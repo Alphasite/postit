@@ -4,6 +4,7 @@ node {
    }
    
    stage('Build') {
+       sh "ls; echp $PWD"
        sh "./gradlew clean build"
    }
    
