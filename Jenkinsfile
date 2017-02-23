@@ -4,11 +4,7 @@ node {
    }
    
    stage('Build') {
-        if(isUnix()){
-            sh './gradlew build --info'
-        } else{
-            bat 'gradlew build --info'
-        }
+       sh "./gradlew clean build"
    }
    
    stage('Results') {
