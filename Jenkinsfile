@@ -18,7 +18,7 @@ node {
    }
 
    stage('Results') {
-        junit '**X/test-results/test/TEST-*.xml'
+        junit '**/test-results/test/TEST-*.xml'
         archive 'target/*.jar'
    }
 }
