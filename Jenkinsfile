@@ -13,8 +13,12 @@ node {
        sh "./gradlew clean build"
    }
    
+   stage('Test') {
+       sh "./gradlew test"
+   }
+
    stage('Results') {
-        junit '**/target/surefire-reports/TEST-*.xml'
+        junit '**X/test-results/test/TEST-*.xml'
         archive 'target/*.jar'
    }
 }
