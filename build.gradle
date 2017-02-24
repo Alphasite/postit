@@ -21,10 +21,11 @@ repositories {
 
 dependencies {
     // The production code uses Guava
-    compile 'com.google.guava:guava:20.0'
+    compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
 
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
+
 }
 
 // Define the main class for the application
