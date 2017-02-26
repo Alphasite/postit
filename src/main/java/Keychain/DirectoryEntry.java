@@ -1,7 +1,7 @@
 package Keychain;
 
 import Backend.Crypto;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import java.lang.UnsupportedOperationException;
 
 import javax.crypto.SecretKey;
 import javax.json.Json;
@@ -40,6 +40,6 @@ public class DirectoryEntry {
     }
 
     public Keychain resolve() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 }
