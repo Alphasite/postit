@@ -1,7 +1,7 @@
-package CLI;
+package cli;
 
 import backend.keyService.KeyService;
-import Keychain.Directory;
+import keychain.Directory;
 
 /**
  * Created by nishadmathur on 22/2/17.

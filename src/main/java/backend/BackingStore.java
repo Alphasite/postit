@@ -1,6 +1,6 @@
 package backend;
 
-import Keychain.*;
+import keychain.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;

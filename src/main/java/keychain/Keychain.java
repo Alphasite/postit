@@ -1,8 +1,7 @@
-package Keychain;
+package keychain;
 
 import javax.json.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**

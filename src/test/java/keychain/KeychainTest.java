@@ -1,9 +1,7 @@
-package Keychain;
+package keychain;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by nishadmathur on 24/2/17.

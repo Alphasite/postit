@@ -1,4 +1,4 @@
-package CLI;
+package cli;
 
 import backend.BackingStore;
 import backend.Crypto;

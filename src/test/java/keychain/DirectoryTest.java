@@ -1,14 +1,12 @@
-package Keychain;
+package keychain;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 /**
  * Created by nishadmathur on 24/2/17.
  */
-public class DirectoryEntryTest {
+public class DirectoryTest {
     @Before
     public void setUp() throws Exception {
 
@@ -20,7 +18,17 @@ public class DirectoryEntryTest {
     }
 
     @Test
-    public void resolve() throws Exception {
+    public void getKeychains() throws Exception {
+
+    }
+
+    @Test
+    public void createKeychain() throws Exception {
+
+    }
+
+    @Test
+    public void writeKeychain() throws Exception {
 
     }
 
