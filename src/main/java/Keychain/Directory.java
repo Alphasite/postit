@@ -1,6 +1,6 @@
 package Keychain;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import java.lang.UnsupportedOperationException;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
@@ -43,10 +43,10 @@ public class Directory {
     }
 
     public Keychain createKeychain(SecretKey encryptionKey, String name) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     public boolean writeKeychain(Keychain keychain) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 }
