@@ -1,22 +1,14 @@
-package Backend;
+package backend;
 
 import Keychain.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
-import javax.json.Json;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
-import javax.security.auth.DestroyFailedException;
+import javax.json.JsonObject;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -73,14 +65,11 @@ public class BackingStore {
             return Optional.empty();
         }
 
-        try (JsonReader in = Json.createReader(new CipherInputStream(new FileInputStream(directoryFile.toFile()), unwrapCipher.get()))) {
+        Optional<JsonObject> jsonObject = Crypto.readJsonObjectFromCipherStream(directoryFile, unwrapCipher.get());
 
-            return Optional.of(new Directory(in.readObject(), getVolume()));
-
-        } catch (IOException e) {
-            // TODO figure this out?
-            LOGGER.severe("Invalid password?");
-            e.printStackTrace();
+        if (jsonObject.isPresent()) {
+            return Optional.of(new Directory(jsonObject.get(), getVolume()));
+        } else {
             return Optional.empty();
         }
     }
@@ -92,17 +81,6 @@ public class BackingStore {
             return false;
         }
 
-        try (JsonWriter out = Json.createWriter(new CipherOutputStream(new FileOutputStream(directoryFile.toFile()), wrapCipher.get()))) {
-            if (!directoryFile.toFile().createNewFile()) {
-                LOGGER.severe("Error creating wrapped key file.");
-                return false;
-            }
-
-            out.writeObject(directory.dump().build());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return true;
+        return Crypto.writeJsonObjectToCipherStream(wrapCipher.get(), directoryFile, directory.dump().build());
     }
 }

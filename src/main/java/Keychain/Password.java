@@ -1,16 +1,13 @@
 package Keychain;
 
-import Backend.Crypto;
+import backend.Crypto;
 
 import javax.crypto.SecretKey;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import javax.json.JsonValue;
 
 /**
  * Created by nishadmathur on 23/2/17.

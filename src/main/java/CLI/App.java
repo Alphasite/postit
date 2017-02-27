@@ -1,7 +1,7 @@
 package CLI;
 
-import Backend.BackingStore;
-import Backend.Crypto;
+import backend.BackingStore;
+import backend.Crypto;
 
 import javax.crypto.SecretKey;
 import java.io.Console;
