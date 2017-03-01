@@ -65,6 +65,7 @@ public class CommandLineParser {
                     SecretKey key = Crypto.secretKeyFromBytes(newPassword.getBytes());
 
                     keychain.get().passwords.add(new Password(args[3], key, keychain.get()));
+                    keychain.get().save();
                 }
             }
         }
