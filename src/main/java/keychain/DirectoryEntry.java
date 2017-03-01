@@ -3,6 +3,7 @@ package keychain;
 import backend.BackingStore;
 import backend.Crypto;
 import backend.KeyService;
+import com.sun.xml.internal.rngom.parse.host.Base;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -12,6 +13,7 @@ import javax.json.JsonObjectBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -45,6 +47,7 @@ public class DirectoryEntry {
         this.directory = directory;
         this.keyService = keyService;
         this.backingStore = backingStore;
+        this.nonce = Base64.getDecoder().decode(object.getString("nonce"));
     }
 
     public JsonObjectBuilder dump() {
@@ -52,6 +55,7 @@ public class DirectoryEntry {
 
         builder.add("name", name);
         builder.add("encryption-key", new String(Crypto.secretKeyToBytes(encryptionKey)));
+        builder.add("nonce", Base64.getEncoder().encodeToString(nonce));
 
         return builder;
     }
