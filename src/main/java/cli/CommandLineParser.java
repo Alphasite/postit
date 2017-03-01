@@ -9,6 +9,7 @@ import keychain.Password;
 import javax.crypto.SecretKey;
 import java.io.Console;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +27,20 @@ public class CommandLineParser {
 
         if (args.length > 0 && args[0].equals("password")) {
             CommandLineParser.password(args, directory);
+        }
+
+        if (args.length > 0 && args[0].equals("interactive")) {
+            Scanner input = new Scanner(System.in);
+            while (true) {
+                System.out.print("\n> ");
+                String[] line = input.nextLine().split("\\s+");
+
+                if (line.length > 0 && line[0].equals("exit")) {
+                    break;
+                }
+
+                CommandLineParser.parse(line, directory);
+            }
         }
     }
 
