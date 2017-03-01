@@ -1,4 +1,4 @@
-package GUI;
+package gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,6 +37,8 @@ public class KeychainViewer {
         menuBar.add(fileMenu);
 
         menuItem = new JMenuItem("New Password");
+        fileMenu.add(menuItem);
+        menuItem = new JMenuItem("New Keychain");
         fileMenu.add(menuItem);
         menuItem = new JMenuItem("Logout");
         fileMenu.add(menuItem);
