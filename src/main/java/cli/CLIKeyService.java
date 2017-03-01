@@ -20,7 +20,7 @@ public class CLIKeyService implements KeyService {
 
     @Override
     public SecretKey getKey() {
-        if (key == null || retrieved == null || Instant.now().isBefore(retrieved.plus(CLIKeyService.timeout))) {
+        if (key == null || retrieved == null || Instant.now().isAfter(retrieved.plus(CLIKeyService.timeout))) {
 
             try {
                 if (key != null) {
