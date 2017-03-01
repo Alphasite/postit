@@ -72,7 +72,7 @@ public class BackingStoreImpl implements BackingStore {
 
     @Override
     public Optional<Directory> readDirectory() {
-        Optional<Cipher> unwrapCipher = Crypto.getUnwrapCipher(keyService.getKey());
+        Optional<Cipher> unwrapCipher = Crypto.getUnwrapCipher(keyService.getMasterKey());
 
         if (!unwrapCipher.isPresent()) {
             LOGGER.warning("Invalid password entered, unable to initialise encryption key.");
@@ -90,7 +90,7 @@ public class BackingStoreImpl implements BackingStore {
 
     @Override
     public boolean writeDirectory(Directory directory) {
-        Optional<Cipher> wrapCipher = Crypto.getWrapCipher(keyService.getKey());
+        Optional<Cipher> wrapCipher = Crypto.getWrapCipher(keyService.getMasterKey());
         if (!wrapCipher.isPresent()) {
             LOGGER.warning("Invalid password entered, unable to initialise encryption key.");
             return false;

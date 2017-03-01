@@ -1,6 +1,7 @@
 package cli;
 
 import backend.Crypto;
+import backend.KeyService;
 import keychain.Directory;
 import keychain.DirectoryEntry;
 import keychain.Keychain;
@@ -16,13 +17,13 @@ import java.util.stream.Collectors;
  * Created by nishadmathur on 22/2/17.
  */
 public class CommandLineParser {
-    public static void parse(String[] args, Directory directory) {
+    public static void parse(String[] args, KeyService keyService, Directory directory) {
         if (args.length > 0 && args[0].equals("init")) {
             CommandLineParser.init(args);
         }
 
         if (args.length > 0 && args[0].equals("keychain")) {
-            CommandLineParser.keychain(args, directory);
+            CommandLineParser.keychain(args, keyService, directory);
         }
 
         if (args.length > 0 && args[0].equals("password")) {
@@ -39,7 +40,7 @@ public class CommandLineParser {
                     break;
                 }
 
-                CommandLineParser.parse(line, directory);
+                CommandLineParser.parse(line, keyService, directory);
             }
         }
     }
@@ -48,7 +49,7 @@ public class CommandLineParser {
 
     }
 
-    private static void keychain(String[] args, Directory directory) {
+    private static void keychain(String[] args, KeyService keyService, Directory directory) {
         if (args.length >= 2 && args[1].equals("create")) {
             if (args.length < 3) {
                 System.err.println("Invalid arguments: 'postit keychain create <name>'");
@@ -75,9 +76,7 @@ public class CommandLineParser {
                         // TODO
                     }
 
-                    Console console = System.console();
-                    String newPassword = new String(console.readPassword("Please enter master password: "));
-                    SecretKey key = Crypto.secretKeyFromBytes(newPassword.getBytes());
+                    SecretKey key = keyService.getClientKey();
 
                     keychain.get().passwords.add(new Password(args[3], key, keychain.get()));
                     keychain.get().save();
@@ -86,10 +85,31 @@ public class CommandLineParser {
         }
 
         if (args.length >= 2 && args[1].equals("list")) {
-            String keys = directory.getKeychains().stream()
-                    .map(entry -> entry.name)
-                    .collect(Collectors.joining("Keychains:\n\t","\t", "\n"));
-            System.out.println(keys);
+            if (args.length == 2) {
+                String keys = directory.getKeychains().stream()
+                        .map(entry -> entry.name)
+                        .collect(Collectors.joining("\t", "Keychains:\n\t","\n"));
+                System.out.println(keys);
+            } else {
+                Optional<DirectoryEntry> matchingKeychain = directory.getKeychains().stream()
+                        .filter(entry -> entry.name.equals(args[2]))
+                        .findAny();
+
+                if (!matchingKeychain.isPresent()) {
+                    // TODO
+                }
+
+                Optional<Keychain> keychain = matchingKeychain.get().readKeychain();
+
+                if (!keychain.isPresent()) {
+                    // TODO
+                }
+
+                String keys = keychain.get().passwords.stream()
+                        .map(password -> password.identifier + ": " + new String(password.password.getEncoded()))
+                        .collect(Collectors.joining("\n\t", "Keychains:\n\t", "\n"));
+                System.out.println(keys);
+            }
         }
 
         if (args.length >= 2 && args[1].equals("delete")) {

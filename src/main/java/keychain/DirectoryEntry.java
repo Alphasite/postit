@@ -11,8 +11,10 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -68,7 +70,7 @@ public class DirectoryEntry {
             return Optional.of(keychain);
         }
 
-        Optional<Cipher> cipher = Crypto.getGCMDecryptCipher(keyService.getKey(), nonce);
+        Optional<Cipher> cipher = Crypto.getGCMDecryptCipher(keyService.getMasterKey(), nonce);
 
         if (!cipher.isPresent()) {
             LOGGER.warning("Invalid password entered, unable to initialise encryption key.");
@@ -78,7 +80,8 @@ public class DirectoryEntry {
         Optional<JsonObject> jsonObject = Crypto.readJsonObjectFromCipherStream(getPath(), cipher.get());
 
         if (jsonObject.isPresent()) {
-            return Optional.of(new Keychain(jsonObject.get(), this));
+            keychain = new Keychain(jsonObject.get(), this);
+            return Optional.of(keychain);
         } else {
             return Optional.empty();
         }
@@ -90,27 +93,45 @@ public class DirectoryEntry {
         }
 
         nonce = Crypto.getNonce();
-        Optional<Cipher> cipher = Crypto.getGCMEncryptCipher(keyService.getKey(), nonce);
+
+        SecretKey newKey = Crypto.generateKey();
+        SecretKey oldKey = encryptionKey;
+
+        Optional<Cipher> cipher = Crypto.getGCMEncryptCipher(newKey, nonce);
 
         if (!cipher.isPresent()) {
             return false;
         }
 
-        boolean success = Crypto.writeJsonObjectToCipherStream(cipher.get(), getPath(), keychain.dump().build());
+        Path tmpPath = getPath().resolve(".tmp");
+        boolean success = Crypto.writeJsonObjectToCipherStream(cipher.get(), tmpPath, keychain.dump().build());
 
         if (success) {
+            encryptionKey = newKey;
+
             if (!directory.save()) {
+                encryptionKey = oldKey;
+
                 LOGGER.severe("Failed to save keychain.");
 
-                try {
-                    Files.delete(getPath());
-                } catch (IOException e) {
-                    LOGGER.severe("Failed to delete orphan keychain: " + e.getMessage());
-                }
-
-                return false;
+                success = false;
             }
-        } else {
+        }
+
+        if (!success) {
+            try {
+                Files.delete(tmpPath);
+            } catch (IOException e) {
+                LOGGER.severe("Failed to delete orphan keychain: " + e.getMessage());
+            }
+
+            return false;
+        }
+
+        try {
+            Files.move(tmpPath, getPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            LOGGER.severe("Failed to move keychain: " + tmpPath + " to " + getPath() + " please do so manually.");
             return false;
         }
 

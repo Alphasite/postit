@@ -54,6 +54,6 @@ public class App {
             return;
         }
 
-        CommandLineParser.parse(args, directory.get());
+        CommandLineParser.parse(args, keyService, directory.get());
     }
 }

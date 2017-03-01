@@ -19,7 +19,23 @@ public class CLIKeyService implements KeyService {
     private Instant retrieved;
 
     @Override
-    public SecretKey getKey() {
+    public byte[] getKey(String keyName) {
+        Console console = System.console();
+
+        String password;
+        if (console != null) {
+            password = new String(console.readPassword("Please enter " + keyName + " password: "));
+        } else {
+            System.err.println("No console detected. Ingesting text via StdIn"); // TODO log.
+            System.out.println("Please enter master password: ");
+            password = new Scanner(System.in).nextLine();
+        }
+
+        return password.getBytes();
+    }
+
+    @Override
+    public SecretKey getMasterKey() {
         if (key == null || retrieved == null || Instant.now().isAfter(retrieved.plus(CLIKeyService.timeout))) {
 
             try {
@@ -34,18 +50,7 @@ public class CLIKeyService implements KeyService {
             }
 
 
-            Console console = System.console();
-
-            String password;
-            if (console != null) {
-                password = new String(console.readPassword("Please enter master password: "));
-            } else {
-                System.err.println("No console detected. Ingesting text via StdIn"); // TODO log.
-                System.out.println("Please enter master password: ");
-                password = new Scanner(System.in).nextLine();
-            }
-
-            key = Crypto.secretKeyFromBytes(password.getBytes());
+            key = Crypto.secretKeyFromBytes(getKey("master"));
         }
 
         retrieved = Instant.now();

@@ -9,12 +9,22 @@ import javax.crypto.SecretKey;
  */
 public class GUIKeyService implements KeyService {
     @Override
-    public SecretKey getKey() {
+    public byte[] getKey(String keyName) {
         return null;
     }
 
     @Override
     public SecretKey createKey() {
+        return null;
+    }
+
+    @Override
+    public SecretKey getMasterKey() {
+        return null;
+    }
+
+    @Override
+    public SecretKey getClientKey() {
         return null;
     }
 }

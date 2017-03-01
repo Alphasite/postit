@@ -4,6 +4,8 @@ import javax.json.JsonObject;
 
 import keychain.Directory;
 
+import java.util.Map;
+
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
  * Changes needed in future:
@@ -16,7 +18,7 @@ import keychain.Directory;
  */
 public class KeychainHandler {
 
-	public boolean addKeychain(String name, String pwd, JsonObject metadata){
+	public boolean addKeychain(String name, String pwd, Map<String, String> metadata){
 		/**
 		 * DirectoryEntry de = new DirectoryEntry(name, path?, generated_encryption_key);
 		 * de.keychain = new Keychain(name, pwd);
