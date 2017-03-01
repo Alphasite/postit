@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class KeychainHandler {
 
-	public boolean addKeychain(String name, String pwd, Map<String, String> metadata){
+	public boolean createKeychain(String name){
 		/**
 		 * DirectoryEntry de = new DirectoryEntry(name, path?, generated_encryption_key);
 		 * de.keychain = new Keychain(name, pwd);
