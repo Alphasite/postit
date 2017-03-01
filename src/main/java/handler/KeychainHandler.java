@@ -40,7 +40,7 @@ public class KeychainHandler {
 		return false;
 	}
 	
-	public boolean removeKeychain(String username, String name){
+	public boolean deleteKeychain(String username, String name){
 		/**
 		 * Assumed user properly logged in and established authenticity
 		 * Directory dir = db.getDirectory(username);
@@ -50,7 +50,7 @@ public class KeychainHandler {
 		return false;
 	}
 	
-	public Directory getKeychains(String username){
+	public Directory getKeychains(){
 		/**
 		 * Assuming authentication
 		 * Directory dir = db.getDirectory(username); return dir;
