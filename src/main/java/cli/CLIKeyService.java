@@ -1,11 +1,13 @@
-package backend.keyService;
+package cli;
 
 import backend.Crypto;
+import backend.KeyService;
 
 import javax.crypto.SecretKey;
 import javax.security.auth.DestroyFailedException;
 import java.io.Console;
 import java.time.*;
+import java.util.Scanner;
 
 /**
  * Created by nishadmathur on 27/2/17.
@@ -33,7 +35,16 @@ public class CLIKeyService implements KeyService {
 
 
             Console console = System.console();
-            String password = new String(console.readPassword("Please enter master password: "));
+
+            String password;
+            if (console != null) {
+                password = new String(console.readPassword("Please enter master password: "));
+            } else {
+                System.err.println("No console detected. Ingesting text via StdIn"); // TODO log.
+                System.out.println("Please enter master password: ");
+                password = new Scanner(System.in).nextLine();
+            }
+
             key = Crypto.secretKeyFromBytes(password.getBytes());
         }
 

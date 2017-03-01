@@ -13,12 +13,24 @@ import javax.json.JsonObjectBuilder;
  * Created by nishadmathur on 23/2/17.
  */
 public class Password {
-    SecretKey password;
-    Map<String, String> metadata;
+    public String identifier;
+    public SecretKey password;
+    public Map<String, String> metadata;
 
-    public Password(JsonObject object) {
-        password = Crypto.secretKeyFromBytes(object.getString("password").getBytes());
-        metadata = new HashMap<>();
+    Keychain keychain;
+
+    public Password(String identifier, SecretKey password, Keychain keychain) {
+        this.identifier = identifier;
+        this.password = password;
+        this.metadata = new HashMap<>();
+    }
+
+    public Password(JsonObject object, Keychain keychain) {
+        this.keychain = keychain;
+
+        this.identifier = object.getString("identifier");
+        this.password = Crypto.secretKeyFromBytes(object.getString("password").getBytes());
+        this.metadata = new HashMap<>();
 
         JsonObject metadataObject = object.getJsonObject("metadata");
         for (String key: metadataObject.keySet()) {
@@ -32,7 +44,17 @@ public class Password {
         metadata.entrySet().stream().map(entry -> metadataObject.add(entry.getKey(), entry.getValue()));
 
         return Json.createObjectBuilder()
+                .add("identifier", identifier)
                 .add("password", new String(Crypto.secretKeyToBytes(password)))
                 .add("metadata", metadataObject);
+    }
+
+    public boolean save() {
+        return this.keychain.save();
+    }
+
+    public boolean delete() {
+        this.keychain.passwords.remove(this);
+        return this.keychain.save();
     }
 }

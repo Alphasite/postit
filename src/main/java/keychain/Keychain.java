@@ -8,20 +8,26 @@ import java.util.List;
  * Created by nishadmathur on 22/2/17.
  */
 public class Keychain {
-    String name;
-    List<Password> passwords;
+    public String name;
+    public List<Password> passwords;
+    private DirectoryEntry directoryEntry;
 
-    public Keychain(String name) {
+    public Keychain(String name, DirectoryEntry directoryEntry) {
+        this.directoryEntry = directoryEntry;
+
         this.name = name;
+        this.passwords = new ArrayList<>();
     }
 
-    public Keychain(JsonObject object) {
-        name = object.getString("name");
-        passwords = new ArrayList<>();
+    public Keychain(JsonObject object, DirectoryEntry directoryEntry) {
+        this.directoryEntry = directoryEntry;
+
+        this.name = object.getString("name");
+        this.passwords = new ArrayList<>();
 
         JsonArray passwordArray = object.getJsonArray("passwords");
         for (int i = 0; i < passwordArray.size(); i++) {
-            passwords.add(new Password(passwordArray.getJsonObject(i)));
+            passwords.add(new Password(passwordArray.getJsonObject(i), this));
         }
     }
 
@@ -35,5 +41,9 @@ public class Keychain {
         return Json.createObjectBuilder()
                 .add("name", name)
                 .add("passwords", passwordArray);
+    }
+
+    public boolean save() {
+        return this.directoryEntry.save();
     }
 }

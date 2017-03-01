@@ -1,4 +1,6 @@
-package backend.keyService;
+package gui;
+
+import backend.KeyService;
 
 import javax.crypto.SecretKey;
 

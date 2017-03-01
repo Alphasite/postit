@@ -1,30 +1,35 @@
 package keychain;
 
-import java.lang.UnsupportedOperationException;
+import backend.BackingStore;
+import backend.KeyService;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
  * Created by nishadmathur on 23/2/17.
  */
 public class Directory {
-    List<DirectoryEntry> keychains;
-    Path ownPath;
+    BackingStore backingStore;
+    KeyService keyService;
 
-    public Directory(Path ownPath) {
+    List<DirectoryEntry> keychains;
+
+    public Directory(KeyService keyService, BackingStore backingStore) {
+        this.keyService = keyService;
+        this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
-        this.ownPath = ownPath;
     }
 
-    public Directory(JsonObject object, Path ownPath) {
-        keychains = new ArrayList<>();
+    public Directory(JsonObject object, KeyService keyService, BackingStore backingStore) {
+        this.keyService = keyService;
+        this.backingStore = backingStore;
+        this.keychains = new ArrayList<>();
 
         JsonArray keychainArray = object.getJsonArray("keychains");
         for (int i = 0; i < keychainArray.size(); i++) {
-            keychains.add(new DirectoryEntry(keychainArray.getJsonObject(i), ownPath));
+            keychains.add(new DirectoryEntry(keychainArray.getJsonObject(i), this, keyService, backingStore));
         }
     }
 
@@ -35,18 +40,38 @@ public class Directory {
         }
 
         return Json.createObjectBuilder()
+                .add("version", "1.0.0")
                 .add("keychains", keychainArray);
     }
 
-    public List<DirectoryEntry> getKeychains(SecretKey masterPassword) {
+    public List<DirectoryEntry> getKeychains() {
         return keychains;
     }
 
-    public Keychain createKeychain(SecretKey encryptionKey, String name) {
-        throw new UnsupportedOperationException();
+    public Optional<Keychain> createKeychain(SecretKey encryptionKey, String name) {
+        DirectoryEntry entry = new DirectoryEntry(
+                name,
+                encryptionKey,
+                this,
+                keyService,
+                backingStore
+        );
+
+        Keychain keychain = new Keychain(name, entry);
+        this.keychains.add(entry);
+
+        if (entry.save()) {
+            return Optional.of(keychain);
+        } else {
+            return Optional.empty();
+        }
     }
 
-    public boolean writeKeychain(Keychain keychain) {
-        throw new UnsupportedOperationException();
+    public boolean delete(DirectoryEntry keychain) {
+        return keychain.delete();
+    }
+
+    public boolean save() {
+        return backingStore.writeDirectory(this);
     }
 }

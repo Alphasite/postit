@@ -1,10 +1,12 @@
 package cli;
 
 import backend.BackingStore;
+import backend.BackingStoreImpl;
 import backend.Crypto;
+import backend.KeyService;
+import keychain.Directory;
 
-import javax.crypto.SecretKey;
-import java.io.Console;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /*
@@ -13,32 +15,45 @@ import java.util.logging.Logger;
 public class App {
     private final static Logger LOGGER = Logger.getLogger(App.class.getName());
 
+    private KeyService keyService;
+    private BackingStore backingStore;
+
     public static void main(String[] args) {
-        if (!App.init()) {
+        CLIKeyService keyService = new CLIKeyService();
+        App app = new App(keyService, new BackingStoreImpl(keyService));
+
+        if (app.init()) {
+            app.run(args);
+        } else {
             LOGGER.severe("Failed to initialise, exiting.");
-            return;
         }
-
-
     }
 
-    private static boolean init() {
+    public App(KeyService keyService, BackingStore backingStore) {
+        this.keyService = keyService;
+        this.backingStore = backingStore;
+    }
+
+    private boolean init() {
         if (!Crypto.init()) {
             return false;
         }
 
-        SecretKey masterKey = getMasterPassword();
-
-        if (!BackingStore.init(masterKey)) {
+        if (!backingStore.init()) {
             return false;
         }
 
         return true;
     }
 
-    private static SecretKey getMasterPassword() {
-        Console console = System.console();
-        String password = new String(console.readPassword("Please enter master password: "));
-        return Crypto.secretKeyFromBytes(password.getBytes());
+    private void run(String[] args) {
+        Optional<Directory> directory = backingStore.readDirectory();
+
+        if (!directory.isPresent()) {
+            LOGGER.severe("Could not load directory.");
+            return;
+        }
+
+        CommandLineParser.parse(args, directory.get());
     }
 }
