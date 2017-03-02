@@ -146,9 +146,13 @@ public class Crypto {
         return sha;
     }
 
+    public static SecretKey hashedSecretKeyFromBytes(byte key[]) {
+        return secretKeyFromBytes(sha.digest(key));
+    }
+
     public static SecretKey secretKeyFromBytes(byte key[]) {
         // TODO FIX THIS!!!
-        return new SecretKeySpec(sha.digest(key), "AES");
+        return new SecretKeySpec(key, "AES");
     }
 
     public static byte[] secretKeyToBytes(SecretKey key) {

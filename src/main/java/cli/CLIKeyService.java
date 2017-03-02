@@ -4,6 +4,7 @@ import backend.Crypto;
 import backend.KeyService;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.DestroyFailedException;
 import java.io.Console;
 import java.time.*;
@@ -27,7 +28,7 @@ public class CLIKeyService implements KeyService {
             password = new String(console.readPassword("Please enter " + keyName + " password: "));
         } else {
             System.err.println("No console detected. Ingesting text via StdIn"); // TODO log.
-            System.out.println("Please enter master password: ");
+            System.out.println("Please enter " + keyName + " password: ");
             password = new Scanner(System.in).nextLine();
         }
 
@@ -50,11 +51,16 @@ public class CLIKeyService implements KeyService {
             }
 
 
-            key = Crypto.secretKeyFromBytes(getKey("master"));
+            key = Crypto.hashedSecretKeyFromBytes(getKey("master"));
         }
 
         retrieved = Instant.now();
         return key;
+    }
+
+    @Override
+    public SecretKey getClientKey() {
+        return Crypto.secretKeyFromBytes(getKey("client"));
     }
 
     @Override
@@ -71,7 +77,7 @@ public class CLIKeyService implements KeyService {
             }
         }
 
-        return Crypto.secretKeyFromBytes(password.getBytes());
+        return Crypto.hashedSecretKeyFromBytes(password.getBytes());
     }
 
 }

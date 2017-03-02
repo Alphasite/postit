@@ -70,7 +70,7 @@ public class DirectoryEntry {
             return Optional.of(keychain);
         }
 
-        Optional<Cipher> cipher = Crypto.getGCMDecryptCipher(keyService.getMasterKey(), nonce);
+        Optional<Cipher> cipher = Crypto.getGCMDecryptCipher(encryptionKey, nonce);
 
         if (!cipher.isPresent()) {
             LOGGER.warning("Invalid password entered, unable to initialise encryption key.");
@@ -103,8 +103,8 @@ public class DirectoryEntry {
             return false;
         }
 
-        Path tmpPath = getPath().resolve(".tmp");
-        boolean success = Crypto.writeJsonObjectToCipherStream(cipher.get(), tmpPath, keychain.dump().build());
+        Path path = getPath();
+        boolean success = Crypto.writeJsonObjectToCipherStream(cipher.get(), path, keychain.dump().build());
 
         if (success) {
             encryptionKey = newKey;
@@ -120,18 +120,11 @@ public class DirectoryEntry {
 
         if (!success) {
             try {
-                Files.delete(tmpPath);
+                Files.delete(path);
             } catch (IOException e) {
                 LOGGER.severe("Failed to delete orphan keychain: " + e.getMessage());
             }
 
-            return false;
-        }
-
-        try {
-            Files.move(tmpPath, getPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            LOGGER.severe("Failed to move keychain: " + tmpPath + " to " + getPath() + " please do so manually.");
             return false;
         }
 
