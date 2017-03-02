@@ -1,11 +1,11 @@
 package handler;
 
-import javax.crypto.SecretKey;
-
 import keychain.Directory;
 import keychain.Keychain;
 import keychain.Password;
 
+import javax.crypto.SecretKey;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,11 +24,11 @@ public class DirectoryController {
     }
 
     public List<Keychain> getKeychains(){
-        return new List<Keychain>;
+        return new ArrayList<Keychain>();
     }
 
     public List<Password> getPasswords(Keychain k){
-        return new List<Password>;
+        return new ArrayList<Password>();
     }
 
     public boolean createKeychain(String keychainName){
