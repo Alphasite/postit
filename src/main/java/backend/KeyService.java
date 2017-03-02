@@ -11,8 +11,5 @@ public interface KeyService {
     public SecretKey createKey();
 
     public SecretKey getMasterKey();
-
-    default SecretKey getClientKey() {
-        return new SecretKeySpec(getKey("client"), "RAW");
-    }
+    public SecretKey getClientKey();
 }

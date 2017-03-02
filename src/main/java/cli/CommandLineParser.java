@@ -106,7 +106,7 @@ public class CommandLineParser {
                 }
 
                 String keys = keychain.get().passwords.stream()
-                        .map(password -> password.identifier + ": " + new String(password.password.getEncoded()))
+                        .map(password -> password.identifier + ": " + new String(Crypto.secretKeyToBytes(password.password)))
                         .collect(Collectors.joining("\n\t", "Keychains:\n\t", "\n"));
                 System.out.println(keys);
             }
