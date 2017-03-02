@@ -80,6 +80,25 @@ public class KeychainViewer {
         menuBar.add(fileMenu);
 
         menuItem = new JMenuItem("New Password");
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String p = (String)JOptionPane.showInputDialog(
+                        frame,
+                        "New Password Name",
+                        "New Password",
+                        JOptionPane.PLAIN_MESSAGE,
+                        null,
+                        null,
+                        "name");
+
+                if ((p != null) && (p.length() > 0)) {
+                    int activeKeychain = tabbedPane.getSelectedIndex()
+                    controller.createPassword(controller.getKeychains().get(activeKeychain),p);
+                    return;
+                }
+            }
+        });
 
         fileMenu.add(menuItem);
         menuItem = new JMenuItem("New Keychain");
@@ -110,6 +129,7 @@ public class KeychainViewer {
         menuBar.add(editMenu);
 
         menuItem = new JMenuItem("Keychain Permissions");
+        menuItem.setEnabled(false);
         editMenu.add(menuItem);
 
         frame.setJMenuBar(menuBar);
