@@ -1,11 +1,15 @@
 package gui;
 
+import apple.security.KeychainStore;
 import backend.BackingStore;
 import backend.BackingStoreImpl;
+import backend.Crypto;
+import backend.KeyService;
 import cli.App;
 import cli.CLIKeyService;
 import handler.DirectoryController;
 import keychain.Directory;
+import keychain.DirectoryEntry;
 import keychain.Keychain;
 import keychain.Password;
 
@@ -24,55 +28,63 @@ import java.util.Optional;
  * Created by jackielaw on 2/27/17.
  */
 public class KeychainViewer {
+    BackingStore backingStore;
+    KeyService keyService;
+
     Directory dir;
     DirectoryController controller;
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
-    private JTabbedPane tabbedPane=new JTabbedPane();
+    private JTabbedPane tabbedPane = new JTabbedPane();
     //each JTable contains a list of passwords in a particular Keychain
     private ArrayList<JTable> tables = new ArrayList<JTable>();
 
-    public KeychainViewer(BackingStore backingStore){
+    public KeychainViewer(BackingStore backingStore, KeyService keyService) {
         // Hardcoding Directory to be a new directory currently
         // Will incorporate loading a directory after account creation is enabled
+
+        this.backingStore = backingStore;
+        this.keyService = keyService;
 
         Optional<Directory> directory = backingStore.readDirectory();
 
         if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null, "Could not load directory");
-        }
-        else{
+        } else {
             dir = directory.get();
-            controller = new DirectoryController(directory.get());
+            controller = new DirectoryController(directory.get(), keyService);
 
             createUIComponents(controller.getKeychains());
         }
 
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         CLIKeyService keyService = new CLIKeyService();
-        App app = new App(keyService, new BackingStoreImpl(keyService));
+        BackingStoreImpl backingStore = new BackingStoreImpl(keyService);
 
-        if (app.init()) {
-            app.run(args);
+        if (!Crypto.init()) {
+            // TODO
         }
 
-        KeychainViewer kv = new KeychainViewer(app.backingStore);
+        if (!backingStore.init()) {
+            // TODO
+        }
+
+        KeychainViewer kv = new KeychainViewer(backingStore, keyService);
     }
 
     /**
-     *  creatUIComponents()
+     * creatUIComponents()
+     * <p>
+     * Creates the UI with each tabbedPane as a keychain
+     * Each tabbedPane contains a table that holds all the passwords
+     * for that keychain
      *
-     *  Creates the UI with each tabbedPane as a keychain
-     *  Each tabbedPane contains a table that holds all the passwords
-     *  for that keychain
-     *
-     *  @param : List<Keychain> keychains
+     * @param : List<Keychain> keychains
      */
-    private void createUIComponents(List<Keychain> keychains) {
+    private void createUIComponents(List<DirectoryEntry> keychains) {
         JFrame frame = new JFrame("Keychain");
         frame.setLayout(new GridLayout());
         menuBar = new JMenuBar();
@@ -105,7 +117,7 @@ public class KeychainViewer {
         menuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String k = (String)JOptionPane.showInputDialog(
+                String k = (String) JOptionPane.showInputDialog(
                         frame,
                         "New Keychain Name",
                         "New Keychain",
@@ -135,10 +147,14 @@ public class KeychainViewer {
         frame.setJMenuBar(menuBar);
 
         //loop through directory and name will be keychain name (can get from DirectoryEntry or Keychain)
+        for (DirectoryEntry entry : keychains) {
+            Optional<Keychain> keychain = entry.readKeychain();
 
-        for (Keychain k: keychains) {
+            if (!keychain.isPresent()) {
+                // TODO
+            }
 
-            addPanes(k);
+            addPanes(keychain.get());
         }
 
         frame.add(tabbedPane);
@@ -148,29 +164,29 @@ public class KeychainViewer {
         frame.setVisible(true);
     }
 
-    private void addPanes(Keychain k){
+    private void addPanes(Keychain k) {
         JComponent tabpanel = new JPanel();
         String name = k.name;
-        tabbedPane.addTab(name,null, tabpanel,
-                "Keychain "+name);
+        tabbedPane.addTab(name, null, tabpanel,
+                "Keychain " + name);
 
         //fill table for Keychain k with all of its passwords
         String[] columnNames = {"Title", "Username"};
-        String[][] data =new String[2][k.passwords.size()];
+        String[][] data = new String[2][k.passwords.size()];
         List<Password> passwords = (ArrayList<Password>) k.passwords;
-        for(int i = 0; i< passwords.size(); i++){
-            Map<String,String> metadata = passwords.get(i).metadata;
+        for (int i = 0; i < passwords.size(); i++) {
+            Map<String, String> metadata = passwords.get(i).metadata;
             if (metadata.containsKey("title"))
-                data[0][i]=metadata.get("title");
+                data[0][i] = metadata.get("title");
             else
-                data[0][i]=metadata.get("title"+i);
+                data[0][i] = metadata.get("title" + i);
             if (metadata.containsKey("username"))
-                data[1][i]=metadata.get("username");
+                data[1][i] = metadata.get("username");
             else
-                data[1][i]=metadata.get("user"+i);
+                data[1][i] = metadata.get("user" + i);
         }
 
-        JTable table = new JTable(data,columnNames) {
+        JTable table = new JTable(data, columnNames) {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
@@ -179,7 +195,7 @@ public class KeychainViewer {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    JTable target = (JTable)e.getSource();
+                    JTable target = (JTable) e.getSource();
                     int row = target.getSelectedRow();
                     PasswordViewer pv = new PasswordViewer(k.passwords.get(row));
                 }

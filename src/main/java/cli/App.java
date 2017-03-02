@@ -34,6 +34,7 @@ public class App {
         this.backingStore = backingStore;
     }
 
+    // TODO remove.
     private boolean init() {
         if (!Crypto.init()) {
             return false;
