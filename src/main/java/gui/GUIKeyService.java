@@ -14,7 +14,7 @@ public class GUIKeyService implements KeyService {
     }
 
     @Override
-    public SecretKey createKey() {
+    public SecretKey createMasterKey() {
         return null;
     }
 

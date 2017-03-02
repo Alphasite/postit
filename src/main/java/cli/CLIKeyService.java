@@ -20,15 +20,15 @@ public class CLIKeyService implements KeyService {
     private Instant retrieved;
 
     @Override
-    public byte[] getKey(String keyName) {
+    public byte[] getKey(String message) {
         Console console = System.console();
 
         String password;
         if (console != null) {
-            password = new String(console.readPassword("Please enter " + keyName + " password: "));
+            password = new String(console.readPassword(message));
         } else {
             System.err.println("No console detected. Ingesting text via StdIn"); // TODO log.
-            System.out.println("Please enter " + keyName + " password: ");
+            System.out.println(message);
             password = new Scanner(System.in).nextLine();
         }
 
@@ -51,7 +51,7 @@ public class CLIKeyService implements KeyService {
             }
 
 
-            key = Crypto.hashedSecretKeyFromBytes(getKey("master"));
+            key = Crypto.hashedSecretKeyFromBytes(getKey("Please enter master password: "));
         }
 
         retrieved = Instant.now();
@@ -60,24 +60,25 @@ public class CLIKeyService implements KeyService {
 
     @Override
     public SecretKey getClientKey() {
-        return Crypto.secretKeyFromBytes(getKey("client"));
+        return Crypto.secretKeyFromBytes(getKey("Please enter client password: "));
     }
 
     @Override
-    public SecretKey createKey() {
-        Console console = System.console();
+    public SecretKey createMasterKey() {
         String password;
 
         while (true) {
-            String password1 = new String(console.readPassword("Please enter NEW master password: "));
-            String password2 = new String(console.readPassword("Please re-enter NEW master password: "));
+            String password1 = new String(getKey("Please enter NEW master password: "));
+            String password2 = new String(getKey("Please re-enter NEW master password: "));
             if (password1.equals(password2)) {
                 password = password1;
                 break;
             }
         }
 
-        return Crypto.hashedSecretKeyFromBytes(password.getBytes());
-    }
+        key = Crypto.hashedSecretKeyFromBytes(password.getBytes());
+        retrieved = Instant.now();
 
+        return key;
+    }
 }
