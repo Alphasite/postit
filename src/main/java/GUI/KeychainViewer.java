@@ -1,15 +1,24 @@
 package gui;
 
+import keychain.Directory;
+
+import handler.DirectoryController;
+import keychain.Keychain;
+import keychain.Password;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.List;
 
 /**
  * Created by jackielaw on 2/27/17.
  */
 public class KeychainViewer {
+    DirectoryController controller;
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -18,18 +27,29 @@ public class KeychainViewer {
     private ArrayList<JTable> tables = new ArrayList<JTable>();
 
     public KeychainViewer(){
-        createUIComponents();
+        // Hardcoding Directory to be a new directory currently
+        // Will incorporate loading a directory after account creation is enabled
+        Directory directory = new Directory();
+        controller = new DirectoryController(directory);
 
+        createUIComponents(controller.getKeychains());
     }
 
     public static void main(String[] args)
     {
         KeychainViewer kv = new KeychainViewer();
     }
-    //Buttons to add: Log out,change permissions, add password
 
-    private void createUIComponents() {
-        // TODO: place custom component creation code here
+    /**
+     *  creatUIComponents()
+     *
+     *  Creates the UI with each tabbedPane as a keychain
+     *  Each tabbedPane contains a table that holds all the passwords
+     *  for that keychain
+     *
+     *  @param : List<Keychain> keychains
+     */
+    private void createUIComponents(List<Keychain> keychains) {
         JFrame frame = new JFrame("Keychain");
         frame.setLayout(new GridLayout());
         menuBar = new JMenuBar();
@@ -49,12 +69,11 @@ public class KeychainViewer {
         menuItem = new JMenuItem("Keychain Permissions");
         editMenu.add(menuItem);
 
-
         frame.setJMenuBar(menuBar);
 
         //loop through directory and name will be keychain name (can get from DirectoryEntry or Keychain)
-        addPanes("MyPane1");
-        addPanes("MyPane2");
+        for (Keychain k: keychains)
+            addPanes(k);
 
         frame.add(tabbedPane);
 
@@ -63,14 +82,27 @@ public class KeychainViewer {
         frame.setVisible(true);
     }
 
-    private void addPanes(String name){
+    private void addPanes(Keychain k){
         JComponent tabpanel = new JPanel();
+        String name = k.name;
         tabbedPane.addTab(name,null, tabpanel,
-                "A Keychain");
+                "Keychain "+name);
 
-        //add table will be from the Keychain
+        //fill table for Keychain k with all of its passwords
         String[] columnNames = {"Title", "Username"};
-        String[][] data = {{"mytitle1","myuser1"},{"mytitle2","myuser2"}};
+        String[][] data = [2][k.passwords.size()];
+        List<Password> passwords = (ArrayList<Password>) k.passwords;
+        for(int i = 0; i< passwords.size(); i++){
+            Map<String,String> metadata = passwords.get(i).metadata;
+            if (metadata.containsKey("title"))
+                data[0][i]=metadata.get("title");
+            else
+                data[0][i]=metadata.get("title"+i);
+            if (metadata.containsKey("username"))
+                data[1][i]=metadata.get("username");
+            else
+                data[1][i]=metadata.get("user"+i);
+        }
 
         JTable table = new JTable(data,columnNames) {
             public boolean isCellEditable(int row, int column) {
@@ -83,7 +115,7 @@ public class KeychainViewer {
                 if (e.getClickCount() == 2) {
                     JTable target = (JTable)e.getSource();
                     int row = target.getSelectedRow();
-                    PasswordViewer pv = new PasswordViewer("Password"+String.valueOf(row));
+                    PasswordViewer pv = new PasswordViewer(k.passwords.get(row));
                 }
             }
         });

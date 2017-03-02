@@ -1,9 +1,12 @@
 package gui;
 
+import backend.Crypto;
+import keychain.Password;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import java.util.Map;
 /**
  * Created by jackielaw on 2/26/17.
  */
@@ -22,9 +25,9 @@ public class PasswordViewer {
     private JLabel commLabel;
     private JButton saveButton;
 
-    public PasswordViewer(String password) {
+    public PasswordViewer(Password p) {
         // TODO: place custom component creation code here
-        createUIComponents(password,password,password,password);
+        createUIComponents(p);
         toggleView.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -46,7 +49,7 @@ public class PasswordViewer {
         //PasswordViewer pv = new PasswordViewer();
     }
 
-    private void createUIComponents(String title, String user, String pass, String comm) {
+    private void createUIComponents(Password p) {
         // TODO: place custom component creation code here
         JFrame frame = new JFrame("Password");
 
@@ -54,12 +57,22 @@ public class PasswordViewer {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+        Map<String,String> metadata = p.metadata;
 
-        titleField.setText(title);
-        userField.setText(user);
-        passField.setText(pass);
-        comments.setText(comm);
+        if (metadata.containsKey("title"))
+            titleField.setText(metadata.get("title"));
+        else
+            titleField.setText("title");
+        if (metadata.containsKey("username"))
+            userField.setText(metadata.get("username"));
+        else
+            userField.setText("user");
+        if (metadata.containsKey("comments"))
+            comments.setText(metadata.get("comments"));
+        else
+            comments.setText("comments");
 
-
+        byte[] bytes = Crypto.secretKeyToBytes(p.password);
+        passField.setText(new String(bytes));
     }
 }
