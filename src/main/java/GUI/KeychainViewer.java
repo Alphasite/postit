@@ -1,8 +1,12 @@
 package gui;
 
+import backend.BackingStore;
+import backend.BackingStoreImpl;
+import backend.KeyService;
 import keychain.Directory;
 
 import handler.DirectoryController;
+import keychain.DirectoryEntry;
 import keychain.Keychain;
 import keychain.Password;
 
@@ -29,8 +33,17 @@ public class KeychainViewer {
     public KeychainViewer(){
         // Hardcoding Directory to be a new directory currently
         // Will incorporate loading a directory after account creation is enabled
-        Directory directory = new Directory();
-        controller = new DirectoryController(directory);
+        KeyService keyService = new GUIKeyService();
+        BackingStore backingStore = new BackingStoreImpl(keyService);
+
+        backingStore.init();
+        Optional<Directory> directory = backingStore.readDirectory();
+
+        if (!directory.isPresent()) {
+
+        }
+
+        controller = new DirectoryController(directory.get(), keyService);
 
         createUIComponents(controller.getKeychains());
     }
@@ -49,7 +62,7 @@ public class KeychainViewer {
      *
      *  @param : List<Keychain> keychains
      */
-    private void createUIComponents(List<Keychain> keychains) {
+    private void createUIComponents(List<DirectoryEntry> keychains) {
         JFrame frame = new JFrame("Keychain");
         frame.setLayout(new GridLayout());
         menuBar = new JMenuBar();
@@ -72,8 +85,15 @@ public class KeychainViewer {
         frame.setJMenuBar(menuBar);
 
         //loop through directory and name will be keychain name (can get from DirectoryEntry or Keychain)
-        for (Keychain k: keychains)
-            addPanes(k);
+        for (DirectoryEntry entry: keychains) {
+            Optional<Keychain> keychain = entry.readKeychain();
+
+            if (!keychain.isPresent()) {
+                // TODO
+            }
+
+            addPanes(keychain.get());
+        }
 
         frame.add(tabbedPane);
 
@@ -90,7 +110,7 @@ public class KeychainViewer {
 
         //fill table for Keychain k with all of its passwords
         String[] columnNames = {"Title", "Username"};
-        String[][] data = [2][k.passwords.size()];
+        String[][] data = new String[2][k.passwords.size()];
         List<Password> passwords = (ArrayList<Password>) k.passwords;
         for(int i = 0; i< passwords.size(); i++){
             Map<String,String> metadata = passwords.get(i).metadata;

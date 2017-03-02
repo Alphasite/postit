@@ -46,4 +46,8 @@ public class Keychain {
     public boolean save() {
         return this.directoryEntry.save();
     }
+
+    public boolean delete() {
+        this.directoryEntry.delete();
+    }
 }

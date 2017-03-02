@@ -17,12 +17,13 @@ public class Password {
     public SecretKey password;
     public Map<String, String> metadata;
 
-    Keychain keychain;
+    private Keychain keychain;
 
     public Password(String identifier, SecretKey password, Keychain keychain) {
         this.identifier = identifier;
         this.password = password;
         this.metadata = new HashMap<>();
+        this.keychain = keychain;
     }
 
     public Password(JsonObject object, Keychain keychain) {
@@ -55,6 +56,10 @@ public class Password {
 
     public boolean delete() {
         this.keychain.passwords.remove(this);
-        return this.keychain.save();
+        if (this.keychain.save()) {
+            return true;
+        } else {
+            this.keychain.passwords.add(this);
+        }
     }
 }
