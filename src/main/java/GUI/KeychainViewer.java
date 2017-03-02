@@ -1,23 +1,30 @@
 package gui;
 
-import keychain.Directory;
-
+import backend.BackingStore;
+import backend.BackingStoreImpl;
+import cli.App;
+import cli.CLIKeyService;
 import handler.DirectoryController;
+import keychain.Directory;
 import keychain.Keychain;
 import keychain.Password;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by jackielaw on 2/27/17.
  */
 public class KeychainViewer {
+    Directory dir;
     DirectoryController controller;
     private JMenuBar menuBar;
     private JMenuItem menuItem;
@@ -26,18 +33,34 @@ public class KeychainViewer {
     //each JTable contains a list of passwords in a particular Keychain
     private ArrayList<JTable> tables = new ArrayList<JTable>();
 
-    public KeychainViewer(){
+    public KeychainViewer(BackingStore backingStore){
         // Hardcoding Directory to be a new directory currently
         // Will incorporate loading a directory after account creation is enabled
-        Directory directory = new Directory();
-        controller = new DirectoryController(directory);
 
-        createUIComponents(controller.getKeychains());
+        Optional<Directory> directory = backingStore.readDirectory();
+
+        if (!directory.isPresent()) {
+            JOptionPane.showMessageDialog(null, "Could not load directory");
+        }
+        else{
+            dir = directory.get();
+            controller = new DirectoryController(directory.get());
+
+            createUIComponents(controller.getKeychains());
+        }
+
     }
 
     public static void main(String[] args)
     {
-        KeychainViewer kv = new KeychainViewer();
+        CLIKeyService keyService = new CLIKeyService();
+        App app = new App(keyService, new BackingStoreImpl(keyService));
+
+        if (app.init()) {
+            app.run(args);
+        }
+
+        KeychainViewer kv = new KeychainViewer(app.backingStore);
     }
 
     /**
@@ -57,8 +80,28 @@ public class KeychainViewer {
         menuBar.add(fileMenu);
 
         menuItem = new JMenuItem("New Password");
+
         fileMenu.add(menuItem);
         menuItem = new JMenuItem("New Keychain");
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String k = (String)JOptionPane.showInputDialog(
+                        frame,
+                        "New Keychain Name",
+                        "New Keychain",
+                        JOptionPane.PLAIN_MESSAGE,
+                        null,
+                        null,
+                        "name");
+
+                if ((k != null) && (k.length() > 0)) {
+                    controller.createKeychain(k);
+                    return;
+                }
+
+            }
+        });
         fileMenu.add(menuItem);
         menuItem = new JMenuItem("Logout");
         fileMenu.add(menuItem);
@@ -72,8 +115,11 @@ public class KeychainViewer {
         frame.setJMenuBar(menuBar);
 
         //loop through directory and name will be keychain name (can get from DirectoryEntry or Keychain)
-        for (Keychain k: keychains)
+
+        for (Keychain k: keychains) {
+
             addPanes(k);
+        }
 
         frame.add(tabbedPane);
 
@@ -90,7 +136,7 @@ public class KeychainViewer {
 
         //fill table for Keychain k with all of its passwords
         String[] columnNames = {"Title", "Username"};
-        String[][] data = [2][k.passwords.size()];
+        String[][] data =new String[2][k.passwords.size()];
         List<Password> passwords = (ArrayList<Password>) k.passwords;
         for(int i = 0; i< passwords.size(); i++){
             Map<String,String> metadata = passwords.get(i).metadata;
