@@ -60,6 +60,7 @@ public class Password {
             return true;
         } else {
             this.keychain.passwords.add(this);
+            return false;
         }
     }
 }

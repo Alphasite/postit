@@ -48,6 +48,6 @@ public class Keychain {
     }
 
     public boolean delete() {
-        this.directoryEntry.delete();
+        return this.directoryEntry.delete();
     }
 }
