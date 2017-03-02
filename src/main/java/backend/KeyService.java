@@ -8,7 +8,8 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public interface KeyService {
     public byte[] getKey(String keyName);
-    public SecretKey createKey();
+
+    public SecretKey createMasterKey();
 
     public SecretKey getMasterKey();
     public SecretKey getClientKey();
