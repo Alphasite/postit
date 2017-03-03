@@ -42,10 +42,7 @@ public class AccountHandler {
 	
 	public boolean updateAccount(DatabaseController db, String username, String pwd, String email, String firstname, String lastname){
 		Account account = new Account(username, pwd, email, firstname, lastname); //TODO encryption on pwd
-		Account cur = db.getAccount(username);
-		if (pwd.equals(cur.getPassword())) 
-			return db.updateAccount(account);
-		return false;
+		return db.updateAccount(account);
 	}
 	
 	public boolean removeAccount(DatabaseController db, String username, String pwd){
