@@ -45,7 +45,7 @@ public class DirectoryEntry {
 
     public DirectoryEntry(JsonObject object, Directory directory, KeyService keyService, BackingStore backingStore) {
         this.name = object.getString("name");
-        this.encryptionKey = Crypto.secretKeyFromBytes(object.getString("encryption-key").getBytes());
+        this.encryptionKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("encryption-key").getBytes()));
         this.directory = directory;
         this.keyService = keyService;
         this.backingStore = backingStore;
@@ -56,7 +56,7 @@ public class DirectoryEntry {
         JsonObjectBuilder builder = Json.createObjectBuilder();
 
         builder.add("name", name);
-        builder.add("encryption-key", new String(Crypto.secretKeyToBytes(encryptionKey)));
+        builder.add("encryption-key", new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(encryptionKey))));
         builder.add("nonce", Base64.getEncoder().encodeToString(nonce));
 
         return builder;
@@ -134,9 +134,12 @@ public class DirectoryEntry {
     public boolean delete() {
         try {
             directory.keychains.remove(this);
-            Files.delete(getPath());
-            directory.delete(this);
-            return true;
+            if (directory.save()) {
+                Files.delete(getPath());
+                return true;
+            } else {
+                return false;
+            }
         } catch (IOException e) {
             LOGGER.severe("Failed while deleting keychain " + name + ": " + e.getMessage());
             return false;

@@ -129,7 +129,7 @@ public class Crypto {
         try {
             gcmCipher.init(Cipher.DECRYPT_MODE, key, spec);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            LOGGER.warning("Unable to init GCM decryption cipher.");
+            LOGGER.warning("Unable to init GCM decryption cipher: " + e.getMessage());
             return Optional.empty();
         }
 

@@ -3,22 +3,19 @@ package handler;
 import backend.BackingStore;
 import backend.BackingStoreImpl;
 import backend.Crypto;
+import backend.MockKeyService;
 import keychain.*;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.hamcrest.core.*;
 
-import javax.crypto.ExemptionMechanismException;
 import javax.crypto.SecretKey;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -133,6 +130,19 @@ public class DirectoryControllerTest {
 
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test6.keychain")), is(true));
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test7.keychain")), is(true));
+
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+
+        names = controller.getKeychains().stream()
+                .map(entry -> entry.name)
+                .collect(Collectors.toList());
+
+        assertThat(names.size(), is(2));
+        assertThat(names.contains("test6"), is(true));
+        assertThat(names.contains("test7"), is(true));
+
+        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test6.keychain")), is(true));
+        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test7.keychain")), is(true));
     }
 
     @Test
@@ -146,6 +156,20 @@ public class DirectoryControllerTest {
         assertThat(passwords.size(), is(2));
 
         List<String> passwordStrings = passwords.stream()
+                .map(key -> key.password)
+                .map(Crypto::secretKeyToBytes)
+                .map(String::new)
+                .collect(Collectors.toList());
+
+        assertThat(passwordStrings.contains("secret3"), is(true));
+        assertThat(passwordStrings.contains("secret4"), is(true));
+
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+
+        passwords = controller.getKeychain("test8").get().passwords;
+        assertThat(passwords.size(), is(2));
+
+        passwordStrings = passwords.stream()
                 .map(key -> key.password)
                 .map(Crypto::secretKeyToBytes)
                 .map(String::new)
@@ -204,6 +228,13 @@ public class DirectoryControllerTest {
             assertThat(controller.getPassword(password), is("secret" + number + 2));
         }
 
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            assertThat(controller.getPassword(password), is("secret" + number + 2));
+        }
     }
 
     @Test
@@ -225,6 +256,18 @@ public class DirectoryControllerTest {
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(true));
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
         assertThat(controller.deleteKeychain(keychain11), is(true));
+        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(false));
+        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+
+        names = controller.getKeychains().stream()
+                .map(entry -> entry.name)
+                .collect(Collectors.toList());
+
+        assertThat(names.size(), is(1));
+        assertThat(names.contains("test11"), is(false));
+        assertThat(names.contains("test12"), is(true));
+
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(false));
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
 
@@ -260,6 +303,7 @@ public class DirectoryControllerTest {
 
         assertThat(controller.deletePassword(password11), is(true));
 
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
         passwords = controller.getPasswords(keychain);
 
         assertThat(passwords.size(), is(2));

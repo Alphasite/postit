@@ -3,12 +3,12 @@ package keychain;
 import backend.BackingStore;
 import backend.BackingStoreImpl;
 import backend.Crypto;
+import backend.MockKeyService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.file.Files;
 
 /**
