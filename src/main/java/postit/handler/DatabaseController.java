@@ -78,15 +78,15 @@ public class DatabaseController {
 		int modify = 0;
 		conn = Database.connectToDefault();
 		try {
-			stmt = conn.prepareStatement("UPDATE "+ACCOUNT+" SET "
-					+ "(`user_name`, `pwd_key`, `email`, `first_name`, `last_name`)"
-					+ "VALUES (?,?,?,?,?);");
+			stmt = conn.prepareStatement("UPDATE "+ACCOUNT+" SET `user_name`=?, `pwd_key`=?, `email`=?, "
+					+ "`first_name`=?, `last_name`=? WHERE `user_name`=?;");
 			stmt.setString(1, account.getUsername());
 			stmt.setString(2, account.getPassword()); // encrypt before storing
 			stmt.setString(3, account.getEmail());
 			stmt.setString(4, account.getFirstname()); 
 			stmt.setString(5, account.getLastname());
-
+			stmt.setString(6, account.getUsername());
+			
 			modify = stmt.executeUpdate();
 		} 
 		catch (SQLException e) {
