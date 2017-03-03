@@ -60,7 +60,11 @@ public class DirectoryEntry {
     }
 
     public Optional<Keychain> readKeychain() {
+        LOGGER.info("Reading keychain " + name);
+
         if (!Files.exists(getPath())) {
+            LOGGER.info("Keychain file doesn't exist... creating it: " + name);
+
             keychain = new Keychain(name, this);
             this.save();
 
@@ -77,6 +81,7 @@ public class DirectoryEntry {
         Optional<JsonObject> jsonObject = Crypto.readJsonObjectFromCipherStream(getPath(), cipher.get());
 
         if (jsonObject.isPresent()) {
+            LOGGER.info("Succeeded in reading keychain " + name + " from disk.");
             keychain = new Keychain(jsonObject.get(), this);
             return Optional.of(keychain);
         } else {
@@ -85,6 +90,8 @@ public class DirectoryEntry {
     }
 
     public boolean save() {
+        LOGGER.info("Saving Directory Entry " + name);
+
         if (keychain == null) {
             return this.readKeychain().isPresent();
         }
@@ -125,6 +132,7 @@ public class DirectoryEntry {
             return false;
         }
 
+        LOGGER.info("Succeeded in writing keychain " + name + " to disk.");
         return true;
     }
 

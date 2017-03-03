@@ -11,6 +11,7 @@ import javax.crypto.SecretKey;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -22,6 +23,8 @@ import static org.junit.Assert.*;
  * Created by nishadmathur on 2/3/17.
  */
 public class DirectoryControllerTest {
+    private final static Logger LOGGER = Logger.getLogger(DirectoryControllerTest.class.getName());
+
     DirectoryEntry entry;
     SecretKey key;
 
@@ -33,8 +36,11 @@ public class DirectoryControllerTest {
 
     @Before
     public void setUp() throws Exception {
+        LOGGER.info("----Setup");
+        System.err.println("asdasdasd");
+
         try {
-            Crypto.init();
+            Crypto.init(false);
 
             keyService = new MockKeyService(Crypto.hashedSecretKeyFromBytes("DirectoryControllerTest".getBytes()));
             backingStore = new MockBackingStoreImpl(keyService);
@@ -47,10 +53,14 @@ public class DirectoryControllerTest {
             FileUtils.deleteDirectory(backingStore.getKeychainsPath().toFile());
             throw e;
         }
+
+        LOGGER.info(backingStore.getVolume().toString());
     }
 
     @After
     public void tearDown() throws Exception {
+        LOGGER.info("----Tear down");
+
         Files.deleteIfExists(backingStore.getDirectoryPath());
         FileUtils.deleteDirectory(backingStore.getKeychainsPath().toFile());
         Files.deleteIfExists(backingStore.getVolume());
@@ -58,6 +68,8 @@ public class DirectoryControllerTest {
 
     @Test
     public void getKeychains() throws Exception {
+        LOGGER.info("----getKeychains");
+
         assertThat(controller.createKeychain("test1"), is(true));
         assertThat(controller.createKeychain("test2"), is(true));
 
@@ -72,10 +84,19 @@ public class DirectoryControllerTest {
 
     @Test
     public void getKeychain() throws Exception {
+        LOGGER.info("----getKeychain");
+
         assertThat(controller.createKeychain("test3"), is(true));
+
+        LOGGER.info("created keychain");
+
         assertThat(controller.getKeychains().size(), is(1));
 
+        LOGGER.info("Got keychain");
+
         Optional<Keychain> keychain = controller.getKeychain("test3");
+
+        LOGGER.info("Check keychain");
 
         assertThat(keychain.isPresent(), is(true));
         assertThat(keychain.get().name, is("test3"));
@@ -83,21 +104,34 @@ public class DirectoryControllerTest {
 
     @Test
     public void getKeychain1() throws Exception {
+        LOGGER.info("----getKeychain1");
+
         assertThat(controller.createKeychain("test4"), is(true));
+
+        System.err.println("created keychain");
+
         assertThat(controller.getKeychains().size(), is(1));
 
         DirectoryEntry entry = controller.getKeychains().get(0);
+
+        System.err.println("Got keychain");
 
         assertThat(entry, notNullValue());
 
         Optional<Keychain> keychain = entry.readKeychain();
 
+        System.err.println("Read keychain");
+
         assertThat(keychain.isPresent(), is(true));
         assertThat(keychain.get().name, is("test4"));
+
+        System.err.println("done");
     }
 
     @Test
     public void getPasswords() throws Exception {
+        LOGGER.info("----getPasswords");
+
         controller.createKeychain("test5");
         Keychain keychain = controller.getKeychain("test5").get();
         assertThat(controller.createPassword(keychain, "password1", Crypto.secretKeyFromBytes("secret1".getBytes())), is(true));
@@ -115,6 +149,8 @@ public class DirectoryControllerTest {
 
     @Test
     public void createKeychain() throws Exception {
+        LOGGER.info("----createKeychain");
+
         assertThat(controller.createKeychain("test6"), is(true));
         assertThat(controller.createKeychain("test7"), is(true));
 
@@ -145,6 +181,8 @@ public class DirectoryControllerTest {
 
     @Test
     public void createPassword() throws Exception {
+        LOGGER.info("----createPassword");
+
         controller.createKeychain("test8");
         Keychain keychain = controller.getKeychain("test8").get();
         assertThat(controller.createPassword(keychain, "password3", Crypto.secretKeyFromBytes("secret3".getBytes())), is(true));
@@ -179,6 +217,8 @@ public class DirectoryControllerTest {
 
     @Test
     public void getPassword() throws Exception {
+        LOGGER.info("----getPassword");
+
         controller.createKeychain("test9");
         Keychain keychain = controller.getKeychain("test9").get();
         assertThat(controller.createPassword(keychain, "password5", Crypto.secretKeyFromBytes("secret5".getBytes())), is(true));
@@ -201,6 +241,8 @@ public class DirectoryControllerTest {
 
     @Test
     public void updatePassword() throws Exception {
+        LOGGER.info("----updatePassword");
+
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
         assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
@@ -237,6 +279,8 @@ public class DirectoryControllerTest {
 
     @Test
     public void deleteKeychain() throws Exception {
+        LOGGER.info("----deleteKeychain");
+
         controller.createKeychain("test11");
         controller.createKeychain("test12");
 
@@ -280,6 +324,8 @@ public class DirectoryControllerTest {
 
     @Test
     public void deletePassword() throws Exception {
+        LOGGER.info("----deletePassword");
+
         controller.createKeychain("test13");
         Keychain keychain = controller.getKeychain("test13").get();
         assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
