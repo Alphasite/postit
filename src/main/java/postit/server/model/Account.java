@@ -1,29 +1,60 @@
-package postit.server.account;
+package postit.server.model;
 import javax.json.*;
+
+import postit.server.model.Customer;
+import postit.server.model.Log;
+import postit.server.model.Metadata;
 /**
  * Created by Zhan on 2/28/2017.
  */
 public class Account {
-    Long id;
+    //Long id; 
+    String username;
     String password;
+    String email;
+    String firstName;
+    String lastName;
+    
     JsonObject keychains;
     Customer customer;
     Log log;
     Metadata metadata;
 
     // CONSTRUCTOR
-    public Account() {}
+    public Account(String username, String password, String email, String firstName, String lastName) {
+    	this.username = username;
+    	this.password = password;
+    	this.email = email;
+    	this.firstName = firstName;
+    	this.lastName = lastName;
+    }
 
     // GETTERS
 
-    public Long getId() {
-        return id;
-    }
+//    public Long getId() {
+//        return id;
+//    }
 
+    public String getUsername(){
+    	return username;
+    }
+    
     public String getPassword() {
         return password;
     }
 
+    public String getEmail(){
+    	return email;
+    }
+    
+    public String getFirstname(){
+    	return firstName;
+    }
+    
+    public String getLastname(){
+    	return lastName;
+    }
+    
     public JsonObject getKeychains() {
         return keychains;
     }

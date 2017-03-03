@@ -1,4 +1,4 @@
-package postit.client.handler;
+package postit.server.controller;
 
 import postit.client.keychain.Directory;
 
