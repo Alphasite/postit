@@ -37,6 +37,8 @@ dependencies {
     // The production code uses Guava
     compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
     compile group: 'org.glassfish', name: 'javax.json', version: '1.0.4'
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.56'
+    compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.56'
 
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
