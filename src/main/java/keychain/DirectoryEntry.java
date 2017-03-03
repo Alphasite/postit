@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  * Created by nishadmathur on 23/2/17.
  */
 public class DirectoryEntry {
-    private final static Logger LOGGER = Logger.getLogger(Crypto.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
     public String name;
     public SecretKey encryptionKey;

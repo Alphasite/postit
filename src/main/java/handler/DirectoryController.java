@@ -1,5 +1,6 @@
 package handler;
 
+import backend.Crypto;
 import backend.KeyService;
 import keychain.Directory;
 import keychain.DirectoryEntry;
@@ -50,7 +51,7 @@ public class DirectoryController {
     }
 
     public boolean createKeychain(String keychainName){
-        return directory.createKeychain(keyService.createMasterKey(), keychainName).isPresent();
+        return directory.createKeychain(keyService.createMasterKey(), keychainName).isPresent() && directory.save();
     }
     public boolean createPassword(Keychain keychain, String identifier, SecretKey key) {
         Password password = new Password(identifier, key, keychain);
@@ -67,5 +68,9 @@ public class DirectoryController {
     }
     public boolean deletePassword(Password p){
         return p.delete();
+    }
+
+    public String getPassword(Password p) {
+        return new String(Crypto.secretKeyToBytes(p.password));
     }
 }

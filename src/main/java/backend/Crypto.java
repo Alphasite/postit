@@ -94,7 +94,7 @@ public class Crypto {
         try {
             wrapCipher.init(Cipher.WRAP_MODE, key);
         } catch (InvalidKeyException e) {
-            LOGGER.warning("Wrap cipher key is invalid.");
+            LOGGER.warning("Wrap cipher key is invalid: " + e.getMessage());
             return Optional.empty();
         }
 
@@ -105,7 +105,7 @@ public class Crypto {
         try {
             wrapCipher.init(Cipher.UNWRAP_MODE, key);
         } catch (InvalidKeyException e) {
-            LOGGER.warning("Unwrap cipher key is invalid.");
+            LOGGER.warning("Unwrap cipher key is invalid: " + e.getMessage());
             return Optional.empty();
         }
 

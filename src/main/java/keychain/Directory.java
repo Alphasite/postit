@@ -1,16 +1,20 @@
 package keychain;
 
 import backend.BackingStore;
+import backend.Crypto;
 import backend.KeyService;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Created by nishadmathur on 23/2/17.
  */
 public class Directory {
+    private final static Logger LOGGER = Logger.getLogger(Directory.class.getName());
+
     BackingStore backingStore;
     KeyService keyService;
 
@@ -61,7 +65,15 @@ public class Directory {
         this.keychains.add(entry);
 
         if (entry.save()) {
-            return Optional.of(keychain);
+            if (this.save()) {
+                return Optional.of(keychain);
+            } else {
+                if (!entry.delete()) {
+                    LOGGER.severe("Failed to delete entry after fialing to save directory, please clean up :" + entry.getPath());
+                }
+
+                return Optional.empty();
+            }
         } else {
             return Optional.empty();
         }
