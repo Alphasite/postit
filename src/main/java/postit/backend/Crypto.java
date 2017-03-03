@@ -39,10 +39,18 @@ public class Crypto {
     private static MessageDigest sha;
 
     public static boolean init() {
+        return init(true);
+    }
+
+    public static boolean init(boolean useSecureRandom) {
         Crypto.removeCryptographyRestrictions();
 
         try {
-            random = SecureRandom.getInstanceStrong();
+            if (useSecureRandom) {
+                random = SecureRandom.getInstanceStrong();
+            } else {
+                random = new SecureRandom();
+            }
         } catch (NoSuchAlgorithmException e) {
             LOGGER.log(Level.SEVERE, "Failed to initialise RNG.");
             return false;

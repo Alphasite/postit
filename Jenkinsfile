@@ -8,22 +8,45 @@ void setBuildStatus(String message, String state) {
   ]);
 }
 
-node {
-   stage('Preparation') { 
-       checkout scm      	
-   }
-   
-   stage('Build') {
-       sh "./gradlew clean build"
-   }
-   
-   stage('Test') {
-       sh "./gradlew test"
-   }
+pipeline {
+    agent any
 
-   stage('Results') {
-        junit '**/test-results/test/TEST-*.xml'
-        archive 'target/*.jar'
-        setBuildStatus("Build complete", "SUCCESS");
-   }
+    stages {
+        stage('Preparation') {
+            steps {
+                checkout scm
+                sh "rm -f keychains.directory"
+                sh "rm -rf keychains/"
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh "./gradlew clean assemble"
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh "./gradlew test"
+            }
+        }
+
+        stage('Mutation Test') {
+            steps {
+                sh "./gradlew pitest"
+            }
+        }
+
+        stage('Results') {
+            steps {
+                junit '**/test-results/test/TEST-*.xml'
+                // step([$class: 'PitPublisher', mutationStatsFile: 'target/pit-reports/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
+                archive 'target/*.jar'
+                setBuildStatus("Build complete", "SUCCESS");
+
+                sh "rm -rf targets/"
+            }
+        }
+    }
 }
