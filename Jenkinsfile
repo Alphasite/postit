@@ -15,6 +15,8 @@ pipeline {
         stage('Preparation') {
             steps {
                 checkout scm
+                sh "rm keychains.directory"
+                sh "rm -r keychains/"
             }
         }
 
@@ -42,6 +44,8 @@ pipeline {
                 step([$class: 'PitPublisher', mutationStatsFile: 'bla/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
                 archive 'target/*.jar'
                 setBuildStatus("Build complete", "SUCCESS");
+
+                sh "rm -r targets/"
             }
         }
     }

@@ -1,9 +1,6 @@
 package postit.handler;
 
-import postit.backend.BackingStore;
-import postit.backend.BackingStoreImpl;
-import postit.backend.Crypto;
-import postit.backend.MockKeyService;
+import postit.backend.*;
 import postit.keychain.*;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -40,7 +37,7 @@ public class DirectoryControllerTest {
             Crypto.init();
 
             keyService = new MockKeyService(Crypto.hashedSecretKeyFromBytes("DirectoryControllerTest".getBytes()));
-            backingStore = new BackingStoreImpl(keyService);
+            backingStore = new MockBackingStoreImpl(keyService);
             directory = new Directory(keyService, backingStore);
             controller = new DirectoryController(directory, keyService);
 
@@ -56,6 +53,7 @@ public class DirectoryControllerTest {
     public void tearDown() throws Exception {
         Files.deleteIfExists(backingStore.getDirectoryPath());
         FileUtils.deleteDirectory(backingStore.getKeychainsPath().toFile());
+        Files.deleteIfExists(backingStore.getVolume());
     }
 
     @Test

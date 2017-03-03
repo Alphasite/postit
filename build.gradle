@@ -43,7 +43,6 @@ dependencies {
     testCompile 'commons-io:commons-io:2.5'
 
     compile 'mysql:mysql-connector-java:6.0.+'
-
 }
 
 // Define the main class for the application
@@ -53,7 +52,7 @@ sourceCompatibility = 1.8
 pitest {
     targetClasses = ['postit.*']  //by default "${project.group}.*"
     pitestVersion = "1.1.0" //not needed when a default PIT version should be used
-    threads = 1
+    threads = 4
     outputFormats = ['XML', 'HTML']
     reportDir = "target/pit-reports/"
 }
