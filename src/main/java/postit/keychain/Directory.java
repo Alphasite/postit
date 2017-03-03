@@ -1,5 +1,6 @@
 package postit.keychain;
 
+import postit.account.Log;
 import postit.backend.BackingStore;
 import postit.backend.KeyService;
 
@@ -52,6 +53,8 @@ public class Directory {
     }
 
     public Optional<Keychain> createKeychain(SecretKey encryptionKey, String name) {
+        LOGGER.info("Creating keychain: " + name);
+
         DirectoryEntry entry = new DirectoryEntry(
                 name,
                 encryptionKey,
@@ -83,6 +86,7 @@ public class Directory {
     }
 
     public boolean save() {
+        LOGGER.info("Saving directory");
         return backingStore.writeDirectory(this);
     }
 }
