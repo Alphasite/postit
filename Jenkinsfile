@@ -17,7 +17,7 @@ pipeline {
         }
 
         stage('Build') {
-            sh "./gradlew clean build"
+            sh "./gradlew clean assemble"
         }
 
         stage('Test') {
@@ -25,7 +25,7 @@ pipeline {
         }
 
         stage('Mutation Test') {
-            sh "./gradlew clean pitest"
+            sh "./gradlew pitest"
         }
 
         stage('Results') {
