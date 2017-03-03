@@ -13,26 +13,36 @@ pipeline {
 
     stages {
         stage('Preparation') {
-            checkout scm
+            steps {
+                checkout scm
+            }
         }
 
         stage('Build') {
-            sh "./gradlew clean assemble"
+            steps {
+                sh "./gradlew clean assemble"
+            }
         }
 
         stage('Test') {
-            sh "./gradlew test"
+            steps {
+                sh "./gradlew test"
+            }
         }
 
         stage('Mutation Test') {
-            sh "./gradlew pitest"
+            steps {
+                sh "./gradlew pitest"
+            }
         }
 
         stage('Results') {
-             junit '**/test-results/test/TEST-*.xml'
-             step([$class: 'PitPublisher', mutationStatsFile: 'bla/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
-             archive 'target/*.jar'
-             setBuildStatus("Build complete", "SUCCESS");
+            steps {
+                junit '**/test-results/test/TEST-*.xml'
+                step([$class: 'PitPublisher', mutationStatsFile: 'bla/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
+                archive 'target/*.jar'
+                setBuildStatus("Build complete", "SUCCESS");
+            }
         }
     }
 }
