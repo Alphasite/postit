@@ -15,8 +15,8 @@ pipeline {
         stage('Preparation') {
             steps {
                 checkout scm
-                sh "rm keychains.directory"
-                sh "rm -r keychains/"
+                sh "rm -f keychains.directory"
+                sh "rm -rf keychains/"
             }
         }
 
@@ -45,7 +45,7 @@ pipeline {
                 archive 'target/*.jar'
                 setBuildStatus("Build complete", "SUCCESS");
 
-                sh "rm -r targets/"
+                sh "rm -rf targets/"
             }
         }
     }
