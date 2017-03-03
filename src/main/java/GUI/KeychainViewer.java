@@ -105,8 +105,9 @@ public class KeychainViewer {
                         "name");
 
                 if ((p != null) && (p.length() > 0)) {
-                    int activeKeychain = tabbedPane.getSelectedIndex()
-                    controller.createPassword(controller.getKeychains().get(activeKeychain),p);
+                    int activeKeychain = tabbedPane.getSelectedIndex();
+                    controller.getKeychains().get(activeKeychain);
+                    controller.createPassword(,p);
                     return;
                 }
             }
