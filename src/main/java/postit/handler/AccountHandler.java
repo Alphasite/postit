@@ -2,6 +2,8 @@ package postit.handler;
 
 import javax.json.JsonObject;
 
+import postit.model.*;
+
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
  * Changes needed in future:
@@ -13,43 +15,44 @@ import javax.json.JsonObject;
  */
 public class AccountHandler {
 
-	public boolean authenticate(String username, String pwd){
-		/**
-		 * Account act = db.getAccount(username);
-		 * compute pwd_key from pwd
-		 * if (pwd_key == act.pwd_key) return true;
-		 * else return false
-		 */
+	/**
+	 * Given username and master password pwd, checks if the user authenticates.
+	 * Returns false if username and pwd do not autheticate.
+	 * @param db
+	 * @param username
+	 * @param pwd
+	 * @return
+	 */
+	public boolean authenticate(DatabaseController db, String username, String pwd){
+		Account account = db.getAccount(username);
+		// TODO pwd = generateKey(pwd);
+		if (account != null && pwd.equals(account.getPassword())) 
+			return true;
 		return false;
 	}
 	
-	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname){
-		/**
-		 * Account act = new Account(username, pwd, email, firstname, lastname);
-		 * encryption on pwd
-		 * if (db.getAccount(username) == null) db.addAccount(act); return true;
-		 * else return false;
-		 */
+	public boolean addAccount(DatabaseController db, String username, String pwd, String email, String firstname, String lastname){
+		Account account = new Account(username, pwd, email, firstname, lastname); //TODO encryption on pwd
+		if (db.getAccount(username) == null){
+			db.addAccount(account); 
+			return true;
+		}
 		return false;
 	}
 	
-	public boolean updateAccount(String username, String pwd, String email, String firstname, String lastname){
-		/**
-		 * Account act = new Account(username, pwd, email, firstname, lastname);
-		 * encryption on pwd
-		 * db.updateAccount(act); 
-		 * return false if db operation failed
-		 */
+	public boolean updateAccount(DatabaseController db, String username, String pwd, String email, String firstname, String lastname){
+		Account account = new Account(username, pwd, email, firstname, lastname); //TODO encryption on pwd
+		Account cur = db.getAccount(username);
+		if (pwd.equals(cur.getPassword())) 
+			return db.updateAccount(account);
 		return false;
 	}
 	
-	public boolean removeAccount(String username, String pwd){
-		/**
-		 * Account act = db.getAccount(username);
-		 * compute pwd_key from pwd
-		 * if (pwd_key == act.pwd_key) db.removeAccount(username); return true;
-		 * else return false
-		 */
+	public boolean removeAccount(DatabaseController db, String username, String pwd){
+		Account account = db.getAccount(username);
+		// TODO pwd = generateKey(pwd);
+		if (pwd.equals(account.getPassword())) 
+			return db.removeAccount(username);
 		return false;
 	}
 	

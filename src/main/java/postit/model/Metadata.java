@@ -1,4 +1,4 @@
-package postit.account;
+package postit.model;
 
 import java.util.*;
 
