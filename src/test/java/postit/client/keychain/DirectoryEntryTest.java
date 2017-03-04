@@ -24,7 +24,7 @@ public class DirectoryEntryTest {
 
     @Before
     public void setUp() throws Exception {
-        keyService = new MockKeyService(Crypto.secretKeyFromBytes("test".getBytes()));
+        keyService = new MockKeyService(Crypto.secretKeyFromBytes("test".getBytes()), null);
         backingStore = new BackingStoreImpl(keyService);
         directory = new Directory(keyService, backingStore);
 
