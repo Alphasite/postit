@@ -1,9 +1,14 @@
 package postit.client.gui;
 
-import postit.shared.Crypto;
+
+import postit.client.handler.DirectoryController;
+import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
+import postit.shared.Crypto;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Map;
@@ -11,28 +16,35 @@ import java.util.Map;
  * Created by jackielaw on 2/26/17.
  */
 public class PasswordViewer {
-
-    //private Password p;
+    private JFrame frame;
     private JPanel panel;
     private JTextField titleField;
     private JTextField userField;
     private JPasswordField passField;
     private JTextArea comments;
     private JButton toggleView;
-    private JLabel titleLabel;
-    private JLabel usernameLabel;
-    private JLabel passwordLabel;
-    private JLabel commLabel;
     private JButton saveButton;
+    private JButton deleteButton;
 
-    public PasswordViewer(Password p) {
+    public PasswordViewer(DirectoryController c, Keychain k, Password p) {
         // TODO: place custom component creation code here
+        titleField = new JTextField();
+        titleField.setEditable(false);
+        userField = new JTextField();
+        userField.setEditable(false);
+        passField = new JPasswordField();
+        comments = new JTextArea(7,10);
+        comments.setEditable(false);
+        toggleView = new JButton("<o>");
+
+        saveButton = new JButton("Save");
+
         createUIComponents(p);
         toggleView.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(passField.getEchoChar()==(char)0)
-                    passField.setEchoChar((char)9679);
+                    passField.setEchoChar((char)9679); //(char)9679 is the black dot symbol
                 else
                     passField.setEchoChar((char)0);
             }
@@ -40,39 +52,117 @@ public class PasswordViewer {
         saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.print("Will need to save the changes to password");
+                String newKey = String.valueOf(passField.getPassword());
+                c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
+                frame.dispose();
             }
         });
     }
 
-    public static void main(String[] args) {
-        //PasswordViewer pv = new PasswordViewer();
-    }
 
     private void createUIComponents(Password p) {
         // TODO: place custom component creation code here
-        JFrame frame = new JFrame("Password");
+        frame = new JFrame("Password");
+
+
+        Map<String,String> metadata = p.metadata;
+
+        titleField.setText(p.identifier);
+        if (metadata.containsKey("username"))
+            userField.setText(metadata.get("username"));
+        else
+            userField.setText("user");
+
+        byte[] bytes = Crypto.secretKeyToBytes(p.password);
+        passField.setText(new String(bytes));
+        if (metadata.containsKey("comments"))
+            comments.setText(metadata.get("comments"));
+        else
+            comments.setText("");
+
+        GridBagLayout gridbag = new GridBagLayout();
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        panel = new JPanel(gridbag);
+
+        Border padding = BorderFactory.createEmptyBorder(10, 10, 10, 10);
+        panel.setBorder(padding);
+
+        double titleWeight = 0.1;
+        double textWeight = 1;
+
+        c.anchor =  GridBagConstraints.NORTHWEST;
+        c.weightx = titleWeight;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.gridwidth=1;
+        JLabel titleLabel = new JLabel("Title");
+        gridbag.setConstraints(titleLabel,c);
+        panel.add(titleLabel);
+
+        c.weightx = textWeight;
+        c.gridx = 1;
+        c.gridy = 0;
+        c.gridwidth=2;
+        gridbag.setConstraints(titleField,c);
+        panel.add(titleField);
+
+        c.weightx = titleWeight;
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridwidth=1;
+        JLabel userLabel = new JLabel("Username");
+        gridbag.setConstraints(userLabel,c);
+        panel.add(userLabel);
+
+        c.weightx = textWeight;
+        c.gridx = 1;
+        c.gridy = 1;
+        c.gridwidth=2;
+        gridbag.setConstraints(userField,c);
+        panel.add(userField);
+
+        c.weightx = titleWeight;
+        c.gridx = 0;
+        c.gridy = 2;
+        c.gridwidth=1;
+        JLabel passLabel = new JLabel("Password");
+        gridbag.setConstraints(passLabel,c);
+        panel.add(passLabel);
+
+        JPanel passPanel = new JPanel(new BorderLayout());
+        passPanel.add(passField,BorderLayout.CENTER);
+        passPanel.add(toggleView,BorderLayout.EAST);
+        c.weightx = textWeight;
+        c.gridx = 1;
+        c.gridy = 2;
+        c.gridwidth=2;
+        gridbag.setConstraints(passPanel,c);
+        panel.add(passPanel);
+
+        c.weightx = titleWeight;
+        c.gridx = 0;
+        c.gridy = 3;
+        JLabel commentsLabel = new JLabel("Comments");
+        gridbag.setConstraints(commentsLabel,c);
+        panel.add(commentsLabel);
+
+        c.weightx = textWeight;
+        c.gridx = 1;
+        c.gridy = 3;
+        gridbag.setConstraints(comments,c);
+        panel.add(comments);
+
+        c.weightx = 1;
+        c.gridx = 1;
+        c.gridy = 4;
+        c.insets = new Insets(10,0,0,0);
+        gridbag.setConstraints(saveButton,c);
+        panel.add(saveButton);
 
         frame.setContentPane(panel);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
-        Map<String,String> metadata = p.metadata;
-
-        if (metadata.containsKey("title"))
-            titleField.setText(metadata.get("title"));
-        else
-            titleField.setText("title");
-        if (metadata.containsKey("username"))
-            userField.setText(metadata.get("username"));
-        else
-            userField.setText("user");
-        if (metadata.containsKey("comments"))
-            comments.setText(metadata.get("comments"));
-        else
-            comments.setText("comments");
-
-        byte[] bytes = Crypto.secretKeyToBytes(p.password);
-        passField.setText(new String(bytes));
     }
 }
