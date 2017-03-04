@@ -49,7 +49,7 @@ public class DirectoryController {
     }
 
     public boolean createKeychain(String keychainName){
-        return directory.createKeychain(keyService.createMasterKey(), keychainName).isPresent() && directory.save();
+        return directory.createKeychain(keyService.getMasterKey(), keychainName).isPresent() && directory.save();
     }
     public boolean createPassword(Keychain keychain, String identifier, SecretKey key) {
         Password password = new Password(identifier, key, keychain);
