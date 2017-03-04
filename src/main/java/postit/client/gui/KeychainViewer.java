@@ -40,6 +40,9 @@ public class KeychainViewer {
     private ArrayList<JTable> tables = new ArrayList<JTable>();
 
     private Password selectedPassword;
+    private JMenuItem addPass;
+    private JMenuItem delPass;
+    private JMenuItem delKey;
 
     public KeychainViewer(BackingStore backingStore, KeyService keyService) {
 
@@ -85,14 +88,15 @@ public class KeychainViewer {
     private void createUIComponents() {
         JFrame frame = new JFrame("Keychain");
         frame.setLayout(new GridLayout());
+        frame.setMinimumSize(new Dimension(520,485));
         menuBar = new JMenuBar();
 
         //FILE Menu Items
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
 
-        menuItem = new JMenuItem("New Password");
-        menuItem.addActionListener(new ActionListener() {
+        addPass = new JMenuItem("New Password");
+        addPass.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JTextField newtitle = new JTextField();
@@ -114,10 +118,11 @@ public class KeychainViewer {
                 refreshTabbedPanes();
             }
         });
-        fileMenu.add(menuItem);
+        addPass.setEnabled(false);
+        fileMenu.add(addPass);
 
-        menuItem = new JMenuItem("Delete Password");
-        menuItem.addActionListener(new ActionListener() {
+        delPass = new JMenuItem("Delete Password");
+        delPass.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
@@ -128,8 +133,10 @@ public class KeychainViewer {
                 }
             }
         });
-        fileMenu.add(menuItem);
+        delPass.setEnabled(false);
+        fileMenu.add(delPass);
 
+        fileMenu.addSeparator();
         menuItem = new JMenuItem("Change Master Password");
         menuItem.setEnabled(false);
         fileMenu.add(menuItem);
@@ -153,7 +160,7 @@ public class KeychainViewer {
                         JOptionPane.PLAIN_MESSAGE,
                         null,
                         null,
-                        "name");
+                        "");
 
                 if ((k != null) && (k.length() > 0)) {
                     controller.createKeychain(k);
@@ -163,8 +170,8 @@ public class KeychainViewer {
         });
         keychainMenu.add(menuItem);
 
-        menuItem = new JMenuItem("Delete Keychain");
-        menuItem.addActionListener(new ActionListener() {
+        delKey = new JMenuItem("Delete Keychain");
+        delKey.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
@@ -176,7 +183,9 @@ public class KeychainViewer {
 
             }
         });
-        keychainMenu.add(menuItem);
+        keychainMenu.add(delKey);
+
+        keychainMenu.addSeparator();
 
         menuItem = new JMenuItem("Keychain Permissions");
         menuItem.setEnabled(false);
@@ -204,6 +213,17 @@ public class KeychainViewer {
 
             addPanes(keychain.get());
         }
+
+        delPass.setEnabled(false);
+        if(this.keychains.size()==0) {
+            addPass.setEnabled(false);
+            delKey.setEnabled(false);
+        }
+        else{
+             addPass.setEnabled(true);
+             delKey.setEnabled(true);
+         }
+
     }
 
     private void addPanes(Keychain k) {
@@ -236,6 +256,7 @@ public class KeychainViewer {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount()==1){
+                    delPass.setEnabled(true);
                     selectedPassword=getActivePassword(passwords,e);
                 }
                 else if (e.getClickCount() == 2) {

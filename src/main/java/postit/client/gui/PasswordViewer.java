@@ -84,7 +84,6 @@ public class PasswordViewer {
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
         panel = new JPanel(gridbag);
-        panel.setPreferredSize(new Dimension(520,485));
 
         Border padding = BorderFactory.createEmptyBorder(10, 10, 10, 10);
         panel.setBorder(padding);
