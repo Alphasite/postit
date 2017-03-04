@@ -3,14 +3,13 @@ package postit.client.gui;
 
 import postit.client.backend.BackingStore;
 import postit.client.backend.BackingStoreImpl;
-import postit.shared.Crypto;
 import postit.client.backend.KeyService;
-import postit.client.cli.CLIKeyService;
 import postit.client.handler.DirectoryController;
 import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
+import postit.shared.Crypto;
 
 import javax.swing.*;
 import java.awt.*;
@@ -191,6 +190,7 @@ public class KeychainViewer {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+
     }
 
      void refreshTabbedPanes(){
