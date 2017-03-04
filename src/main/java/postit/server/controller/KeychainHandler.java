@@ -1,6 +1,11 @@
 package postit.server.controller;
 
-import postit.client.keychain.Directory;
+import java.util.List;
+
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import postit.server.model.*;
 
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
@@ -13,19 +18,21 @@ import postit.client.keychain.Directory;
  * @author Ning
  */
 public class KeychainHandler {
-
-    public boolean createKeychain(String name) {
-        /**
-         * DirectoryEntry de = new DirectoryEntry(name, path?, generated_encryption_key);
-         * de.keychain = new Keychain(name, pwd);
-         * perform necessary encryption
-         * if (db.getKeychain(name) == null) db.addKeychain(de); //series of db updates to Directory, DirectoryEntry, etc
-         * else return false;
-         */
+	
+    public boolean createKeychain(DatabaseController db, String username, String name, String path, String pwd) {
+        Directory dir = db.getDirectory(username);
+    	if (dir != null){
+    		JsonObject de = db.addDirectoryEntry(name, "", dir.getDirectoryId()); // change to generated encryptionkey
+    		if (de.getString("status").equals("success")){
+    			JsonObject kc = db.addKeychain(de.getInt("directory_entry_id"), pwd, ""); // add metadata 
+    			if (kc.getString("status").equals("success"))
+    				return true;
+    		}
+    	}
         return false;
     }
 
-    public boolean updateKeychain(String username, String pwd, String email, String firstname, String lastname) {
+    public boolean updateKeychain(DatabaseController db, int directoryEntryId, String name, String encryptKey, String password, String metadata) {
         /**
          * DirectoryEntry de = new DirectoryEntry(name, path?, generated_encryption_key);
          * de.keychain = new Keychain(name, pwd);
@@ -33,26 +40,42 @@ public class KeychainHandler {
          * db.updateKeychain(de); //series of db updates to Directory, DirectoryEntry, etc
          * return false if any operation fails
          */
-        return false;
+    	if (db.updateDirectoryEntry(new DirectoryEntry(directoryEntryId, name, encryptKey, 0))) //directoryId not needed here
+    		return db.updateKeychain(new Keychain(directoryEntryId, password, metadata));
+    	return false;
     }
 
-    public boolean removeKeychain(String username, String name) {
-        /**
-         * Assumed user properly logged in and established authenticity
-         * Directory dir = db.getDirectory(username);
-         * if (dir.contains(name) db.removeKeychain(name); dir.removeKeychain(name); etc
-         * return false if any operation fails
-         */
+    public boolean removeKeychain(DatabaseController db, int directoryEntryId) {
+    	if (db.removeDirectoryEntry(directoryEntryId)) 
+    		return db.removeKeychain(directoryEntryId);
         return false;
     }
 	
-    public Directory getKeychains() {
-        /**
-         * Assuming authentication
-         * Directory dir = db.getDirectory(username); return dir;
-         * return null if operation failed.
-         */
-        // Or returns a list of information to be displayed instead of the actual object
-        return null;
+    public JsonObject getKeychains(DatabaseController db, String username) {
+    	//Assuming authentication
+    	
+        Directory dir = db.getDirectory(username);
+        if (dir == null) return Json.createObjectBuilder().add("status", "failure").build();
+        
+        List<DirectoryEntry> des = db.getDirectoryEntries(dir.getDirectoryId());
+        JsonArrayBuilder build = Json.createArrayBuilder();
+        //TODO double check the format of output needed from client side
+        for (DirectoryEntry de: des){
+        	Keychain k = db.getKeychain(de.getDirectoryEntryId());
+        	if (k == null)
+        		build.add(Json.createObjectBuilder().add("status", "failure"));
+        	else
+        		build.add(Json.createObjectBuilder()
+        				.add("status", "success")
+        				.add("directory_entry_id", de.getDirectoryEntryId())
+        				.add("name", de.getName()) 
+        				.add("encryption_key", de.getEncryptionKey()) 
+        				.add("password", k.getPassword()) 
+        				.add("metadata", k.getMetadata()));
+        }
+        return Json.createObjectBuilder()
+        		.add("status", "success")
+        		.add("keychains", build)
+        		.build();
     }
 }
