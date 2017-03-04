@@ -63,6 +63,12 @@ public class Directory {
         );
 
         Keychain keychain = new Keychain(name, entry);
+
+        if (keychains.stream().map(k -> k.name).anyMatch(n -> n.equals(name))) {
+            LOGGER.warning("Keychian " + name +  "is a duplicate, not adding.");
+            return Optional.empty();
+        }
+
         this.keychains.add(entry);
 
         if (entry.save()) {

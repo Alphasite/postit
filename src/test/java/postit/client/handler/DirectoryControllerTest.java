@@ -43,7 +43,7 @@ public class DirectoryControllerTest {
         try {
             Crypto.init(false);
 
-            keyService = new MockKeyService(Crypto.hashedSecretKeyFromBytes("DirectoryControllerTest".getBytes()));
+            keyService = new MockKeyService(Crypto.hashedSecretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
             backingStore = new MockBackingStoreImpl(keyService);
             directory = new Directory(keyService, backingStore);
             controller = new DirectoryController(directory, keyService);
@@ -165,10 +165,35 @@ public class DirectoryControllerTest {
 
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test6.keychain")), is(true));
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test7.keychain")), is(true));
+    }
+
+    @Test
+    public void createKeychainDuplicate() throws Exception {
+        LOGGER.info("----createKeychain");
+
+        assertThat(controller.createKeychain("test6"), is(true));
+        assertThat(controller.createKeychain("test6"), is(false));
+
+        List<String> names = controller.getKeychains().stream()
+                .map(entry -> entry.name)
+                .collect(Collectors.toList());
+
+        assertThat(names.size(), is(1));
+        assertThat(names.contains("test6"), is(true));
+
+        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test6.keychain")), is(true));
+    }
+
+    @Test
+    public void createKeychainPersistent() throws Exception {
+        LOGGER.info("----createKeychain");
+
+        assertThat(controller.createKeychain("test6"), is(true));
+        assertThat(controller.createKeychain("test7"), is(true));
 
         controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
 
-        names = controller.getKeychains().stream()
+        List<String> names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
                 .collect(Collectors.toList());
 
@@ -200,13 +225,23 @@ public class DirectoryControllerTest {
 
         assertThat(passwordStrings.contains("secret3"), is(true));
         assertThat(passwordStrings.contains("secret4"), is(true));
+    }
+
+    @Test
+    public void createPasswordPersistent() throws Exception {
+        LOGGER.info("----createPassword");
+
+        controller.createKeychain("test8");
+        Keychain keychain = controller.getKeychain("test8").get();
+        assertThat(controller.createPassword(keychain, "password3", Crypto.secretKeyFromBytes("secret3".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password4", Crypto.secretKeyFromBytes("secret4".getBytes())), is(true));
 
         controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
 
-        passwords = controller.getKeychain("test8").get().passwords;
+        List<Password> passwords = controller.getKeychain("test8").get().passwords;
         assertThat(passwords.size(), is(2));
 
-        passwordStrings = passwords.stream()
+        List<String> passwordStrings = passwords.stream()
                 .map(key -> key.password)
                 .map(Crypto::secretKeyToBytes)
                 .map(String::new)
@@ -268,6 +303,31 @@ public class DirectoryControllerTest {
             String number = password.identifier.substring(8);
             assertThat(controller.getPassword(password), is("secret" + number + 2));
         }
+    }
+
+    @Test
+    public void updatePasswordPersistent() throws Exception {
+        LOGGER.info("----updatePassword");
+
+        controller.createKeychain("test10");
+        Keychain keychain = controller.getKeychain("test10").get();
+        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            assertThat(controller.getPassword(password), is("secret" + number));
+        }
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            assertThat(controller.updatePassword(
+                    password,
+                    Crypto.secretKeyFromBytes(("secret" + (number + 2)).getBytes())
+            ), is(true));
+        }
 
         controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
         passwords = controller.getPasswords(keychain);
@@ -309,8 +369,32 @@ public class DirectoryControllerTest {
         assertThat(names.size(), is(1));
         assertThat(names.contains("test11"), is(false));
         assertThat(names.contains("test12"), is(true));
+    }
+
+    @Test
+    public void deleteKeychainPersistent() throws Exception {
+        LOGGER.info("----deleteKeychain");
+
+        controller.createKeychain("test11");
+        controller.createKeychain("test12");
+
+        Keychain keychain11 = controller.getKeychain("test11").get();
+        Keychain keychain12 = controller.getKeychain("test12").get();
+
+        List<String> names = controller.getKeychains().stream()
+                .map(entry -> entry.name)
+                .collect(Collectors.toList());
+
+        assertThat(names.size(), is(2));
+        assertThat(names.contains("test11"), is(true));
+        assertThat(names.contains("test12"), is(true));
+
+        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(true));
+        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+        assertThat(controller.deleteKeychain(keychain11), is(true));
 
         controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(false));
         assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
 
@@ -325,6 +409,48 @@ public class DirectoryControllerTest {
 
     @Test
     public void deletePassword() throws Exception {
+        LOGGER.info("----deletePassword");
+
+        controller.createKeychain("test13");
+        Keychain keychain = controller.getKeychain("test13").get();
+        assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password11", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password12", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        assertThat(passwords.size(), is(3));
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            assertThat(controller.getPassword(password), is("secret" + number));
+        }
+
+        Password password11 = passwords.stream()
+                .filter(password -> password.identifier.equals("password11"))
+                .findAny()
+                .get();
+
+        assertThat(controller.deletePassword(password11), is(true));
+
+        passwords = controller.getPasswords(keychain);
+
+        assertThat(passwords.size(), is(2));
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            assertThat(controller.getPassword(password), is("secret" + number));
+        }
+
+        List<String> names = passwords.stream()
+                .map(password -> password.identifier)
+                .collect(Collectors.toList());
+
+        assertThat(names.size(), is(2));
+        assertThat(names, hasItem("password10"));
+        assertThat(names, hasItem("password12"));
+    }
+
+    @Test
+    public void deletePasswordPersistent() throws Exception {
         LOGGER.info("----deletePassword");
 
         controller.createKeychain("test13");
@@ -365,5 +491,4 @@ public class DirectoryControllerTest {
         assertThat(names, hasItem("password10"));
         assertThat(names, hasItem("password12"));
     }
-
 }
