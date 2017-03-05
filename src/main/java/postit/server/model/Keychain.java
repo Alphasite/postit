@@ -22,4 +22,12 @@ public class Keychain {
 	public int getDirectoryEntryId(){
 		return directoryEntryId;
 	}
+	
+	public void setPassword(String pwd){
+		password = pwd;
+	}
+	
+	public void setMetadata(String metadata){
+		this.metadata = metadata;
+	}
 }

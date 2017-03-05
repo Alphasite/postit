@@ -14,7 +14,7 @@ public class LocalMySQL {
     public static Connection getConnection(String database, String user, String pwd) {
     	try {
             Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + database, user, pwd);
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + database + "?useSSL=false", user, pwd);
         } catch (Exception e) {
             e.printStackTrace();
         }

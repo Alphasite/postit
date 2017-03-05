@@ -197,6 +197,7 @@ public class DatabaseController {
 		catch (SQLException e) {
 			System.out.println("An error occurred in addDirectory");
 			success = false;
+			e.printStackTrace();
 		} 
 		finally {
 			closeQuietly(stmt);
@@ -257,6 +258,7 @@ public class DatabaseController {
 		catch (SQLException e) {
 			System.out.println("An error occurred in addDirectoryEntry");
 			success = false;
+			e.printStackTrace();
 		} 
 		finally {
 			closeQuietly(stmt);

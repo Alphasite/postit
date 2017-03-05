@@ -31,11 +31,22 @@ public class AccountHandler {
 		return false;
 	}
 	
+	/**
+	 * Creates a new user with given information.
+	 * @param db
+	 * @param username
+	 * @param pwd
+	 * @param email
+	 * @param firstname
+	 * @param lastname
+	 * @return
+	 */
 	public boolean addAccount(DatabaseController db, String username, String pwd, String email, String firstname, String lastname){
 		Account account = new Account(username, pwd, email, firstname, lastname); //TODO encryption on pwd
 		if (db.getAccount(username) == null){
-			db.addAccount(account); 
-			return true;
+			if (db.addAccount(account)){
+				return db.addDirectory(username, ".").getString("status").equals("success"); // check what path it should be
+			}
 		}
 		return false;
 	}
@@ -48,8 +59,9 @@ public class AccountHandler {
 	public boolean removeAccount(DatabaseController db, String username, String pwd){
 		Account account = db.getAccount(username);
 		// TODO pwd = generateKey(pwd);
-		if (pwd.equals(account.getPassword())) 
-			return db.removeAccount(username);
+		if (pwd.equals(account.getPassword())){
+			return db.removeAccount(username) && db.removeDirectory(username);
+		}
 		return false;
 	}
 	

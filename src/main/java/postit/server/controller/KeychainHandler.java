@@ -19,29 +19,39 @@ import postit.server.model.*;
  */
 public class KeychainHandler {
 	
-    public boolean createKeychain(DatabaseController db, String username, String name, String path, String pwd) {
+    public JsonObject createKeychain(DatabaseController db, String username, String name, String path, String pwd) {
         Directory dir = db.getDirectory(username);
     	if (dir != null){
     		JsonObject de = db.addDirectoryEntry(name, "", dir.getDirectoryId()); // change to generated encryptionkey
     		if (de.getString("status").equals("success")){
     			JsonObject kc = db.addKeychain(de.getInt("directory_entry_id"), pwd, ""); // add metadata 
     			if (kc.getString("status").equals("success"))
-    				return true;
+    				return de;
     		}
     	}
-        return false;
+        return Json.createObjectBuilder().add("status", "failure").build();
     }
 
+    /**
+     * Updates keychain information in the database. Any item that should be left unchanged should be null.
+     * @param db
+     * @param directoryEntryId
+     * @param name
+     * @param encryptKey
+     * @param password
+     * @param metadata
+     * @return
+     */
     public boolean updateKeychain(DatabaseController db, int directoryEntryId, String name, String encryptKey, String password, String metadata) {
-        /**
-         * DirectoryEntry de = new DirectoryEntry(name, path?, generated_encryption_key);
-         * de.keychain = new Keychain(name, pwd);
-         * perform necessary encryption
-         * db.updateKeychain(de); //series of db updates to Directory, DirectoryEntry, etc
-         * return false if any operation fails
-         */
-    	if (db.updateDirectoryEntry(new DirectoryEntry(directoryEntryId, name, encryptKey, 0))) //directoryId not needed here
-    		return db.updateKeychain(new Keychain(directoryEntryId, password, metadata));
+    	DirectoryEntry de = db.getDirectoryEntry(directoryEntryId);
+    	if (name != null) de.setName(name); 
+    	if (encryptKey != null) de.setEncryptionKey(encryptKey); 
+    	if (db.updateDirectoryEntry(de)){
+    		Keychain k = db.getKeychain(directoryEntryId);
+    		if (password != null) k.setPassword(password); 
+    		if (metadata != null) k.setMetadata(metadata); 
+    		return db.updateKeychain(k);
+    	}
     	return false;
     }
 

@@ -24,4 +24,12 @@ public class DirectoryEntry {
 	public String getEncryptionKey(){
 		return encryptionKey;
 	}
+	
+	public void setName(String name){
+		this.name = name;
+	}
+	
+	public void setEncryptionKey(String key){
+		encryptionKey = key;
+	}
 }
