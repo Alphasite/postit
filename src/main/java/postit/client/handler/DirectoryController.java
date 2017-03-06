@@ -58,6 +58,7 @@ public class DirectoryController {
 
     public boolean updatePassword(Password pass, SecretKey key){
         pass.password = key;
+        System.out.println("edited pass to: " + pass.dump().build());
         return pass.save();
     }
 
