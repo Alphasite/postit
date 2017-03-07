@@ -8,8 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import org.json.JSONObject;
 
 import postit.server.database.Database;
 import postit.server.model.*;
@@ -169,7 +168,7 @@ public class DatabaseController {
 	 * @param ownPath
 	 * @return
 	 */
-	public JsonObject addDirectory(String username, String ownPath){
+	public JSONObject addDirectory(String username, String ownPath){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int add = 0;
@@ -203,10 +202,15 @@ public class DatabaseController {
 			closeQuietly(stmt);
 			closeQuietly(conn);
 		}
-		return Json.createObjectBuilder()
-			     .add("status", success ? "success" : "failure")
-			     .add("directory_id", id)
-			     .build();
+		
+		JSONObject res = new JSONObject();
+		if (success){
+			res.put("status", "success");
+			res.put("directory_id", id);
+		}
+		else
+			res.put("status", "failure");
+		return res;
 	}
 	
 	public boolean removeDirectory(String username){
@@ -229,7 +233,7 @@ public class DatabaseController {
 		return remove == 1;
 	}
 	
-	public JsonObject addDirectoryEntry(String name, String encryptKey, int directoryId){
+	public JSONObject addDirectoryEntry(String name, String encryptKey, int directoryId){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int add = 0;
@@ -265,13 +269,15 @@ public class DatabaseController {
 			closeQuietly(conn);
 		}
 		
-		if (success)
-			return Json.createObjectBuilder()
-					.add("status", "success")
-					.add("directory_entry_id", id)
-					.build();
+		JSONObject res = new JSONObject();
+		if (success){
+			res.put("status", "success");
+			res.put("directoryEntryId", id);
+		}
 		else
-			return Json.createObjectBuilder().add("status", "failure").build();
+			res.put("status", "failure");
+		
+		return res;
 	}
 	
 	public boolean updateDirectoryEntry(DirectoryEntry de){
@@ -384,7 +390,7 @@ public class DatabaseController {
 		return remove == 1;
 	}
 	
-	public JsonObject addKeychain(int deId, String password, String metadata){
+	public boolean addKeychain(int deId, String password, String metadata){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int add = 0;
@@ -407,9 +413,7 @@ public class DatabaseController {
 			closeQuietly(stmt);
 			closeQuietly(conn);
 		}
-		return Json.createObjectBuilder()
-			     .add("status", add == 1 ? "success" : "failure")
-			     .build();
+		return add == 1;
 	}
 	
 	public boolean updateKeychain(Keychain key){
@@ -492,7 +496,8 @@ public class DatabaseController {
 	
 	public void closeQuietly(PreparedStatement stmt){
 		try {
-			stmt.close();
+			if (stmt != null)
+				stmt.close();
 		} catch (SQLException e) {
 			// do nothing
 		}
@@ -500,7 +505,8 @@ public class DatabaseController {
 	
 	public void closeQuietly(Connection conn){
 		try {
-			conn.close();
+			if (conn != null)
+				conn.close();
 		} catch (SQLException e) {
 			// do nothing
 		}

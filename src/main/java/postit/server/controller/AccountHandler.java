@@ -14,6 +14,12 @@ import postit.server.model.*;
  *
  */
 public class AccountHandler {
+	
+	private DatabaseController db;
+	
+	public AccountHandler(DatabaseController db){
+		this.db = db;
+	}
 
 	/**
 	 * Given username and master password pwd, checks if the user authenticates.
@@ -23,7 +29,7 @@ public class AccountHandler {
 	 * @param pwd
 	 * @return
 	 */
-	public boolean authenticate(DatabaseController db, String username, String pwd){
+	public boolean authenticate(String username, String pwd){
 		Account account = db.getAccount(username);
 		// TODO pwd = generateKey(pwd);
 		if (account != null && pwd.equals(account.getPassword())) 
@@ -41,28 +47,39 @@ public class AccountHandler {
 	 * @param lastname
 	 * @return
 	 */
-	public boolean addAccount(DatabaseController db, String username, String pwd, String email, String firstname, String lastname){
-		Account account = new Account(username, pwd, email, firstname, lastname); //TODO encryption on pwd
-		if (db.getAccount(username) == null){
+	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname){
+		return addAccount(new Account(username, pwd, email, firstname, lastname)); //TODO encryption on pwd
+	}
+	
+	public boolean addAccount(Account account){
+		if (db.getAccount(account.getUsername()) == null){
 			if (db.addAccount(account)){
-				return db.addDirectory(username, ".").getString("status").equals("success"); // check what path it should be
+				return db.addDirectory(account.getUsername(), ".").getString("status").equals("success");
 			}
 		}
 		return false;
 	}
 	
-	public boolean updateAccount(DatabaseController db, String username, String pwd, String email, String firstname, String lastname){
+	public boolean updateAccount(String username, String pwd, String email, String firstname, String lastname){
 		Account account = new Account(username, pwd, email, firstname, lastname); //TODO encryption on pwd
+		return updateAccount(account);
+	}
+	
+	public boolean updateAccount(Account account){
 		return db.updateAccount(account);
 	}
 	
-	public boolean removeAccount(DatabaseController db, String username, String pwd){
+	public boolean removeAccount(String username, String pwd){
 		Account account = db.getAccount(username);
 		// TODO pwd = generateKey(pwd);
 		if (pwd.equals(account.getPassword())){
 			return db.removeAccount(username) && db.removeDirectory(username);
 		}
 		return false;
+	}
+	
+	public Account getAccount(String username){
+		return db.getAccount(username);
 	}
 	
 	public JsonObject getAccounts(){

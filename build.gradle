@@ -45,6 +45,7 @@ dependencies {
     testCompile 'commons-io:commons-io:2.5'
 
     compile 'mysql:mysql-connector-java:6.0.+'
+    compile 'org.json:json:20160212'
 }
 
 // Define the main class for the application

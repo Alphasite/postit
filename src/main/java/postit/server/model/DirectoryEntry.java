@@ -25,11 +25,23 @@ public class DirectoryEntry {
 		return encryptionKey;
 	}
 	
+	public int getDirectoryId(){
+		return directoryId;
+	}
+	
+	public void setDirectoryEntryId(int directoryEntryId){
+		this.directoryEntryId = directoryEntryId;
+	}
+	
 	public void setName(String name){
 		this.name = name;
 	}
 	
 	public void setEncryptionKey(String key){
 		encryptionKey = key;
+	}
+	
+	public void setDirectoryId(int id){
+		directoryId = id;
 	}
 }

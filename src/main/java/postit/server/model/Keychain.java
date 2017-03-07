@@ -11,6 +11,10 @@ public class Keychain {
 		this.metadata = metadata;
 	}
 	
+	public int getDirectoryEntryId(){
+		return directoryEntryId;
+	}
+	
 	public String getPassword(){
 		return password;
 	}
@@ -19,8 +23,8 @@ public class Keychain {
 		return metadata;
 	}
 	
-	public int getDirectoryEntryId(){
-		return directoryEntryId;
+	public void setDirectoryEntryId(int directoryEntryId){
+		this.directoryEntryId = directoryEntryId;
 	}
 	
 	public void setPassword(String pwd){
