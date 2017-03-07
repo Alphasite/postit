@@ -1,6 +1,8 @@
 package postit.server.model;
 import javax.json.*;
 
+import org.json.JSONObject;
+
 import postit.server.model.Customer;
 import postit.server.model.Log;
 import postit.server.model.Metadata;
@@ -82,5 +84,10 @@ public class Account {
 
     public void setLog(Log log) {
         this.log = log;
+    }
+    
+    public static Account fromJSONObject(JSONObject act){
+    	return new Account(act.getString("username"), act.getString("password"), 
+    			act.getString("email"), act.getString("firstname"), act.getString("lastname"));
     }
 }

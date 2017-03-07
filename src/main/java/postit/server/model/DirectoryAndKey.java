@@ -1,5 +1,7 @@
 package postit.server.model;
 
+import org.json.JSONObject;
+
 /**
  * A wrapper class containing information of both DirectoryEntry and Keychain
  * @author Ning
@@ -86,5 +88,10 @@ public class DirectoryAndKey {
 		k.setDirectoryEntryId(directoryEntryId);
 		k.setMetadata(metadata);
 		k.setPassword(password);
+	}
+	
+	public static DirectoryAndKey fromJSONObject(JSONObject obj){
+		return new DirectoryAndKey(obj.getInt("directoryEntryId"), obj.getString("name"), obj.getString("encryptionKey"), 
+				obj.getInt("directoryId"), obj.getString("password"), obj.getString("metadata"));
 	}
 }
