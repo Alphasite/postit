@@ -1,6 +1,9 @@
-package postit.server.model;
+package postit.shared.model;
 
 import org.json.JSONObject;
+
+import postit.server.model.DirectoryEntry;
+import postit.server.model.Keychain;
 
 /**
  * A wrapper class containing information of both DirectoryEntry and Keychain
@@ -14,6 +17,11 @@ public class DirectoryAndKey {
 	int directoryId;
 	String password;
 	String metadata;
+	
+	public DirectoryAndKey(){
+		directoryEntryId = -1;
+		directoryId = -1;
+	}
 	
 	public DirectoryAndKey(int id, String name, String key, int dirId, String password, String metadata){
 		this.directoryEntryId = id;
@@ -37,6 +45,10 @@ public class DirectoryAndKey {
 	
 	public int getDirectoryEntryId(){
 		return directoryEntryId;
+	}
+	
+	public int getDirectoryId(){
+		return directoryId;
 	}
 	
 	public String getName(){

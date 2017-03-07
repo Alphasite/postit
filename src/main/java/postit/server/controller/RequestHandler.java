@@ -7,6 +7,8 @@ import org.json.JSONObject;
 import postit.server.model.*;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
+import postit.shared.model.Account;
+import postit.shared.model.DirectoryAndKey;
 
 /**
  * 
@@ -83,7 +85,9 @@ public class RequestHandler {
 					return MessagePackager.createResponse(false, username, "Unable to get account information of " + username, asset, null);
 			case KEYCHAIN:
 				int deId = obj.getInt("directoryEntryId");
-				DirectoryAndKey dak = kh.getKeychain(deId);
+				DirectoryAndKey dak;
+				if (deId != -1) dak = kh.getKeychain(deId);
+				else dak = kh.getKeychain(username, obj.getString("name"));
 				if (dak != null)
 					return MessagePackager.createResponse(true, username, "", asset, dak);
 				else
@@ -127,9 +131,17 @@ public class RequestHandler {
 					return MessagePackager.createResponse(false, username, "Unable to update account information of " + account.getUsername(), 
 							asset, null);
 			case KEYCHAIN:
-				DirectoryAndKey dak = new DirectoryAndKey(obj.getInt("directoryEntryId"), obj.getString("name"), 
-						obj.getString("encryptionKey"), obj.getInt("directoryId"), obj.getString("password"), obj.getString("metadata"));
-				if (kh.updateKeychain(dak)) 
+				DirectoryAndKey dak = new DirectoryAndKey();
+				if (obj.has("directoryId")) dak.setDirectoryId(obj.getInt("directoryId"));
+				if (obj.has("directoryEntryId")) dak.setDirectoryEntryId(obj.getInt("directoryEntryId"));
+				if (obj.has("name")) dak.setName(obj.getString("name"));
+				if (obj.has("encryptionKey")) dak.setEncryptionKey(obj.getString("encryptionKey"));
+				if (obj.has("password")) dak.setPassword(obj.getString("password"));
+				if (obj.has("metadata")) dak.setMetadata(obj.getString("metadata"));
+				
+				if (dak.getDirectoryId() == -1 && kh.updateKeychain(username, dak))
+					return MessagePackager.createResponse(true, username, "", asset, dak);
+				else if (kh.updateKeychain(dak)) 
 					return MessagePackager.createResponse(true, username, "", asset, dak);
 				else 
 					return MessagePackager.createResponse(false, username, "Unable to update keychain information of " + dak.getName(), 

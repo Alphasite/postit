@@ -3,6 +3,7 @@ package postit.server.controller;
 import javax.json.JsonObject;
 
 import postit.server.model.*;
+import postit.shared.model.Account;
 
 /**
  * Class handling requests from frontend and directs to the proper backend controller.

@@ -6,6 +6,7 @@ import java.util.List;
 import org.json.JSONObject;
 
 import postit.server.model.*;
+import postit.shared.model.DirectoryAndKey;
 
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
@@ -72,6 +73,12 @@ public class KeychainHandler {
     	return updateKeychain(dak.getDirectoryEntryId(), dak.getName(), dak.getEncryptionKey(), dak.getPassword(), dak.getMetadata());
     }
     
+    public boolean updateKeychain(String username, DirectoryAndKey dak){
+    	Directory dir = db.getDirectory(username);
+    	dak.setDirectoryId(dir.getDirectoryId());
+    	return updateKeychain(dak);
+    }
+    
     public boolean removeKeychain(int directoryEntryId) {
     	if (db.removeDirectoryEntry(directoryEntryId)) 
     		return db.removeKeychain(directoryEntryId);
@@ -81,6 +88,14 @@ public class KeychainHandler {
     public DirectoryAndKey getKeychain(int directoryEntryId){
     	DirectoryEntry de = db.getDirectoryEntry(directoryEntryId);
     	Keychain k = db.getKeychain(directoryEntryId);
+    	if (de != null && k != null) return new DirectoryAndKey(de, k);
+    	else return null;
+    }
+    
+    public DirectoryAndKey getKeychain(String username, String name){
+    	Directory dir = db.getDirectory(username);
+    	DirectoryEntry de = db.getDirectoryEntry(dir.getDirectoryId(), name);
+    	Keychain k = db.getKeychain(de.getDirectoryEntryId());
     	if (de != null && k != null) return new DirectoryAndKey(de, k);
     	else return null;
     }

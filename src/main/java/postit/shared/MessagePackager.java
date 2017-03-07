@@ -5,6 +5,7 @@ import java.util.*;
 import org.json.JSONObject;
 
 import postit.server.model.*;
+import postit.shared.model.Account;
 
 /**
  * Packages requests and responses in JsonObject to be sent between client and server
@@ -125,8 +126,11 @@ public class MessagePackager {
 	/*
 	public static void main(String[] args){
 		List<Account> acts = new ArrayList<Account>();
-		acts.add(new Account("ning", "1234", "nw@cornell.edu", "ning", "wang"));
-		System.out.println(createResponse(true, "", Asset.ACCOUNTS, acts));
+		Account act = new Account("ning", "1234", null, "ning", "wang");
+		acts.add(act);
+		String res = createResponse(true, "ning", "", Asset.ACCOUNT, act);
+		System.out.println(res);
+		System.out.println(new JSONObject(new JSONObject(res).getString("account")).getString("email") == null);
 		List<String> hi = new ArrayList<String>();
 		hi.add("lol");
 		System.out.println("Type is string? " + hi.iterator().next().getClass().isInstance(new String()));
