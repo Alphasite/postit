@@ -17,12 +17,14 @@ public class Directory {
     BackingStore backingStore;
     KeyService keyService;
 
-    List<DirectoryEntry> keychains;
+    public List<DirectoryEntry> keychains;
+    public List<Long> deletedKeychains;
 
     public Directory(KeyService keyService, BackingStore backingStore) {
         this.keyService = keyService;
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
+        this.deletedKeychains = new ArrayList<>();
     }
 
     public Directory(JsonObject object, KeyService keyService, BackingStore backingStore) {
@@ -34,6 +36,11 @@ public class Directory {
         for (int i = 0; i < keychainArray.size(); i++) {
             keychains.add(new DirectoryEntry(keychainArray.getJsonObject(i), this, keyService, backingStore));
         }
+
+        JsonArray deletedKeychainsArray = object.getJsonArray("deletedKeychains");
+        for (int i = 0; i < deletedKeychainsArray.size(); i++) {
+            deletedKeychains.add(deletedKeychainsArray.getJsonNumber(i).longValue());
+        }
     }
 
     public JsonObjectBuilder dump() {
@@ -42,9 +49,15 @@ public class Directory {
             keychainArray.add(keychain.dump());
         }
 
+        JsonArrayBuilder deletedKeychainsArray = Json.createArrayBuilder();
+        for (Long deletedKeychain : deletedKeychains) {
+            deletedKeychainsArray.add(deletedKeychain);
+        }
+
         return Json.createObjectBuilder()
                 .add("version", "1.0.0")
-                .add("keychains", keychainArray);
+                .add("keychains", keychainArray)
+                .add("deleted", deletedKeychainsArray);
     }
 
     public List<DirectoryEntry> getKeychains() {
@@ -76,7 +89,28 @@ public class Directory {
                 return Optional.of(keychain);
             } else {
                 if (!entry.delete()) {
-                    LOGGER.severe("Failed to delete entry after fialing to save directory, please clean up :" + entry.getPath());
+                    LOGGER.severe("Failed to delete entry after failing to save directory, please clean up :" + entry.getPath());
+                }
+
+                return Optional.empty();
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<DirectoryEntry> createKeychain(JsonObject entryObject, JsonObject keychainObject) {
+        DirectoryEntry entry = new DirectoryEntry(entryObject, this, keyService, backingStore);
+        entry.keychain = new Keychain(keychainObject, entry);
+        this.keychains.add(entry);
+
+
+        if (entry.save()) {
+            if (this.save()) {
+                return Optional.of(entry);
+            } else {
+                if (!entry.delete()) {
+                    LOGGER.severe("Failed to delete entry after failing to save directory, please clean up :" + entry.getPath());
                 }
 
                 return Optional.empty();
@@ -87,6 +121,10 @@ public class Directory {
     }
 
     public boolean delete(DirectoryEntry keychain) {
+        if (keychain.serverid != null) {
+            deletedKeychains.add(keychain.serverid);
+        }
+
         return keychain.delete();
     }
 

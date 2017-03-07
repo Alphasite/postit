@@ -1,5 +1,6 @@
-package postit.client.handler;
+package postit.client.controller;
 
+import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 import postit.client.keychain.Directory;
@@ -8,13 +9,19 @@ import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
 
 import javax.crypto.SecretKey;
+import javax.json.JsonObject;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 /**
  * Created by jackielaw on 3/1/17.
  */
 public class DirectoryController {
+    private final static Logger LOGGER = Logger.getLogger(DirectoryController.class.getName());
+
     private Directory directory;
     private KeyService keyService;
 
@@ -51,6 +58,7 @@ public class DirectoryController {
     public boolean createKeychain(String keychainName){
         return directory.createKeychain(keyService.getMasterKey(), keychainName).isPresent() && directory.save();
     }
+
     public boolean createPassword(Keychain keychain, String identifier, SecretKey key) {
         Password password = new Password(identifier, key, keychain);
         return keychain.passwords.add(password) && password.save();
@@ -65,11 +73,47 @@ public class DirectoryController {
     public boolean deleteKeychain(Keychain k){
         return k.delete();
     }
+
+    public boolean deleteEntry(DirectoryEntry entry) {
+        return entry.delete();
+    }
+
     public boolean deletePassword(Password p){
         return p.delete();
     }
 
     public String getPassword(Password p) {
         return new String(Crypto.secretKeyToBytes(p.password));
+    }
+
+    public List<Long> getDeletedKeychains() {
+        return directory.deletedKeychains;
+    }
+
+    public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject) {
+        long serverid = entryObject.getJsonNumber("serverid").longValue();
+        LocalDateTime lastModified = LocalDateTime.parse(entryObject.getString("lastModified"));
+
+        // TODO make better (e.g. handle simultaneous edits)
+        // merge
+
+        if (entry.lastModified.isBefore(lastModified)) {
+            entry.updateFrom(entryObject);
+
+            Optional<Keychain> keychain = entry.readKeychain();
+            if (keychain.isPresent()) {
+                // TODO replace this later
+                keychain.get().initFrom(keychainObject);
+            } else {
+                LOGGER.warning("Failed to update entry " + entry.name + "from object (couldn't load keychain).");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public Optional<DirectoryEntry> createKeychain(JsonObject directory, JsonObject keychain) {
+        return this.directory.createKeychain(directory, keychain);
     }
 }

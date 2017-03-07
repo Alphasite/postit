@@ -1,4 +1,4 @@
-package postit.client.handler;
+package postit.client.controller;
 
 import postit.client.backend.*;
 import postit.client.keychain.*;

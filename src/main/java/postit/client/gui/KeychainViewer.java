@@ -4,7 +4,7 @@ package postit.client.gui;
 import postit.client.backend.BackingStore;
 import postit.client.backend.BackingStoreImpl;
 import postit.client.backend.KeyService;
-import postit.client.handler.DirectoryController;
+import postit.client.controller.DirectoryController;
 import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;

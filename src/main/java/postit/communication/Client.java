@@ -11,7 +11,7 @@ import javax.json.*;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Client  {
+public class Client {
 
     Vector<JsonObject> outQueue;
     Socket clientSocket;
@@ -21,7 +21,7 @@ public class Client  {
     BufferedReader reader;
     int port;
 
-    Client(Vector<JsonObject> queue, int port){
+    Client(Vector<JsonObject> queue, int port) {
         this.outQueue = queue;
         this.port = port;
     }
@@ -37,7 +37,7 @@ public class Client  {
             in = new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8);
             //3: Communicating with the server
             do {
-                if (!outQueue.isEmpty()){
+                if (!outQueue.isEmpty()) {
                     sendMessage(outQueue.remove(0));
                 }
             } while (true);
@@ -45,25 +45,23 @@ public class Client  {
             System.err.println("You are trying to connect to an unknown host!");
         } catch (IOException ioException) {
             ioException.printStackTrace();
-        }finally{
+        } finally {
             //4: Closing connection
-            try{
+            try {
                 in.close();
                 out.close();
                 clientSocket.close();
-            }
-            catch(IOException ioException){
+            } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
         }
     }
-    void sendMessage(JsonObject obj)
-    {
-        try{
+
+    void sendMessage(JsonObject obj) {
+        try {
             out.write(obj.toString());
             out.flush();
-        }
-        catch(IOException ioException){
+        } catch (IOException ioException) {
             ioException.printStackTrace();
         }
     }

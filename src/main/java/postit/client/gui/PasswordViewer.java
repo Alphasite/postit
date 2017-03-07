@@ -1,7 +1,7 @@
 package postit.client.gui;
 
 
-import postit.client.handler.DirectoryController;
+import postit.client.controller.DirectoryController;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
 import postit.shared.Crypto;
