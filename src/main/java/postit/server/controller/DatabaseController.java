@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 import postit.server.database.Database;
 import postit.server.model.*;
+import postit.shared.model.Account;
 
 public class DatabaseController {
 
@@ -320,6 +321,39 @@ public class DatabaseController {
 			
 			if (rset.next()){
 				de = new DirectoryEntry(directoryEntryId, rset.getString("name"), rset.getString("encryption_key"), rset.getInt("directory_id"));
+			}		
+		}
+		catch(SQLException e){
+			System.out.println("An error occurred in getDirectoryEntry"); 
+		}
+		catch(Exception e){
+			System.out.println("An error occurred"); 
+		}
+		finally{
+			closeQuietly(stmt);
+			closeQuietly(conn);
+		}
+		
+		return de;
+	}
+	
+	public DirectoryEntry getDirectoryEntry(int directoryId, String name){
+		Connection conn = null;
+		PreparedStatement stmt = null;
+		ResultSet rset = null;
+		DirectoryEntry de = null;
+		
+		try {
+			conn = Database.connectToDefault();
+			stmt = conn.prepareStatement("SELECT * FROM "+DIRECTORY_ENTRY+" WHERE "
+					+ "`directory_id`=? AND `name`=?;");
+
+			stmt.setInt(1, directoryId);
+			stmt.setString(2, name);
+			rset = stmt.executeQuery();
+			
+			if (rset.next()){
+				de = new DirectoryEntry(rset.getInt("directory_entry_id"), name, rset.getString("encryption_key"), directoryId);
 			}		
 		}
 		catch(SQLException e){

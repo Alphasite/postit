@@ -1,13 +1,12 @@
 package postit.communication;
 
-
+import postit.server.controller.RequestHandler;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Vector;
 import javax.json.*;
-
 /**
  * Created by Zhan on 3/7/2017.
  */
@@ -15,15 +14,19 @@ public class Client {
 
     Vector<JsonObject> outQueue;
     Socket clientSocket;
-    Socket connection = null;
     OutputStreamWriter out;
     InputStreamReader in;
-    BufferedReader reader;
     int port;
+    boolean ifClientSide;
+    RequestHandler requestHandler;
 
-    Client(Vector<JsonObject> queue, int port) {
+    Client(Vector<JsonObject> queue, int port, boolean ifClientSide){
         this.outQueue = queue;
         this.port = port;
+        this.ifClientSide = ifClientSide;
+        if (!ifClientSide){
+            requestHandler = new RequestHandler();
+        }
     }
 
     void run() {
@@ -39,6 +42,9 @@ public class Client {
             do {
                 if (!outQueue.isEmpty()) {
                     sendMessage(outQueue.remove(0));
+                    if (!ifClientSide){ // this is the server side client
+                        requestHandler.handleRequest(outQueue.remove(0).toString());
+                    }
                 }
             } while (true);
         } catch (UnknownHostException unknownHost) {
