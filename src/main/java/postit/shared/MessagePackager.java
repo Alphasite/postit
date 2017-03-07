@@ -67,7 +67,7 @@ public class MessagePackager {
 	 * @param bean - returned object
 	 * @return
 	 */
-	public static JSONObject createResponse(boolean status, String username, String message, Asset asset, Object bean){
+	public static String createResponse(boolean status, String username, String message, Asset asset, Object bean){
 		JSONObject response = new JSONObject();
 		response.put("username", username);
 		if (status){
@@ -83,7 +83,7 @@ public class MessagePackager {
 			response.put("status", "failure");
 			response.put("message", message);
 		}
-		return response; 
+		return response.toString(); 
 	}
 	
 	public static void checkInputTypes(Asset asset, Object bean) throws InputMismatchException{
