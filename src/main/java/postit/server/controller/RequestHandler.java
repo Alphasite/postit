@@ -29,17 +29,19 @@ public class RequestHandler {
 	 * @param req
 	 * @return
 	 */
-	public JSONObject handleRequest(JSONObject request){
+	public String handleRequest(String request){
 		//TODO refactor this gigantic thing using multiple engine classes that handle requests
 		// associated to specific assets
 		
-		Action act = Action.valueOf(request.getString("action"));
-		Asset asset = Asset.valueOf(request.getString("asset"));
-		String username = request.getString("username"); // only empty for ADD ACCOUNT
+		JSONObject json = new JSONObject(request);
+		
+		Action act = Action.valueOf(json.getString("action"));
+		Asset asset = Asset.valueOf(json.getString("asset"));
+		String username = json.getString("username"); // only empty for ADD ACCOUNT
 		if (username.equals("") && act != Action.ADD && asset != Asset.ACCOUNT)
 			return MessagePackager.createResponse(false, "", "Missing username as input", asset, null);
 		
-		JSONObject obj = request.getJSONObject(MessagePackager.typeToString(asset).toLowerCase());
+		JSONObject obj = json.getJSONObject(MessagePackager.typeToString(asset).toLowerCase());
 
 		switch(act){
 		case ADD:
