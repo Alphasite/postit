@@ -2,6 +2,8 @@ package postit.server.controller;
 
 import javax.json.JsonObject;
 
+import org.json.JSONObject;
+
 /**
  * 
  * @author Ning
@@ -9,43 +11,43 @@ import javax.json.JsonObject;
  */
 public class KeychainHandlerTest {
 
-	public static int testAddKeychain(DatabaseController db, KeychainHandler kh, String username, String name, String pwd){
-		JsonObject js = kh.createKeychain(db, username, name, ".", "123456");
+	public static int testAddKeychain(KeychainHandler kh, String username, String name, String pwd){
+		JSONObject js = kh.createKeychain(username, name, ".", "123456");
 		boolean res = js.getString("status").equals("success");
 		System.out.printf("Adding keychain to %s: (%s, %s) %s\n", username, name, pwd, res ? "successful" : "failed");
 		return js.getInt("directory_entry_id");
 	}
 	
-	public static void testUpdateKeychain(DatabaseController db, KeychainHandler kh, int directoryEntryId, String name, 
+	public static void testUpdateKeychain(KeychainHandler kh, int directoryEntryId, String name, 
 			String encryptKey, String password, String metadata){
-		boolean res = kh.updateKeychain(db, directoryEntryId, name, encryptKey, password, metadata);
+		boolean res = kh.updateKeychain(directoryEntryId, name, encryptKey, password, metadata);
 		System.out.printf("Updating keychain %d (%s,%s,%s,%s) %s\n", directoryEntryId, name, encryptKey, password, metadata, res ? "successful" : "failed");
 	}
 	
-	public static void testRemoveKeychain(DatabaseController db, KeychainHandler kh, int directoryEntryId){
-		boolean res = kh.removeKeychain(db, directoryEntryId);
+	public static void testRemoveKeychain(KeychainHandler kh, int directoryEntryId){
+		boolean res = kh.removeKeychain(directoryEntryId);
 		System.out.printf("Removing keychain %d %s\n", directoryEntryId, res ? "successful" : "failed");
 	}
 	
 	public static void main(String[] args){
 		DatabaseController db = new DatabaseController();
-		AccountHandler ah = new AccountHandler();
-		KeychainHandler kh = new KeychainHandler();
+		AccountHandler ah = new AccountHandler(db);
+		KeychainHandler kh = new KeychainHandler(db);
 		
 		String username = "mc";
-		boolean res = ah.addAccount(db, username, "cs5431", "mc@cornell.edu", "m", "c");
+		boolean res = ah.addAccount(username, "cs5431", "mc@cornell.edu", "m", "c");
 		int dirId = db.getDirectory(username).getDirectoryId();
 		System.out.println("directoryId: " + dirId);
 		
-		int id1 = testAddKeychain(db, kh, username, "netflix", "password");
-		testUpdateKeychain(db, kh, id1, null, null, "netflixpwd", null);
-		int id2 = testAddKeychain(db, kh, username, "fb", "123456"); 
-		testRemoveKeychain(db, kh, id2);
+		int id1 = testAddKeychain(kh, username, "netflix", "password");
+		testUpdateKeychain(kh, id1, null, null, "netflixpwd", null);
+		int id2 = testAddKeychain(kh, username, "fb", "123456"); 
+		testRemoveKeychain(kh, id2);
 		
-		System.out.println(kh.getKeychains(db, username));
+		System.out.println(kh.getKeychains(username));
 		
-		testRemoveKeychain(db, kh, id1);
-		System.out.println(kh.getKeychains(db, username));
+		testRemoveKeychain(kh, id1);
+		System.out.println(kh.getKeychains(username));
 		
 		db.removeAccount(username);
 		
