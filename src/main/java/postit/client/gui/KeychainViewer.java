@@ -279,12 +279,12 @@ public class KeychainViewer {
 
     private Keychain getActiveKeychain(){
         int activeKeychainidx = tabbedPane.getSelectedIndex();
-        return this.keychains.get(activeKeychainidx).readKeychain().get();
+        return controller.getKeychains().get(activeKeychainidx).readKeychain().get();
     }
 
     private Password getActivePassword(List<Password> passwords, MouseEvent e){
         JTable target = (JTable) e.getSource();
         int row = target.getSelectedRow();
-        return passwords.get(row);
+        return controller.getPasswords(this.getActiveKeychain()).get(row);
     }
 }
