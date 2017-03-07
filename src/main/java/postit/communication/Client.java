@@ -14,10 +14,8 @@ public class Client  {
 
     Vector<JsonObject> outQueue;
     Socket clientSocket;
-    Socket connection = null;
     OutputStreamWriter out;
     InputStreamReader in;
-    BufferedReader reader;
     int port;
     boolean ifClientSide;
     RequestHandler requestHandler;
@@ -45,7 +43,7 @@ public class Client  {
                 if (!outQueue.isEmpty()){
                     sendMessage(outQueue.remove(0));
                     if (!ifClientSide){ // this is the server side client
-                        requestHandler.handleRequest(outQueue.remove(0));
+                        requestHandler.handleRequest(outQueue.remove(0).toString());
                     }
                 }
             } while (true);
