@@ -31,13 +31,14 @@ public class Directory {
         this.keyService = keyService;
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
+        this.deletedKeychains = new ArrayList<>();
 
         JsonArray keychainArray = object.getJsonArray("keychains");
         for (int i = 0; i < keychainArray.size(); i++) {
             keychains.add(new DirectoryEntry(keychainArray.getJsonObject(i), this, keyService, backingStore));
         }
 
-        JsonArray deletedKeychainsArray = object.getJsonArray("deletedKeychains");
+        JsonArray deletedKeychainsArray = object.getJsonArray("deleted");
         for (int i = 0; i < deletedKeychainsArray.size(); i++) {
             deletedKeychains.add(deletedKeychainsArray.getJsonNumber(i).longValue());
         }
@@ -78,7 +79,7 @@ public class Directory {
         Keychain keychain = new Keychain(name, entry);
 
         if (keychains.stream().map(k -> k.name).anyMatch(n -> n.equals(name))) {
-            LOGGER.warning("Keychian " + name +  "is a duplicate, not adding.");
+            LOGGER.warning("Keychain " + name +  "is a duplicate, not adding.");
             return Optional.empty();
         }
 
@@ -121,7 +122,7 @@ public class Directory {
     }
 
     public boolean delete(DirectoryEntry keychain) {
-        if (keychain.serverid != null) {
+        if (keychain.serverid != 0L) {
             deletedKeychains.add(keychain.serverid);
         }
 
@@ -132,4 +133,6 @@ public class Directory {
         LOGGER.info("Saving directory");
         return backingStore.writeDirectory(this);
     }
+
+
 }

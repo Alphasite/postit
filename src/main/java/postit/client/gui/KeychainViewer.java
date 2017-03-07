@@ -228,7 +228,7 @@ public class KeychainViewer {
 
     private void addPanes(Keychain k) {
         JComponent tabpanel = new JPanel();
-        String name = k.name;
+        String name = k.getName();
         tabbedPane.addTab(name, null, tabpanel,
                 "Keychain " + name);
 

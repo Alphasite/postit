@@ -91,7 +91,6 @@ public class DirectoryController {
     }
 
     public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject) {
-        long serverid = entryObject.getJsonNumber("serverid").longValue();
         LocalDateTime lastModified = LocalDateTime.parse(entryObject.getString("lastModified"));
 
         // TODO make better (e.g. handle simultaneous edits)
@@ -110,10 +109,10 @@ public class DirectoryController {
             }
         }
 
-        return true;
+        return entry.save();
     }
 
-    public Optional<DirectoryEntry> createKeychain(JsonObject directory, JsonObject keychain) {
-        return this.directory.createKeychain(directory, keychain);
+    public boolean createKeychain(JsonObject directory, JsonObject keychain) {
+        return this.directory.createKeychain(directory, keychain).isPresent() && this.directory.save();
     }
 }

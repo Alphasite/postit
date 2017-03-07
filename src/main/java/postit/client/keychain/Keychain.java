@@ -41,6 +41,10 @@ public class Keychain {
                 .add("passwords", passwordArray);
     }
 
+    public String getName() {
+        return directoryEntry.name;
+    }
+
     public boolean save() {
         return this.directoryEntry.save();
     }

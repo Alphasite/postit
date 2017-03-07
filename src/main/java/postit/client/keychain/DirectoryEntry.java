@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -26,10 +27,10 @@ public class DirectoryEntry {
     private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
     public String name;
-    public Long serverid;
+    public long serverid;
 
     public SecretKey encryptionKey;
-    private byte[] nonce;
+    public byte[] nonce;
 
     Directory directory;
     Keychain keychain;
@@ -47,6 +48,7 @@ public class DirectoryEntry {
         this.keyService = keyService;
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
+        this.serverid = -1L;
     }
 
     public DirectoryEntry(JsonObject object, Directory directory, KeyService keyService, BackingStore backingStore) {
@@ -161,6 +163,10 @@ public class DirectoryEntry {
 
     public boolean delete() {
         try {
+            if (serverid != -1L) {
+                this.directory.deletedKeychains.add(serverid);
+            }
+
             directory.keychains.remove(this);
             if (directory.save()) {
                 Files.delete(getPath());
@@ -176,5 +182,29 @@ public class DirectoryEntry {
 
     public Path getPath() {
         return backingStore.getKeychainsPath().resolve(name + ".keychain");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DirectoryEntry entry = (DirectoryEntry) o;
+
+        if (serverid != entry.serverid) return false;
+        if (!name.equals(entry.name)) return false;
+        if (!encryptionKey.equals(entry.encryptionKey)) return false;
+        if (!Arrays.equals(nonce, entry.nonce)) return false;
+        return lastModified.equals(entry.lastModified);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (int) (serverid ^ (serverid >>> 32));
+        result = 31 * result + encryptionKey.hashCode();
+        result = 31 * result + Arrays.hashCode(nonce);
+        result = 31 * result + lastModified.hashCode();
+        return result;
     }
 }

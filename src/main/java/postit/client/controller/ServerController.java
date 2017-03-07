@@ -69,14 +69,26 @@ public class ServerController {
             }
         }
 
+        for (DirectoryEntry entry : clientKeychains) {
+            if (createKeychain(entry)) {
+                continue;
+            } else {
+                LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
+                return false;
+            }
+        }
+
         for (Long serverid : keychainsToDownload) {
             JsonObject directoryKeychainObject = getKeychain(serverid);
 
             if (directoryKeychainObject != null) {
-                directoryController.createKeychain(
+                if (!directoryController.createKeychain(
                         directoryKeychainObject.getJsonObject("entry"),
                         directoryKeychainObject.getJsonObject("keychain") // TODO encrypt decrypt??
-                );
+                )) {
+                    LOGGER.warning("Failed to merge keychain (" + serverid + ") merge keychain.");
+                    return false;
+                }
             } else {
                 LOGGER.warning("Failed to download keychain (" + serverid + ") from server.");
                 return false;
@@ -87,15 +99,6 @@ public class ServerController {
             if (localKeychainsToDelete.contains(entry.serverid)) {
                 directoryController.deleteEntry(entry);
                 continue;
-            }
-
-            if (keychainsToUpload.contains(entry.serverid)) {
-                if (createKeychain(entry)) {
-                    continue;
-                } else {
-                    LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
-                    return false;
-                }
             }
 
             if (keychainsToUpdate.contains(entry.serverid)) {
