@@ -54,9 +54,10 @@ public class MessagePackager {
 	public static String createRequest(Action req, String username, Asset asset, Object bean){
 		JSONObject request = new JSONObject();
 		request.put("action", req);
-		request.put("object", asset);
+		request.put("asset", asset);
 		request.put("username", username);
-		request.put(typeToString(asset), new JSONObject(bean));
+		if (bean != null)
+			request.put(typeToString(asset), new JSONObject(bean));
 		return request.toString();
 	}
 	

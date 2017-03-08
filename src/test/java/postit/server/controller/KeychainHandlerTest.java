@@ -15,7 +15,7 @@ public class KeychainHandlerTest {
 		JSONObject js = kh.createKeychain(username, name, ".", "123456");
 		boolean res = js.getString("status").equals("success");
 		System.out.printf("Adding keychain to %s: (%s, %s) %s\n", username, name, pwd, res ? "successful" : "failed");
-		return js.getInt("directory_entry_id");
+		return js.getInt("directoryEntryId");
 	}
 	
 	public static void testUpdateKeychain(KeychainHandler kh, int directoryEntryId, String name, 

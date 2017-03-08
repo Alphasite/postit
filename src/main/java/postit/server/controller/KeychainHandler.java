@@ -87,16 +87,18 @@ public class KeychainHandler {
 	
     public DirectoryAndKey getKeychain(int directoryEntryId){
     	DirectoryEntry de = db.getDirectoryEntry(directoryEntryId);
+    	if (de == null) return null;
     	Keychain k = db.getKeychain(directoryEntryId);
-    	if (de != null && k != null) return new DirectoryAndKey(de, k);
+    	if (k != null) return new DirectoryAndKey(de, k);
     	else return null;
     }
     
     public DirectoryAndKey getKeychain(String username, String name){
     	Directory dir = db.getDirectory(username);
     	DirectoryEntry de = db.getDirectoryEntry(dir.getDirectoryId(), name);
+    	if (de == null) return null;
     	Keychain k = db.getKeychain(de.getDirectoryEntryId());
-    	if (de != null && k != null) return new DirectoryAndKey(de, k);
+    	if (k != null) return new DirectoryAndKey(de, k);
     	else return null;
     }
     

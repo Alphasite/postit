@@ -43,7 +43,10 @@ public class RequestHandler {
 		if (username.equals("") && act != Action.ADD && asset != Asset.ACCOUNT)
 			return MessagePackager.createResponse(false, "", "Missing username as input", asset, null);
 		
-		JSONObject obj = json.getJSONObject(MessagePackager.typeToString(asset).toLowerCase());
+		String assetName = MessagePackager.typeToString(asset).toLowerCase();
+		JSONObject obj = null;
+		if (json.has(assetName)) 
+			obj = json.getJSONObject(assetName);
 
 		switch(act){
 		case ADD:
@@ -112,7 +115,15 @@ public class RequestHandler {
 				else
 					return MessagePackager.createResponse(false, username, "Unable to remove account " + username, asset, null);
 			case KEYCHAIN:
-				int deId = obj.getInt("directoryEntryId");
+				int deId;
+				if (! obj.has("directoryEntryId") || obj.getInt("directoryEntryId") == -1){
+					DirectoryAndKey dak = kh.getKeychain(username, obj.getString("name"));
+					if (dak == null)
+						return MessagePackager.createResponse(false, username, "No keychain has name " + obj.getString("name"), asset, null);
+					deId = dak.getDirectoryEntryId();
+				}
+				else
+					deId = obj.getInt("directoryEntryId");
 				if (kh.removeKeychain(deId))
 					return MessagePackager.createResponse(true, username, "", asset, null);
 				else
@@ -139,8 +150,17 @@ public class RequestHandler {
 				if (obj.has("password")) dak.setPassword(obj.getString("password"));
 				if (obj.has("metadata")) dak.setMetadata(obj.getString("metadata"));
 				
-				if (dak.getDirectoryId() == -1 && kh.updateKeychain(username, dak))
+				if (dak.getDirectoryId() == -1){
+					if (dak.getDirectoryEntryId() == -1){
+						DirectoryAndKey dak2 = kh.getKeychain(username, obj.getString("name"));
+						if (dak2 == null)
+							return MessagePackager.createResponse(false, username, "No keychain has name " + obj.getString("name"), asset, dak);
+						dak.setDirectoryEntryId(dak2.getDirectoryEntryId());
+					}
+					if (! kh.updateKeychain(dak))
+						return MessagePackager.createResponse(false, username, "Unable to update keychain information of " + dak.getName(), asset, dak);
 					return MessagePackager.createResponse(true, username, "", asset, dak);
+				}
 				else if (kh.updateKeychain(dak)) 
 					return MessagePackager.createResponse(true, username, "", asset, dak);
 				else 
