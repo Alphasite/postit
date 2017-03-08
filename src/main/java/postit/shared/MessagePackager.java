@@ -29,7 +29,7 @@ public class MessagePackager {
 	 *
 	 */
 	
-	public enum Action{
+	public enum Action {
 		ADD,
 		UPDATE,
 		REMOVE,
@@ -37,7 +37,7 @@ public class MessagePackager {
 		AUTHENTICATE
 	};
 	
-	public enum Asset{
+	public enum Asset {
 		ACCOUNT,
 		ACCOUNTS,
 		KEYCHAIN,

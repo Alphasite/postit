@@ -1,6 +1,7 @@
 package postit.client.keychain;
 
 import postit.client.backend.BackingStore;
+import postit.client.controller.DirectoryController;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 
@@ -12,6 +13,9 @@ import javax.json.JsonObjectBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -23,14 +27,18 @@ public class DirectoryEntry {
     private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
     public String name;
+    public long serverid;
+
     public SecretKey encryptionKey;
-    private byte[] nonce;
+    public byte[] nonce;
 
     Directory directory;
     Keychain keychain;
 
     KeyService keyService;
     BackingStore backingStore;
+
+    public LocalDateTime lastModified;
 
     public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, KeyService keyService, BackingStore backingStore) {
         this.name = name;
@@ -39,16 +47,24 @@ public class DirectoryEntry {
         this.keychain = null;
         this.keyService = keyService;
         this.backingStore = backingStore;
+        this.lastModified = LocalDateTime.now();
+        this.serverid = -1L;
     }
 
     public DirectoryEntry(JsonObject object, Directory directory, KeyService keyService, BackingStore backingStore) {
-        this.name = object.getString("name");
-        this.encryptionKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("encryption-key").getBytes()));
         this.directory = directory;
         this.keychain = null;
         this.keyService = keyService;
         this.backingStore = backingStore;
+        this.updateFrom(object);
+    }
+
+    public void updateFrom(JsonObject object) {
+        this.name = object.getString("name");
+        this.encryptionKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("encryption-key").getBytes()));
         this.nonce = Base64.getDecoder().decode(object.getString("nonce"));
+        this.serverid = object.getJsonNumber("serverid").longValue();
+        this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
     }
 
     public JsonObjectBuilder dump() {
@@ -57,6 +73,8 @@ public class DirectoryEntry {
         builder.add("name", name);
         builder.add("encryption-key", new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(encryptionKey))));
         builder.add("nonce", Base64.getEncoder().encodeToString(nonce));
+        builder.add("serverid", serverid);
+        builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
 
         return builder;
     }
@@ -145,6 +163,10 @@ public class DirectoryEntry {
 
     public boolean delete() {
         try {
+            if (serverid != -1L) {
+                this.directory.deletedKeychains.add(serverid);
+            }
+
             directory.keychains.remove(this);
             if (directory.save()) {
                 Files.delete(getPath());
@@ -160,5 +182,29 @@ public class DirectoryEntry {
 
     public Path getPath() {
         return backingStore.getKeychainsPath().resolve(name + ".keychain");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DirectoryEntry entry = (DirectoryEntry) o;
+
+        if (serverid != entry.serverid) return false;
+        if (!name.equals(entry.name)) return false;
+        if (!encryptionKey.equals(entry.encryptionKey)) return false;
+        if (!Arrays.equals(nonce, entry.nonce)) return false;
+        return lastModified.equals(entry.lastModified);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (int) (serverid ^ (serverid >>> 32));
+        result = 31 * result + encryptionKey.hashCode();
+        result = 31 * result + Arrays.hashCode(nonce);
+        result = 31 * result + lastModified.hashCode();
+        return result;
     }
 }
