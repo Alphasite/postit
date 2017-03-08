@@ -1,4 +1,4 @@
-package postit.client.handler;
+package postit.client.controller;
 
 import postit.shared.model.*;
 import postit.shared.MessagePackager;
@@ -43,9 +43,21 @@ public class RequestMessenger {
 		return MessagePackager.createRequest(Action.GET, username, Asset.KEYCHAIN, dak);
 	}
 	
+	public static String createGetKeychainMessage(String username, long keychainId){
+		DirectoryAndKey dak = new DirectoryAndKey();
+		dak.setDirectoryEntryId((int) keychainId);
+		return MessagePackager.createRequest(Action.GET, username, Asset.KEYCHAIN, dak);
+	}
+	
 	public static String createRemoveKeychainMessage(String username, String name){
 		DirectoryAndKey dak = new DirectoryAndKey();
 		dak.setName(name);
+		return MessagePackager.createRequest(Action.REMOVE, username, Asset.KEYCHAIN, dak);
+	}
+	
+	public static String createRemoveKeychainMessage(String username, long keychainId){
+		DirectoryAndKey dak = new DirectoryAndKey();
+		dak.setDirectoryEntryId((int) keychainId);
 		return MessagePackager.createRequest(Action.REMOVE, username, Asset.KEYCHAIN, dak);
 	}
 	

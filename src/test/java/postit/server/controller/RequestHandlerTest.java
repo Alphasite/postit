@@ -2,7 +2,7 @@ package postit.server.controller;
 
 import org.json.JSONObject;
 
-import postit.client.handler.RequestMessenger;
+import postit.client.controller.RequestMessenger;
 
 public class RequestHandlerTest {
 

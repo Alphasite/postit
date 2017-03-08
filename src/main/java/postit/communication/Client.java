@@ -67,6 +67,17 @@ public class Client extends Thread{
         }
     }
 
+    /**
+     * Adds the request to be sent to the server.
+     * Returns the identification number of the request for retrieval.
+     * @param req
+     * @return
+     */
+    public int addRequest(String req){
+    	
+    	return -1;
+    }
+    
     void sendMessage(JsonObject obj) {
         try {
             out.write(obj.toString());
