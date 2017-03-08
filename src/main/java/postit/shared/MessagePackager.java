@@ -35,15 +35,15 @@ public class MessagePackager {
 		REMOVE,
 		GET,
 		AUTHENTICATE
-	};
-	
+	}
+
 	public enum Asset {
 		ACCOUNT,
 		ACCOUNTS,
 		KEYCHAIN,
 		KEYCHAINS
-	};
-	
+	}
+
 	/**
 	 * Takes inputs and package them into the string representation of a single JSONObject
 	 * @param req

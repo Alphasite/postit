@@ -1,7 +1,6 @@
 package postit.client.keychain;
 
 import postit.client.backend.BackingStore;
-import postit.client.controller.DirectoryController;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;

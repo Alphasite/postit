@@ -1,5 +1,6 @@
 package postit.shared;
 
+import org.bouncycastle.crypto.generators.SCrypt;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.*;
@@ -32,6 +33,11 @@ public class Crypto {
     public static final String ENCRYPTION_CIPHER = "AES";
     public static final String GCM_CIPHER = "AES/GCM/NoPadding";
     public static final String DIGEST_ALGORITHM = "SHA-256";
+
+    public static final int CPU_SCALING_FACTOR = 10;
+    public static final int MEMORY_SCALING_FACTOR = 10;
+    public static final int PARALLELISM_SCALING_FACTOR = 10;
+    public static final int KEY_LENGTH = 32;
 
     private static SecureRandom random;
     private static KeyGenerator keyGenerator;
@@ -68,7 +74,6 @@ public class Crypto {
         }
 
         try {
-            // TODO Investigate AESWrap vs AES256 + GCM mode
             wrapCipher = Cipher.getInstance(WRAP_CIPHER);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             LOGGER.log(Level.SEVERE, "Failed to initialise AESWrap.");
@@ -157,7 +162,15 @@ public class Crypto {
     }
 
     public static SecretKey hashedSecretKeyFromBytes(byte key[]) {
-        return secretKeyFromBytes(sha.digest(key));
+        byte[] salt = "rsY4o3uUVqjPPz2".getBytes(); // TODO find a good solution to this.
+        return Crypto.secretKeyFromBytes(SCrypt.generate(
+                key,
+                salt,
+                CPU_SCALING_FACTOR,
+                MEMORY_SCALING_FACTOR,
+                PARALLELISM_SCALING_FACTOR,
+                KEY_LENGTH
+        ));
     }
 
     public static SecretKey secretKeyFromBytes(byte key[]) {
