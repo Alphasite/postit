@@ -11,7 +11,7 @@ import javax.json.*;
 /**
  * Created by Zhan on 3/7/2017.
  */
- class Server extends Thread{
+public class Server extends Thread{
 
     Vector<JsonObject> inQueue;
     ServerSocket serverSocket;
