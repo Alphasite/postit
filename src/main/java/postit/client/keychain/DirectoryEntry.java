@@ -36,6 +36,7 @@ public class DirectoryEntry {
         this.name = name;
         this.encryptionKey = encryptionKey;
         this.directory = directory;
+        this.keychain = null;
         this.keyService = keyService;
         this.backingStore = backingStore;
     }
@@ -44,6 +45,7 @@ public class DirectoryEntry {
         this.name = object.getString("name");
         this.encryptionKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("encryption-key").getBytes()));
         this.directory = directory;
+        this.keychain = null;
         this.keyService = keyService;
         this.backingStore = backingStore;
         this.nonce = Base64.getDecoder().decode(object.getString("nonce"));
@@ -68,6 +70,10 @@ public class DirectoryEntry {
             keychain = new Keychain(name, this);
             this.save();
 
+            return Optional.of(keychain);
+        }
+
+        if (keychain != null) {
             return Optional.of(keychain);
         }
 
@@ -109,6 +115,7 @@ public class DirectoryEntry {
 
         Path path = getPath();
         boolean success = Crypto.writeJsonObjectToCipherStream(cipher.get(), path, keychain.dump().build());
+        System.out.println("Saved keychain as: " + keychain.dump().build());
 
         if (success) {
             encryptionKey = newKey;

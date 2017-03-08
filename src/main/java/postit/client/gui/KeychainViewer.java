@@ -35,9 +35,9 @@ public class KeychainViewer {
     private JMenuItem menuItem;
 
     private JTabbedPane tabbedPane = new JTabbedPane();
-    private ArrayList<DirectoryEntry> keychains;
+    private List<DirectoryEntry> keychains;
     //each JTable contains a list of passwords in a particular Keychain
-    private ArrayList<JTable> tables = new ArrayList<JTable>();
+    private List<JTable> tables = new ArrayList<JTable>();
 
     private Password selectedPassword;
     private JMenuItem addPass;
@@ -56,7 +56,7 @@ public class KeychainViewer {
         } else {
             dir = directory.get();
             controller = new DirectoryController(directory.get(), keyService);
-            this.keychains = (ArrayList<DirectoryEntry>) controller.getKeychains();
+            this.keychains = controller.getKeychains();
             createUIComponents();
         }
 
