@@ -1,5 +1,7 @@
 package postit.client.gui;
 
+import postit.client.keychain.Account;
+import postit.client.keychain.Directory;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 
@@ -69,5 +71,10 @@ public class GUIKeyService implements KeyService {
     public SecretKey getClientKey() {
         return Crypto.secretKeyFromBytes(getKey("Please enter client password: "));
 
+    }
+
+    @Override
+    public String getAccount() {
+        return JOptionPane.showInputDialog("Please enter username: ");
     }
 }

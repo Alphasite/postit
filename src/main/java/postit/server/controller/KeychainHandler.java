@@ -48,7 +48,6 @@ public class KeychainHandler {
     
     /**
      * Updates keychain information in the database. Any item that should be left unchanged should be null.
-     * @param db
      * @param directoryEntryId
      * @param name
      * @param encryptKey

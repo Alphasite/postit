@@ -63,6 +63,12 @@ public class CLIKeyService implements KeyService {
     }
 
     @Override
+    public String getAccount() {
+        System.out.println("Please enter username: ");
+        return new Scanner(System.in).nextLine();
+    }
+
+    @Override
     public SecretKey createMasterKey() {
         String password;
 

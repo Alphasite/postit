@@ -1,15 +1,13 @@
 package postit.client.controller;
 
+import postit.client.backend.KeyService;
 import postit.client.keychain.DirectoryEntry;
 import postit.communication.Client;
 import postit.communication.Server;
 import postit.shared.model.DirectoryAndKey;
 
 import javax.crypto.SecretKey;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
+import javax.json.*;
 
 import java.io.StringReader;
 import java.util.*;
@@ -34,14 +32,14 @@ public class ServerController {
     private Server serverToClient;
     private DirectoryController directoryController;
 
-    public ServerController(Client clientToServer, Server serverToClient, DirectoryController directoryController) {
+    public ServerController(Client clientToServer, Server serverToClient, DirectoryController directoryController, KeyService keyService) {
         this.clientToServer = clientToServer;
         this.serverToClient = serverToClient;
         this.directoryController = directoryController;
     }
 
     public boolean sync() {
-        this.login("", null);
+        this.login(null);
 
         Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
         List<Long> serverDeletedKeychains = getDeletedKeychains();
@@ -86,7 +84,7 @@ public class ServerController {
         }
 
         for (Long serverid : keychainsToDownload) {
-            JsonObject directoryKeychainObject = getKeychain(serverid);
+            JsonObject directoryKeychainObject = getDirectoryKeychainObject(serverid);
 
             if (directoryKeychainObject != null) {
                 if (!directoryController.createKeychain(
@@ -109,7 +107,7 @@ public class ServerController {
             }
 
             if (keychainsToUpdate.contains(entry.serverid)) {
-                JsonObject directoryKeychainObject = getKeychain(entry.serverid);
+                JsonObject directoryKeychainObject = getDirectoryKeychainObject(entry.serverid);
 
                 directoryController.updateLocalIfIsOlder(
                         entry,
@@ -158,14 +156,18 @@ public class ServerController {
     	return object;
     }
     
-    private boolean login(String username, SecretKey password) {
-    	String req = RequestMessenger.createAuthenticateMessage(username, password.toString());
+    private boolean login(SecretKey password) {
+    	String req = RequestMessenger.createAuthenticateMessage(getUsername(), password.toString());
     	JsonObject res = stringToJsonObject(sendRequestAndWait(req));
     	return res.getString("status").equals("success");
     }
 
-    private List<Long> getKeychains(String username) {
-        String req = RequestMessenger.createGetKeychainsMessage(username);
+    private String getUsername() {
+        return directoryController.getAccount().getUsername();
+    }
+
+    private List<Long> getKeychains() {
+        String req = RequestMessenger.createGetKeychainsMessage(getUsername());
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));
         JsonArray list = res.getJsonArray("keychains");
         List<Long> keys = new ArrayList<Long>();
@@ -183,24 +185,28 @@ public class ServerController {
         return null;
     }
 
-    private JsonObject getKeychain(String username, long serverid) {
-        String req = RequestMessenger.createGetKeychainMessage(username, serverid);
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
-        
-        //TODO WHAT IS THE FORMAT OF RETURNED VALUE HERE? DirectoryAndKey.fromJsonObject(res.getJsonObject("keychain")) would 
-        // return the wrapper for directoryentry and keychain
+    private JsonObject getDirectoryKeychainObject(long serverid) {
+        String req = RequestMessenger.createGetKeychainMessage(getUsername(), serverid);
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+
         return res;
     }
 
-    private boolean createKeychain(String username, DirectoryEntry entry) {
-    	//TODO ALDO NEED KEYCHAIN INFORMATION
-    	String req = RequestMessenger.createAddKeychainsMessage(username, entry.name, entry.encryptionKey.toString(), "", ""); 
+    private boolean createKeychain(DirectoryEntry entry) {
+        Optional<JsonObjectBuilder> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
+
+        if (!keychainEntryObject.isPresent()) {
+            return false;
+        }
+
+        // TODO fill this in?
+    	String req = RequestMessenger.createAddKeychainsMessage(getUsername(), entry.name, entry.encryptionKey.toString(), "", "");
     	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
     	DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(res.getJsonObject("keychain"));
     	long id = dak.getDirectoryEntryId();
     	
         // ask server for new keychain id;
-        Optional<Long> newid = id; //TODO convert this to Optional<Long>
+        Optional<Long> newid = Optional.of(id);
 
         if (!newid.isPresent()) {
             LOGGER.warning("Failed to create keychain (" + entry.name + ")  on server...");
@@ -213,15 +219,21 @@ public class ServerController {
         return setKeychain(entry);
     }
 
-    private boolean setKeychain(String username, DirectoryEntry entry) {
-    	//TODO ALDO NEED KEYCHAIN INFORMATION
-    	String req = RequestMessenger.createUpdateKeychainMessage(username, entry.name, entry.encryptionKey.toString(), "", "");
+    private boolean setKeychain(DirectoryEntry entry) {
+        Optional<JsonObjectBuilder> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
+
+        if (!keychainEntryObject.isPresent()) {
+            return false;
+        }
+
+        // TODO fill this in?
+        String req = RequestMessenger.createUpdateKeychainMessage(getUsername(), entry.name, entry.encryptionKey.toString(), "", "");
     	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
     	return res.getString("status").equals("success");
     }
 
-    private boolean deleteKeychain(String username, long id) {
-    	String req = RequestMessenger.createRemoveKeychainMessage(username, id);
+    private boolean deleteKeychain(long id) {
+    	String req = RequestMessenger.createRemoveKeychainMessage(getUsername(), id);
     	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
     	return res.getString("status").equals("success");
     }

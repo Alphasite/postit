@@ -1,14 +1,13 @@
 package postit.client.controller;
 
+import postit.client.keychain.*;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
-import postit.client.keychain.Directory;
-import postit.client.keychain.DirectoryEntry;
-import postit.client.keychain.Keychain;
-import postit.client.keychain.Password;
 
 import javax.crypto.SecretKey;
+import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,13 +22,13 @@ public class DirectoryController {
     private Directory directory;
     private KeyService keyService;
 
-    public DirectoryController(Directory directory, KeyService keyService){
+    public DirectoryController(Directory directory, KeyService keyService) {
         //I'm not 100% if we want to do it this way, so feel free to change the constructor params
         this.directory = directory;
         this.keyService = keyService;
     }
 
-    public List<DirectoryEntry> getKeychains(){
+    public List<DirectoryEntry> getKeychains() {
         return directory.getKeychains();
     }
 
@@ -49,11 +48,11 @@ public class DirectoryController {
         return directoryEntry.readKeychain();
     }
 
-    public List<Password> getPasswords(Keychain k){
+    public List<Password> getPasswords(Keychain k) {
         return k.passwords;
     }
 
-    public boolean createKeychain(String keychainName){
+    public boolean createKeychain(String keychainName) {
         return directory.createKeychain(keyService.getMasterKey(), keychainName).isPresent() && directory.save();
     }
 
@@ -62,7 +61,7 @@ public class DirectoryController {
         return keychain.passwords.add(password) && password.save();
     }
 
-    public boolean updatePassword(Password pass, SecretKey key){
+    public boolean updatePassword(Password pass, SecretKey key) {
         pass.password = key;
         System.out.println("edited pass to: " + pass.dump().build());
         return pass.save();
@@ -78,7 +77,7 @@ public class DirectoryController {
         return password.save();
     }
 
-    public boolean deleteKeychain(Keychain k){
+    public boolean deleteKeychain(Keychain k) {
         return k.delete();
     }
 
@@ -86,7 +85,7 @@ public class DirectoryController {
         return entry.delete();
     }
 
-    public boolean deletePassword(Password p){
+    public boolean deletePassword(Password p) {
         return p.delete();
     }
 
@@ -122,5 +121,24 @@ public class DirectoryController {
 
     public boolean createKeychain(JsonObject directory, JsonObject keychain) {
         return this.directory.createKeychain(directory, keychain).isPresent() && this.directory.save();
+    }
+
+    public Account getAccount() {
+        return this.directory.account;
+    }
+
+    public Optional<JsonObjectBuilder> buildKeychainEntryObject(DirectoryEntry entry) {
+        Optional<Keychain> keychain = entry.readKeychain();
+
+        if (!keychain.isPresent()) {
+            LOGGER.warning("Could not retrieve keychain " + entry.name + " from disk.");
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                Json.createObjectBuilder()
+                        .add("directory", entry.dump())
+                        .add("keychain", keychain.get().dump())
+        );
     }
 }
