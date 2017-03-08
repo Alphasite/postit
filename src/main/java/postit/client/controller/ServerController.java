@@ -2,6 +2,7 @@ package postit.client.controller;
 
 import postit.client.keychain.DirectoryEntry;
 import postit.communication.Client;
+import postit.communication.Server;
 
 import javax.crypto.SecretKey;
 import javax.json.JsonObject;
@@ -23,11 +24,13 @@ import java.util.stream.Collectors;
 public class ServerController {
     private final static Logger LOGGER = Logger.getLogger(ServerController.class.getName());
 
-    Client client;
+    Client clientToServer;
+    Server serverToClient;
     DirectoryController directoryController;
 
-    public ServerController(Client client, DirectoryController directoryController) {
-        this.client = client;
+    public ServerController(Client clientToServer, Server serverToClient, DirectoryController directoryController) {
+        this.clientToServer = clientToServer;
+        this.serverToClient = serverToClient;
         this.directoryController = directoryController;
     }
 

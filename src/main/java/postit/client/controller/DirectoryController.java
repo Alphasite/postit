@@ -68,6 +68,16 @@ public class DirectoryController {
         return pass.save();
     }
 
+    public boolean updateMetadataEntry(Password password, String name, String entry) {
+        password.metadata.put(name, entry);
+        return password.save();
+    }
+
+    public boolean removeMetadataEntryIfExists(Password password, String name) {
+        password.metadata.remove(name);
+        return password.save();
+    }
+
     public boolean deleteKeychain(Keychain k){
         return k.delete();
     }
