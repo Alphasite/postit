@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 public class ServerController {
     private final static Logger LOGGER = Logger.getLogger(ServerController.class.getName());
 
-    Client clientToServer;
-    Server serverToClient;
-    DirectoryController directoryController;
+    private Client clientToServer;
+    private Server serverToClient;
+    private DirectoryController directoryController;
 
     public ServerController(Client clientToServer, Server serverToClient, DirectoryController directoryController) {
         this.clientToServer = clientToServer;
