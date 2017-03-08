@@ -1,5 +1,7 @@
 package postit.shared.model;
 
+import javax.json.JsonObject;
+
 import org.json.JSONObject;
 
 import postit.server.model.DirectoryEntry;
@@ -103,6 +105,11 @@ public class DirectoryAndKey {
 	}
 	
 	public static DirectoryAndKey fromJSONObject(JSONObject obj){
+		return new DirectoryAndKey(obj.getInt("directoryEntryId"), obj.getString("name"), obj.getString("encryptionKey"), 
+				obj.getInt("directoryId"), obj.getString("password"), obj.getString("metadata"));
+	}
+	
+	public static DirectoryAndKey fromJsonObject(JsonObject obj){
 		return new DirectoryAndKey(obj.getInt("directoryEntryId"), obj.getString("name"), obj.getString("encryptionKey"), 
 				obj.getInt("directoryId"), obj.getString("password"), obj.getString("metadata"));
 	}

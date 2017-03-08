@@ -88,6 +88,13 @@ public class MessagePackager {
 		return response.toString(); 
 	}
 	
+	public static String createTimeOutResponse(){
+		JSONObject response = new JSONObject();
+		response.put("status", "failure");
+		response.put("message", "Time out: no response from server");
+		return response.toString();
+	}
+	
 	public static void checkInputTypes(Asset asset, Object bean) throws InputMismatchException{
 		switch(asset){
 		case ACCOUNT:
