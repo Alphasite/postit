@@ -24,6 +24,15 @@ public class RequestMessenger {
 		return "";
 	}
 	
+	public static String createAddKeychainsMessage(String username, String name, String encryptionKey, String password, String meta){
+		DirectoryAndKey dak = new DirectoryAndKey();
+		dak.setName(name);
+		dak.setEncryptionKey(encryptionKey);
+		dak.setPassword(password);
+		dak.setMetadata(meta);
+		return MessagePackager.createRequest(Action.ADD, username, Asset.KEYCHAIN, dak);
+	}
+	
 	public static String createGetKeychainsMessage(String username){
 		return MessagePackager.createRequest(Action.GET, username, Asset.KEYCHAINS, null);
 	}
@@ -32,6 +41,12 @@ public class RequestMessenger {
 		DirectoryAndKey dak = new DirectoryAndKey();
 		dak.setName(name);
 		return MessagePackager.createRequest(Action.GET, username, Asset.KEYCHAIN, dak);
+	}
+	
+	public static String createRemoveKeychainMessage(String username, String name){
+		DirectoryAndKey dak = new DirectoryAndKey();
+		dak.setName(name);
+		return MessagePackager.createRequest(Action.REMOVE, username, Asset.KEYCHAIN, dak);
 	}
 	
 	public static String createUpdateKeychainMessage(String username, String name, String encryptionKey, String password, String meta){
