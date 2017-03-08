@@ -49,15 +49,15 @@ public class ServerController {
 
         // Figure out which keychains have been deleted here
         Set<Long> serverKeychainsToDelete = new HashSet<>(directoryController.getDeletedKeychains());
-        serverKeychainsToDelete.remove(serverDeletedKeychains);
+        serverKeychainsToDelete.removeAll(serverDeletedKeychains);
 
         Set<Long> keychainsToDownload = new HashSet<>(serverKeychains);
-        keychainsToDownload.remove(clientKeychainNames);
-        keychainsToDownload.remove(serverKeychainsToDelete);
+        keychainsToDownload.removeAll(clientKeychainNames);
+        keychainsToDownload.removeAll(serverKeychainsToDelete);
 
         Set<Long> keychainsToUpload = new HashSet<>(clientKeychainNames);
-        keychainsToUpload.remove(serverKeychains);
-        keychainsToUpload.remove(localKeychainsToDelete);
+        keychainsToUpload.removeAll(serverKeychains);
+        keychainsToUpload.removeAll(localKeychainsToDelete);
 
         Set<Long> keychainsToUpdate = new HashSet<>(clientKeychainNames);
         keychainsToUpdate.retainAll(serverKeychains);
@@ -70,9 +70,7 @@ public class ServerController {
         }
 
         for (DirectoryEntry entry : clientKeychains) {
-            if (createKeychain(entry)) {
-                continue;
-            } else {
+            if (!createKeychain(entry)) {
                 LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
                 return false;
             }

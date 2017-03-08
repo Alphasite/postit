@@ -1,7 +1,6 @@
 package postit.client.keychain;
 
 import javax.json.*;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -2,7 +2,6 @@ package postit.server.controller;
 
 import javax.json.JsonObject;
 
-import postit.server.model.*;
 import postit.shared.model.Account;
 
 /**

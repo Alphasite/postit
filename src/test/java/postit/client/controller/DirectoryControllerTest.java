@@ -9,7 +9,6 @@ import org.junit.Test;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
-import javax.json.JsonObject;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;

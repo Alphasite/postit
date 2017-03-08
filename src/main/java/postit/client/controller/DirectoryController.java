@@ -1,6 +1,5 @@
 package postit.client.controller;
 
-import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 import postit.client.keychain.Directory;
@@ -11,7 +10,6 @@ import postit.client.keychain.Password;
 import javax.crypto.SecretKey;
 import javax.json.JsonObject;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;

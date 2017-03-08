@@ -96,7 +96,7 @@ public class KeychainHandler {
     	Directory dir = db.getDirectory(username);
     	DirectoryEntry de = db.getDirectoryEntry(dir.getDirectoryId(), name);
     	Keychain k = db.getKeychain(de.getDirectoryEntryId());
-    	if (de != null && k != null) return new DirectoryAndKey(de, k);
+    	if (k != null) return new DirectoryAndKey(de, k);
     	else return null;
     }
     
@@ -106,7 +106,7 @@ public class KeychainHandler {
         Directory dir = db.getDirectory(username);
         if (dir == null) return null;
         
-        List<DirectoryAndKey> list = new ArrayList<DirectoryAndKey>();
+        List<DirectoryAndKey> list = new ArrayList<>();
         List<DirectoryEntry> des = db.getDirectoryEntries(dir.getDirectoryId());
         for (DirectoryEntry de: des){
         	Keychain k = db.getKeychain(de.getDirectoryEntryId());

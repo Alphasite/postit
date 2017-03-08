@@ -1,7 +1,5 @@
 package postit.server.controller;
 
-import javax.json.JsonObject;
-
 import org.json.JSONObject;
 
 /**
