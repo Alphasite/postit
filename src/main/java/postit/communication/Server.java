@@ -15,9 +15,9 @@ import org.json.JSONObject;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Server extends Thread{
+public class Server implements Runnable {
 
-    Vector<JsonObject> inQueue;
+    Vector<String> inQueue;
     ServerSocket serverSocket;
     Socket connection = null;
     OutputStreamWriter out;
@@ -37,6 +37,7 @@ public class Server extends Thread{
             table = new HashMap<>();
     }
 
+    @Override
     public void run(){
         try{
             //1. creating a server socket

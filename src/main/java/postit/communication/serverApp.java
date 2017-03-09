@@ -13,7 +13,7 @@ public class serverApp {
 
         Client processor = new Client(outPort, true);
         Server receiver = new Server(rePort, true, processor);
-        receiver.start();
-        processor.start();
+        receiver.run();
+        processor.run();
     }
 }

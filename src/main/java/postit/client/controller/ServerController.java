@@ -4,6 +4,7 @@ import postit.client.backend.KeyService;
 import postit.client.keychain.DirectoryEntry;
 import postit.communication.Client;
 import postit.communication.Server;
+import postit.shared.Crypto;
 import postit.shared.model.DirectoryAndKey;
 
 import javax.crypto.SecretKey;
@@ -39,7 +40,7 @@ public class ServerController {
     }
 
     public boolean sync() {
-        this.login(null);
+        this.login(Crypto.secretKeyFromBytes("temp".getBytes())); // TODO
 
         Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
         List<Long> serverDeletedKeychains = getDeletedKeychains();
