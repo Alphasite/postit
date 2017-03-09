@@ -63,7 +63,7 @@ public class PasswordViewer {
     private void createUIComponents(Password p) {
         // TODO: place custom component creation code here
         frame = new JFrame("Password");
-
+        frame.setMinimumSize(new Dimension(300,400));
 
         Map<String,String> metadata = p.metadata;
 
@@ -71,12 +71,12 @@ public class PasswordViewer {
         if (metadata.containsKey("username"))
             userField.setText(metadata.get("username"));
         else
-            userField.setText("user");
+            userField.setText("");
 
         byte[] bytes = Crypto.secretKeyToBytes(p.password);
         passField.setText(new String(bytes));
         if (metadata.containsKey("comments"))
-            comments.setText(metadata.get("comments"));
+            comments.setText(metadata.get(""));
         else
             comments.setText("");
 

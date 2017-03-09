@@ -141,8 +141,22 @@ public class KeychainViewer {
         menuItem.setEnabled(false);
         fileMenu.add(menuItem);
 
+        menuItem = new JMenuItem(("Sync"));
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+        fileMenu.add(menuItem)
+
         menuItem = new JMenuItem("Close");
-        menuItem.setEnabled(false);
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                frame.dispose();
+            }
+        });
         fileMenu.add(menuItem);
 
         //KEYCHAIN Menu Item
