@@ -9,8 +9,6 @@ import postit.shared.Crypto;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Map;
 /**
  * Created by jackielaw on 2/26/17.
@@ -31,10 +29,8 @@ public class PasswordViewer {
         titleField = new JTextField();
         titleField.setEditable(false);
         userField = new JTextField();
-        userField.setEditable(false);
         passField = new JPasswordField();
         comments = new JTextArea(7,10);
-        comments.setEditable(false);
         toggleView = new JButton("<o>");
 
         saveButton = new JButton("Save");
@@ -47,6 +43,15 @@ public class PasswordViewer {
                 passField.setEchoChar((char)0);
         });
         saveButton.addActionListener(e -> {
+            //String newTitle = String.valueOf(titleField.getText();
+            //c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
+
+            String newUser = String.valueOf(userField.getText());
+            c.updateMetadataEntry(p,"username",newUser);
+
+            String newComments = String.valueOf(comments.getText());
+            c.updateMetadataEntry(p,"comments",newComments);
+
             String newKey = String.valueOf(passField.getPassword());
             c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
             frame.dispose();
@@ -69,8 +74,9 @@ public class PasswordViewer {
 
         byte[] bytes = Crypto.secretKeyToBytes(p.password);
         passField.setText(new String(bytes));
+
         if (metadata.containsKey("comments"))
-            comments.setText(metadata.get(""));
+            comments.setText(metadata.get("comments"));
         else
             comments.setText("");
 
