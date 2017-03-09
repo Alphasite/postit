@@ -13,7 +13,7 @@ import javax.json.*;
  */
 public class Server implements Runnable {
 
-    Vector<JsonObject> inQueue;
+    Vector<String> inQueue;
     ServerSocket serverSocket;
     Socket connection = null;
     OutputStreamWriter out;
@@ -21,7 +21,7 @@ public class Server implements Runnable {
     BufferedReader reader;
     int port;
 
-    Server(Vector<JsonObject> queue, int port){
+    public Server(Vector<String> queue, int port){
         this.inQueue = queue;
         this.port = port;
     }
@@ -44,7 +44,7 @@ public class Server implements Runnable {
 
                 reader = new BufferedReader(in);
                 JsonObject obj = readBuffer(reader);
-                inQueue.add(obj);
+                inQueue.add(obj.toString());
 
             }while(true);
         }

@@ -1,26 +1,29 @@
 
 package postit.client.gui;
 
+
 import postit.client.backend.BackingStore;
 import postit.client.backend.BackingStoreImpl;
 import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
+import postit.client.controller.ServerController;
 import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
+import postit.communication.Client;
+import postit.communication.Server;
 import postit.shared.Crypto;
 
+import javax.json.JsonObject;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Created by jackielaw on 2/27/17.
@@ -30,7 +33,8 @@ public class KeychainViewer {
     KeyService keyService;
 
     Directory dir;
-    DirectoryController controller;
+    DirectoryController directoryController;
+    ServerController serverController;
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -55,8 +59,17 @@ public class KeychainViewer {
             JOptionPane.showMessageDialog(null, "Could not load directory");
         } else {
             dir = directory.get();
-            controller = new DirectoryController(directory.get(), keyService);
-            this.keychains = controller.getKeychains();
+            directoryController = new DirectoryController(directory.get(), keyService);
+            this.keychains = directoryController.getKeychains();
+
+            int rePort = 2048;
+            int outPort = 4880;
+            Vector<String> inQueue = new Vector<>();
+            Vector<String> outQueue = new Vector<>();
+
+            Server receiver = new Server(inQueue, rePort);
+            Client processor = new Client(outQueue, outPort, false);
+            serverController = new ServerController(processor,receiver,directoryController,keyService);
             createUIComponents();
         }
 
@@ -107,7 +120,7 @@ public class KeychainViewer {
             int option = JOptionPane.showConfirmDialog(frame, message, "New Password", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
                 if(newtitle.getText().length() > 0 && newpassword.getText().length() > 0) {
-                    controller.createPassword(getActiveKeychain(),
+                    directoryController.createPassword(getActiveKeychain(),
                                                 newtitle.getText(),
                                                 Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
                 }
@@ -122,7 +135,7 @@ public class KeychainViewer {
             int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
                     "Delete Password", JOptionPane.YES_NO_OPTION);
             if (deletePassword==JOptionPane.YES_OPTION){
-                controller.deletePassword(selectedPassword);
+                directoryController.deletePassword(selectedPassword);
                 refreshTabbedPanes();
             }
         });
@@ -134,8 +147,32 @@ public class KeychainViewer {
         menuItem.setEnabled(false);
         fileMenu.add(menuItem);
 
+        menuItem = new JMenuItem(("Refresh"));
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshTabbedPanes();
+            }
+        });
+        fileMenu.add(menuItem);
+
+
+        menuItem = new JMenuItem(("Sync"));
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                serverController.sync();
+            }
+        });
+        fileMenu.add(menuItem);
+
         menuItem = new JMenuItem("Close");
-        menuItem.setEnabled(false);
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                frame.dispose();
+            }
+        });
         fileMenu.add(menuItem);
 
         //KEYCHAIN Menu Item
@@ -154,7 +191,7 @@ public class KeychainViewer {
                     "");
 
             if ((k != null) && (k.length() > 0)) {
-                controller.createKeychain(k);
+                directoryController.createKeychain(k);
             }
             refreshTabbedPanes();
         });
@@ -165,7 +202,7 @@ public class KeychainViewer {
             int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
                                                             "Delete keychain", JOptionPane.YES_NO_OPTION);
             if (deleteKeychain==JOptionPane.YES_OPTION){
-                controller.deleteKeychain(getActiveKeychain());
+                directoryController.deleteKeychain(getActiveKeychain());
                 refreshTabbedPanes();
             }
 
@@ -230,7 +267,7 @@ public class KeychainViewer {
             if (metadata.containsKey("username"))
                 data[i][1] = metadata.get("username");
             else
-                data[i][1] = metadata.get("user" + i);
+                data[i][1] = "";
         }
 
         JTable table = new JTable(data, columnNames) {
@@ -248,10 +285,8 @@ public class KeychainViewer {
                 }
                 else if (e.getClickCount() == 2) {
                     Password activePassword = getActivePassword(passwords, e);
-                    PasswordViewer pv = new PasswordViewer(controller,getActiveKeychain(),activePassword);
+                    PasswordViewer pv = new PasswordViewer(directoryController,getActiveKeychain(),activePassword);
                 }
-                table.revalidate();
-                table.repaint();
             }
         });
 
