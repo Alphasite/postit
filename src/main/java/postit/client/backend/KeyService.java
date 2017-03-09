@@ -1,6 +1,5 @@
 package postit.client.backend;
 
-import jdk.internal.util.xml.impl.Pair;
 import postit.client.keychain.Account;
 
 import javax.crypto.SecretKey;

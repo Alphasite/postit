@@ -128,6 +128,7 @@ public class DirectoryController {
     }
 
     public Optional<JsonObjectBuilder> buildKeychainEntryObject(DirectoryEntry entry) {
+        // TODO encryption.
         Optional<Keychain> keychain = entry.readKeychain();
 
         if (!keychain.isPresent()) {

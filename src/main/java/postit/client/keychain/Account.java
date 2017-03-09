@@ -21,6 +21,7 @@ public class Account {
     public Account(String username, Directory directory) {
         this.username = username;
         this.directory = directory;
+        this.secretKey = Crypto.secretKeyFromBytes("TODO".getBytes()); // TODO
     }
 
     public Account(JsonObject object, Directory directory) {

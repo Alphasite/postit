@@ -48,9 +48,12 @@ public class DirectoryControllerTest {
             Crypto.init(false);
 
             keyService = new MockKeyService(Crypto.hashedSecretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
+            keyService.account = "test";
+
             backingStore = new MockBackingStoreImpl(keyService);
             directory = new Directory(keyService, backingStore);
             controller = new DirectoryController(directory, keyService);
+
 
             backingStore.init();
         } catch (Exception e) {
