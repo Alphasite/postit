@@ -11,9 +11,9 @@ import javax.json.*;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Server extends Thread{
+public class Server implements Runnable {
 
-    Vector<JsonObject> inQueue;
+    Vector<String> inQueue;
     ServerSocket serverSocket;
     Socket connection = null;
     OutputStreamWriter out;
@@ -21,11 +21,12 @@ public class Server extends Thread{
     BufferedReader reader;
     int port;
 
-    Server(Vector<JsonObject> queue, int port){
+    public Server(Vector<String> queue, int port){
         this.inQueue = queue;
         this.port = port;
     }
 
+    @Override
     public void run(){
         try{
             //1. creating a server socket
@@ -43,7 +44,7 @@ public class Server extends Thread{
 
                 reader = new BufferedReader(in);
                 JsonObject obj = readBuffer(reader);
-                inQueue.add(obj);
+                inQueue.add(obj.toString());
 
             }while(true);
         }

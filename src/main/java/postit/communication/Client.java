@@ -11,9 +11,9 @@ import javax.json.*;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Client extends Thread{
+public class Client implements Runnable {
 
-    Vector<JsonObject> outQueue;
+    Vector<String> outQueue;
     Socket clientSocket;
     OutputStreamWriter out;
     InputStreamReader in;
@@ -21,7 +21,7 @@ public class Client extends Thread{
     boolean postitServer;
     RequestHandler requestHandler;
 
-    Client(Vector<JsonObject> queue, int port, boolean ifClientSide){
+    public Client(Vector<String> queue, int port, boolean ifClientSide){
         this.outQueue = queue;
         this.port = port;
         this.postitServer = ifClientSide;
@@ -30,6 +30,7 @@ public class Client extends Thread{
         }
     }
 
+    @Override
     public void run() {
         try {
             wait(5000);
@@ -78,9 +79,9 @@ public class Client extends Thread{
     	return -1;
     }
     
-    void sendMessage(JsonObject obj) {
+    void sendMessage(String obj) {
         try {
-            out.write(obj.toString());
+            out.write(obj);
             out.flush();
         } catch (IOException ioException) {
             ioException.printStackTrace();
