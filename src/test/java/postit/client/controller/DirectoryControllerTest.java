@@ -9,9 +9,9 @@ import org.junit.Test;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
-import javax.json.JsonObject;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -23,7 +23,10 @@ import static org.junit.Assert.*;
 
 /**
  * Created by nishadmathur on 2/3/17.
+ *
+ * Test class for directory controller.
  */
+@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent"})
 public class DirectoryControllerTest {
     private final static Logger LOGGER = Logger.getLogger(DirectoryControllerTest.class.getName());
 
@@ -45,9 +48,12 @@ public class DirectoryControllerTest {
             Crypto.init(false);
 
             keyService = new MockKeyService(Crypto.hashedSecretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
+            keyService.account = "test";
+
             backingStore = new MockBackingStoreImpl(keyService);
             directory = new Directory(keyService, backingStore);
             controller = new DirectoryController(directory, keyService);
+
 
             backingStore.init();
         } catch (Exception e) {
@@ -728,5 +734,263 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain.passwords.size(), is(1));
         assertThat(oldKeychain.passwords.get(0).identifier, is("json"));
         assertThat(oldKeychain.passwords.get(0).getPasswordAsString(), is("json"));
+    }
+
+    @Test
+    public void updateMetadataCreate() throws Exception {
+        LOGGER.info("----updateMetadataCreate");
+
+        controller.createKeychain("test10");
+        Keychain keychain = controller.getKeychain("test10").get();
+        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "7")) {
+                controller.updateMetadataEntry(password, "test", "banana");
+            }
+        }
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(true));
+                assertThat(password.metadata.get("test"), is("banana"));
+            }
+        }
+    }
+
+    @Test
+    public void updateMetadataCreatePersistent() throws Exception {
+        LOGGER.info("----updateMetadataCreatePersistent");
+
+        controller.createKeychain("test10");
+        Keychain keychain = controller.getKeychain("test10").get();
+        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "7")) {
+                controller.updateMetadataEntry(password, "test", "banana");
+            }
+        }
+
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(true));
+                assertThat(password.metadata.get("test"), is("banana"));
+            }
+        }
+    }
+
+    @Test
+    public void updateMetadataUpdate() throws Exception {
+        LOGGER.info("----updateMetadataUpdate");
+
+        controller.createKeychain("test10");
+        Keychain keychain = controller.getKeychain("test10").get();
+        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "7")) {
+                controller.updateMetadataEntry(password, "test", "banana");
+                controller.updateMetadataEntry(password, "test2", "asdasd");
+            }
+        }
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(true));
+                assertThat(password.metadata.containsKey("test2"), is(true));
+                assertThat(password.metadata.get("test"), is("banana"));
+                assertThat(password.metadata.get("test2"), is("asdasd"));
+                assertThat(controller.updateMetadataEntry(password, "test", "ham"), is(true));
+            }
+        }
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(true));
+                assertThat(password.metadata.containsKey("test2"), is(true));
+                assertThat(password.metadata.get("test"), is("ham"));
+                assertThat(password.metadata.get("test2"), is("asdasd"));
+            }
+        }
+    }
+
+    @Test
+    public void updateMetadataUpdatePersistent() throws Exception {
+        LOGGER.info("----updateMetadataUpdatePersistent");
+
+        controller.createKeychain("test10");
+        Keychain keychain = controller.getKeychain("test10").get();
+        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "7")) {
+                controller.updateMetadataEntry(password, "test", "banana");
+                controller.updateMetadataEntry(password, "test2", "asdasd");
+            }
+        }
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(true));
+                assertThat(password.metadata.containsKey("test2"), is(true));
+                assertThat(password.metadata.get("test"), is("banana"));
+                assertThat(password.metadata.get("test2"), is("asdasd"));
+                assertThat(controller.updateMetadataEntry(password, "test", "ham"), is(true));
+            }
+        }
+
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(true));
+                assertThat(password.metadata.containsKey("test2"), is(true));
+                assertThat(password.metadata.get("test"), is("ham"));
+                assertThat(password.metadata.get("test2"), is("asdasd"));
+            }
+        }
+    }
+
+    @Test
+    public void deletePasswordMetadata() throws Exception {
+        LOGGER.info("----deletePasswordMetadata");
+
+        controller.createKeychain("test13");
+        Keychain keychain = controller.getKeychain("test13").get();
+        assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password11", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password12", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        assertThat(passwords.size(), is(3));
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            assertThat(controller.getPassword(password), is("secret" + number));
+        }
+
+        Password password11 = passwords.stream()
+                .filter(password -> password.identifier.equals("password11"))
+                .findAny()
+                .get();
+
+        assertThat(controller.deletePassword(password11), is(true));
+
+        passwords = controller.getPasswords(keychain);
+
+        assertThat(passwords.size(), is(2));
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "10")) {
+                controller.updateMetadataEntry(password, "test", "banana");
+                controller.updateMetadataEntry(password, "test2", "asdasd");
+            }
+        }
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "10")) {
+                assertThat(controller.removeMetadataEntryIfExists(password, "test"), is(true));
+            }
+        }
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(false));
+                assertThat(password.metadata.containsKey("test2"), is(true));
+                assertThat(password.metadata.get("test2"), is("asdasd"));
+            }
+        }
+    }
+
+    @Test
+    public void deletePasswordMetadataPersistent() throws Exception {
+        LOGGER.info("----deletePasswordMetadata");
+
+        controller.createKeychain("test13");
+        Keychain keychain = controller.getKeychain("test13").get();
+        assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password11", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password12", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        assertThat(passwords.size(), is(3));
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            assertThat(controller.getPassword(password), is("secret" + number));
+        }
+
+        Password password11 = passwords.stream()
+                .filter(password -> password.identifier.equals("password11"))
+                .findAny()
+                .get();
+
+        assertThat(controller.deletePassword(password11), is(true));
+
+        passwords = controller.getPasswords(keychain);
+
+        assertThat(passwords.size(), is(2));
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "10")) {
+                controller.updateMetadataEntry(password, "test", "banana");
+                controller.updateMetadataEntry(password, "test2", "asdasd");
+            }
+        }
+
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+
+            if (Objects.equals(number, "10")) {
+                assertThat(controller.removeMetadataEntryIfExists(password, "test"), is(true));
+            }
+        }
+
+        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+
+        for (Password password : passwords) {
+            String number = password.identifier.substring(8);
+            if (Objects.equals(number, "7")) {
+                assertThat(password.metadata.containsKey("test"), is(false));
+                assertThat(password.metadata.containsKey("test2"), is(true));
+                assertThat(password.metadata.get("test2"), is("asdasd"));
+            }
+        }
     }
 }

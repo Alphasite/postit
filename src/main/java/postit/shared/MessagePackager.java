@@ -35,15 +35,15 @@ public class MessagePackager {
 		REMOVE,
 		GET,
 		AUTHENTICATE
-	};
-	
+	}
+
 	public enum Asset {
 		ACCOUNT,
 		ACCOUNTS,
 		KEYCHAIN,
 		KEYCHAINS
-	};
-	
+	}
+
 	/**
 	 * Takes inputs and package them into the string representation of a single JSONObject
 	 * @param req
@@ -86,6 +86,13 @@ public class MessagePackager {
 			response.put("message", message);
 		}
 		return response.toString(); 
+	}
+	
+	public static String createTimeOutResponse(){
+		JSONObject response = new JSONObject();
+		response.put("status", "failure");
+		response.put("message", "Time out: no response from server");
+		return response.toString();
 	}
 	
 	public static void checkInputTypes(Asset asset, Object bean) throws InputMismatchException{

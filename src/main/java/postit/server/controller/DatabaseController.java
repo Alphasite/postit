@@ -374,7 +374,7 @@ public class DatabaseController {
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rset = null;
-		ArrayList<DirectoryEntry> list = new ArrayList<DirectoryEntry>();
+		ArrayList<DirectoryEntry> list = new ArrayList<>();
 		
 		try {
 			conn = Database.connectToDefault();

@@ -40,22 +40,16 @@ public class PasswordViewer {
         saveButton = new JButton("Save");
 
         createUIComponents(p);
-        toggleView.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(passField.getEchoChar()==(char)0)
-                    passField.setEchoChar((char)9679); //(char)9679 is the black dot symbol
-                else
-                    passField.setEchoChar((char)0);
-            }
+        toggleView.addActionListener(e -> {
+            if(passField.getEchoChar()==(char)0)
+                passField.setEchoChar((char)9679); //(char)9679 is the black dot symbol
+            else
+                passField.setEchoChar((char)0);
         });
-        saveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String newKey = String.valueOf(passField.getPassword());
-                c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
-                frame.dispose();
-            }
+        saveButton.addActionListener(e -> {
+            String newKey = String.valueOf(passField.getPassword());
+            c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
+            frame.dispose();
         });
     }
 

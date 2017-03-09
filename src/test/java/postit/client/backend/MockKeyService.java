@@ -8,11 +8,13 @@ import java.util.List;
  * Created by nishadmathur on 2/3/17.
  */
 public class MockKeyService implements KeyService {
-    List<byte[]> getKeys;
-    List<SecretKey> clientKeys;
+    public List<byte[]> getKeys;
+    public List<SecretKey> clientKeys;
 
-    SecretKey masterKey;
-    SecretKey newMasterKey;
+    public SecretKey masterKey;
+    public SecretKey newMasterKey;
+
+    public String account;
 
     public MockKeyService(SecretKey masterKey, SecretKey newMasterKey) {
         this.getKeys = new ArrayList<>();
@@ -39,5 +41,10 @@ public class MockKeyService implements KeyService {
     @Override
     public SecretKey getClientKey() {
         return clientKeys.remove(0);
+    }
+
+    @Override
+    public String getAccount() {
+        return account;
     }
 }

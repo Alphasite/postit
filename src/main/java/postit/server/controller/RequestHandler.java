@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.json.JSONObject;
 
-import postit.server.model.*;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
 import postit.shared.model.Account;

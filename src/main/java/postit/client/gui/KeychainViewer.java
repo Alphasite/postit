@@ -37,7 +37,7 @@ public class KeychainViewer {
     private JTabbedPane tabbedPane = new JTabbedPane();
     private List<DirectoryEntry> keychains;
     //each JTable contains a list of passwords in a particular Keychain
-    private List<JTable> tables = new ArrayList<JTable>();
+    private List<JTable> tables = new ArrayList<>();
 
     private Password selectedPassword;
     private JMenuItem addPass;
@@ -96,41 +96,34 @@ public class KeychainViewer {
         menuBar.add(fileMenu);
 
         addPass = new JMenuItem("New Password");
-        addPass.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JTextField newtitle = new JTextField();
-                JTextField newpassword = new JPasswordField();
-                Object[] message = {
-                        "Title:", newtitle,
-                        "Password:", newpassword
-                };
+        addPass.addActionListener(e -> {
+            JTextField newtitle = new JTextField();
+            JTextField newpassword = new JPasswordField();
+            Object[] message = {
+                    "Title:", newtitle,
+                    "Password:", newpassword
+            };
 
-                int option = JOptionPane.showConfirmDialog(frame, message, "New Password", JOptionPane.OK_CANCEL_OPTION);
-                if (option == JOptionPane.OK_OPTION) {
-                    if(newtitle!=null && newtitle.getText().length()>0
-                            && newpassword!=null && newpassword.getText().length()>0) {
-                        controller.createPassword(getActiveKeychain(),
-                                                    newtitle.getText(),
-                                                    Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
-                    }
+            int option = JOptionPane.showConfirmDialog(frame, message, "New Password", JOptionPane.OK_CANCEL_OPTION);
+            if (option == JOptionPane.OK_OPTION) {
+                if(newtitle.getText().length() > 0 && newpassword.getText().length() > 0) {
+                    controller.createPassword(getActiveKeychain(),
+                                                newtitle.getText(),
+                                                Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
                 }
-                refreshTabbedPanes();
             }
+            refreshTabbedPanes();
         });
         addPass.setEnabled(false);
         fileMenu.add(addPass);
 
         delPass = new JMenuItem("Delete Password");
-        delPass.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
-                        "Delete Password", JOptionPane.YES_NO_OPTION);
-                if (deletePassword==JOptionPane.YES_OPTION){
-                    controller.deletePassword(selectedPassword);
-                    refreshTabbedPanes();
-                }
+        delPass.addActionListener(e -> {
+            int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
+                    "Delete Password", JOptionPane.YES_NO_OPTION);
+            if (deletePassword==JOptionPane.YES_OPTION){
+                controller.deletePassword(selectedPassword);
+                refreshTabbedPanes();
             }
         });
         delPass.setEnabled(false);
@@ -164,38 +157,32 @@ public class KeychainViewer {
         menuBar.add(keychainMenu);
 
         menuItem = new JMenuItem("New Keychain");
-        menuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String k = (String) JOptionPane.showInputDialog(
-                        frame,
-                        "New Keychain Name",
-                        "New Keychain",
-                        JOptionPane.PLAIN_MESSAGE,
-                        null,
-                        null,
-                        "");
+        menuItem.addActionListener(e -> {
+            String k = (String) JOptionPane.showInputDialog(
+                    frame,
+                    "New Keychain Name",
+                    "New Keychain",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "");
 
-                if ((k != null) && (k.length() > 0)) {
-                    controller.createKeychain(k);
-                }
-                refreshTabbedPanes();
+            if ((k != null) && (k.length() > 0)) {
+                controller.createKeychain(k);
             }
+            refreshTabbedPanes();
         });
         keychainMenu.add(menuItem);
 
         delKey = new JMenuItem("Delete Keychain");
-        delKey.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
-                                                                "Delete keychain", JOptionPane.YES_NO_OPTION);
-                if (deleteKeychain==JOptionPane.YES_OPTION){
-                    controller.deleteKeychain(getActiveKeychain());
-                    refreshTabbedPanes();
-                }
-
+        delKey.addActionListener(e -> {
+            int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
+                                                            "Delete keychain", JOptionPane.YES_NO_OPTION);
+            if (deleteKeychain==JOptionPane.YES_OPTION){
+                controller.deleteKeychain(getActiveKeychain());
+                refreshTabbedPanes();
             }
+
         });
         keychainMenu.add(delKey);
 
@@ -210,7 +197,7 @@ public class KeychainViewer {
         refreshTabbedPanes();
         frame.add(tabbedPane);
 
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
 
@@ -248,7 +235,7 @@ public class KeychainViewer {
 
         //fill table for Keychain k with all of its passwords
         String[] columnNames = {"Title", "Username"};
-        List<Password> passwords = (ArrayList<Password>) k.passwords;
+        List<Password> passwords = k.passwords;
 
         String[][] data = new String[passwords.size()][2];
         for (int i = 0; i < passwords.size(); i++) {
@@ -293,7 +280,13 @@ public class KeychainViewer {
 
     private Keychain getActiveKeychain(){
         int activeKeychainidx = tabbedPane.getSelectedIndex();
-        return this.keychains.get(activeKeychainidx).readKeychain().get();
+        Optional<Keychain> keychain = this.keychains.get(activeKeychainidx).readKeychain();
+
+        if (!keychain.isPresent()) {
+            // TODO
+        }
+
+        return keychain.get();
     }
 
     private Password getActivePassword(List<Password> passwords, MouseEvent e){

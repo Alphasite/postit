@@ -20,11 +20,14 @@ public class Directory {
     public List<DirectoryEntry> keychains;
     public List<Long> deletedKeychains;
 
+    public Account account;
+
     public Directory(KeyService keyService, BackingStore backingStore) {
         this.keyService = keyService;
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
+        this.account = new Account(keyService.getAccount(), this);
     }
 
     public Directory(JsonObject object, KeyService keyService, BackingStore backingStore) {
@@ -32,6 +35,8 @@ public class Directory {
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
+
+        this.account = new Account(object.getJsonObject("account"), this);
 
         JsonArray keychainArray = object.getJsonArray("keychains");
         for (int i = 0; i < keychainArray.size(); i++) {
@@ -57,6 +62,7 @@ public class Directory {
 
         return Json.createObjectBuilder()
                 .add("version", "1.0.0")
+                .add("account", account.dump())
                 .add("keychains", keychainArray)
                 .add("deleted", deletedKeychainsArray);
     }
@@ -133,6 +139,4 @@ public class Directory {
         LOGGER.info("Saving directory");
         return backingStore.writeDirectory(this);
     }
-
-
 }

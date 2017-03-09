@@ -11,7 +11,7 @@ import javax.json.*;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Server {
+public class Server extends Thread{
 
     Vector<JsonObject> inQueue;
     ServerSocket serverSocket;
@@ -26,7 +26,7 @@ public class Server {
         this.port = port;
     }
 
-    void run(){
+    public void run(){
         try{
             //1. creating a server socket
             serverSocket = new ServerSocket(port);
@@ -63,6 +63,19 @@ public class Server {
         }
     }
 
+    /**
+     * Given a request id, retrieves the response that server sent.
+     * Returns null if no response with that id has been received.
+     * Should return time out message if no server side response after a threshold time.
+     * @param requestId
+     * @return
+     */
+    public String getResponse(int requestId){
+    	
+    	// to create timeout message: MessagePackager.createTimeoutMessage();
+    	return null;
+    }
+    
     JsonObject readBuffer(BufferedReader reader){
         JsonReader jsonReader = Json.createReader(reader);
         JsonObject obj = jsonReader.readObject();
