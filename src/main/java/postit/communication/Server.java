@@ -1,11 +1,15 @@
 package postit.communication;
 
+import org.json.JSONObject;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Vector;
 import javax.json.*;
+import org.json.JSONObject;
 
 
 /**
@@ -20,10 +24,17 @@ public class Server extends Thread{
     InputStreamReader in;
     BufferedReader reader;
     int port;
+    boolean postitServer;
+    Client client;
+    HashMap<Integer, JSONObject> table;
 
-    Server(Vector<JsonObject> queue, int port){
-        this.inQueue = queue;
+    Server(int port, boolean postitServer, Client client){
         this.port = port;
+        this.postitServer = postitServer;
+        if (this.postitServer)
+            this.client = client;
+        else
+            table = new HashMap<>();
     }
 
     public void run(){
@@ -40,11 +51,15 @@ public class Server extends Thread{
             in = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8);
             //4. The two parts communicate via the input and output streams
             do{
-
                 reader = new BufferedReader(in);
-                JsonObject obj = readBuffer(reader);
-                inQueue.add(obj);
-
+                JSONObject obj = readBuffer(reader);
+                if (this.postitServer) {
+                    client.addRequest(obj);
+                }
+                else {
+                    int id = (int)obj.get("id");
+                    table.put(id, (JSONObject)obj.get("obj"));
+                }
             }while(true);
         }
         catch(IOException ioException){
@@ -71,15 +86,15 @@ public class Server extends Thread{
      * @return
      */
     public String getResponse(int requestId){
-    	
+        return table.get(requestId).toString();
     	// to create timeout message: MessagePackager.createTimeoutMessage();
-    	return null;
     }
     
-    JsonObject readBuffer(BufferedReader reader){
+    JSONObject readBuffer(BufferedReader reader){
         JsonReader jsonReader = Json.createReader(reader);
         JsonObject obj = jsonReader.readObject();
         jsonReader.close();
-        return obj;
+        JSONObject rtn = new JSONObject(obj.toString());
+        return rtn;
     }
 }

@@ -8,13 +8,11 @@ import java.util.Vector;
  */
 public class serverApp {
     public static void main(String[] args){
-        Vector<JsonObject> inQueue = new Vector<>();
-        Vector<JsonObject> outQueue = new Vector<>();
         int rePort = 2048;
         int outPort = 4880;
 
-        Thread receiver = new Server(inQueue, rePort);
-        Thread processor = new Client(outQueue, outPort, false);
+        Client processor = new Client(outPort, true);
+        Server receiver = new Server(rePort, true, processor);
         receiver.start();
         processor.start();
     }

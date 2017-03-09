@@ -1,10 +1,12 @@
 package postit.communication;
 
+import org.json.JSONObject;
 import postit.server.controller.RequestHandler;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.TimeoutException;
 import javax.json.*;
@@ -13,7 +15,7 @@ import javax.json.*;
  */
 public class Client extends Thread{
 
-    Vector<JsonObject> outQueue;
+    Vector<JSONObject> outQueue;
     Socket clientSocket;
     OutputStreamWriter out;
     InputStreamReader in;
@@ -21,11 +23,11 @@ public class Client extends Thread{
     boolean postitServer;
     RequestHandler requestHandler;
 
-    Client(Vector<JsonObject> queue, int port, boolean ifClientSide){
-        this.outQueue = queue;
+    Client(int port, boolean postitServer){
+        this.outQueue = new Vector<>();
         this.port = port;
-        this.postitServer = ifClientSide;
-        if (!postitServer){
+        this.postitServer = postitServer;
+        if (postitServer){
             requestHandler = new RequestHandler();
         }
     }
@@ -43,9 +45,17 @@ public class Client extends Thread{
             //3: Communicating with the server
             do {
                 if (!outQueue.isEmpty()) {
-                    sendMessage(outQueue.remove(0));
-                    if (!postitServer){ // this is the server side client
-                        requestHandler.handleRequest(outQueue.remove(0).toString());
+                    if (postitServer){ // this is the server side client
+                        JSONObject obj = outQueue.remove(0);
+                        String response = requestHandler.handleRequest(obj.get("obj").toString());
+                        int id = Integer.valueOf((Integer)obj.get("id"));
+                        JSONObject toBeSent = new JSONObject();
+                        toBeSent.put("id", id);
+                        toBeSent.put("obj", toBeSent);
+                        sendMessage(toBeSent);
+                    }
+                    else{
+                        sendMessage(outQueue.remove(0));
                     }
                 }
             } while (true);
@@ -73,12 +83,29 @@ public class Client extends Thread{
      * @param req
      * @return
      */
+    private static Random rnd = new Random();
+
+    public static int getRandomNumber(int digCount) {
+        StringBuilder sb = new StringBuilder(digCount);
+        for(int i=0; i < digCount; i++)
+            sb.append((char)('0' + rnd.nextInt(10)));
+        return Integer.parseInt(sb.toString());
+    }
     public int addRequest(String req){
-    	
-    	return -1;
+    	JSONObject obj = new JSONObject(req);
+    	JSONObject toBeSent = new JSONObject();
+    	int id = getRandomNumber(8);
+    	toBeSent.put("id", id);
+    	toBeSent.put("obj", obj);
+    	outQueue.add(obj);
+    	return id;
+    }
+
+    public void addRequest(JSONObject obj){
+        outQueue.add(obj);
     }
     
-    void sendMessage(JsonObject obj) {
+    void sendMessage(JSONObject obj) {
         try {
             out.write(obj.toString());
             out.flush();
