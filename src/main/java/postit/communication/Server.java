@@ -28,7 +28,7 @@ public class Server implements Runnable {
     Client client;
     HashMap<Integer, JSONObject> table;
 
-    Server(int port, boolean postitServer, Client client){
+    public Server(int port, boolean postitServer, Client client){
         this.port = port;
         this.postitServer = postitServer;
         if (this.postitServer)

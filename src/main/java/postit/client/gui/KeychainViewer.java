@@ -64,11 +64,9 @@ public class KeychainViewer {
 
             int rePort = 2048;
             int outPort = 4880;
-            Vector<String> inQueue = new Vector<>();
-            Vector<String> outQueue = new Vector<>();
 
-            Server receiver = new Server(inQueue, rePort);
-            Client processor = new Client(outQueue, outPort, false);
+            Client processor = new Client(outPort, false);
+            Server receiver = new Server(rePort, false, processor);
             serverController = new ServerController(processor,receiver,directoryController,keyService);
             createUIComponents();
         }

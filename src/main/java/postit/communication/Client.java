@@ -23,7 +23,7 @@ public class Client implements Runnable {
     boolean postitServer;
     RequestHandler requestHandler;
 
-    Client(int port, boolean postitServer){
+    public Client(int port, boolean postitServer){
         this.outQueue = new Vector<>();
         this.port = port;
         this.postitServer = postitServer;
