@@ -164,6 +164,7 @@ public class KeychainViewer {
                 serverController.sync();
             }
         });
+        menuItem.setEnabled(false);
         fileMenu.add(menuItem);
 
         menuItem = new JMenuItem("Close");
