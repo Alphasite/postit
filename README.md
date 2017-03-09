@@ -6,3 +6,5 @@ To run the system in a GUI, open the project in a Java IDE. Change the working d
 You will be prompted for a master password (if this is your first time running the system, you will be setting your master password)
 
 From here, there you have to option of creating a keychain, then adding a password. Once you have a keychain and a password, you can add or delete keychains and add, edit, or delete passwords.
+
+When entering the master password, avoid closing the dialog box because the system will crash.
