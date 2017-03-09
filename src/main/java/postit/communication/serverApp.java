@@ -13,8 +13,8 @@ public class serverApp {
         int rePort = 2048;
         int outPort = 4880;
 
-        Thread receiver = new Server(inQueue, rePort);
-        Thread processor = new Client(outQueue, outPort, false);
+        Thread receiver = new Thread(new Server(inQueue, rePort));
+        Thread processor = new Thread(new Client(outQueue, outPort, false));
         receiver.start();
         processor.start();
     }

@@ -11,7 +11,7 @@ import javax.json.*;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Client extends Thread{
+public class Client implements Runnable {
 
     Vector<JsonObject> outQueue;
     Socket clientSocket;
@@ -30,6 +30,7 @@ public class Client extends Thread{
         }
     }
 
+    @Override
     public void run() {
         try {
             wait(5000);

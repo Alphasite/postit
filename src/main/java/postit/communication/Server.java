@@ -11,7 +11,7 @@ import javax.json.*;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Server extends Thread{
+public class Server implements Runnable {
 
     Vector<JsonObject> inQueue;
     ServerSocket serverSocket;
@@ -26,6 +26,7 @@ public class Server extends Thread{
         this.port = port;
     }
 
+    @Override
     public void run(){
         try{
             //1. creating a server socket
