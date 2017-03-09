@@ -64,8 +64,8 @@ public class KeychainViewer {
 
             int rePort = 2048;
             int outPort = 4880;
-            Vector<JsonObject> inQueue = new Vector<>();
-            Vector<JsonObject> outQueue = new Vector<>();
+            Vector<String> inQueue = new Vector<>();
+            Vector<String> outQueue = new Vector<>();
 
             Server receiver = new Server(inQueue, rePort);
             Client processor = new Client(outQueue, outPort, false);

@@ -8,8 +8,8 @@ import java.util.Vector;
  */
 public class serverApp {
     public static void main(String[] args){
-        Vector<JsonObject> inQueue = new Vector<>();
-        Vector<JsonObject> outQueue = new Vector<>();
+        Vector<String> inQueue = new Vector<>();
+        Vector<String> outQueue = new Vector<>();
         int rePort = 2048;
         int outPort = 4880;
 
