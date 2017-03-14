@@ -94,6 +94,7 @@ public class KeychainHandler {
     
     public DirectoryAndKey getKeychain(String username, String name){
     	Directory dir = db.getDirectory(username);
+    	if (dir == null) return null;
     	DirectoryEntry de = db.getDirectoryEntry(dir.getDirectoryId(), name);
     	if (de == null) return null;
     	Keychain k = db.getKeychain(de.getDirectoryEntryId());

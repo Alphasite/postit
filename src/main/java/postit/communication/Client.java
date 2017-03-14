@@ -23,6 +23,7 @@ public class Client implements Runnable {
     int port;
     boolean postitServer;
     RequestHandler requestHandler;
+    boolean running = false;
 
     public Client(int port, boolean postitServer){
         this.outQueue = new Vector<>();
@@ -35,6 +36,7 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
+    	running = true;
         try {
             //1. creating a socket to connect to the server
             System.out.println("before connecting");
@@ -55,24 +57,28 @@ public class Client implements Runnable {
             System.out.println("Connected to localhost in port " + port);
             //2. get Input and Output streams
             out = new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8);
-            out.flush();
+            //out.flush();
             in = new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8);
             //3: Communicating with the server
             do {
                 if (!outQueue.isEmpty()) {
                     if (postitServer){ // this is the server side client
                         JSONObject obj = outQueue.remove(0);
+                        System.out.println("server processing: " + obj.toString());
                         String response = requestHandler.handleRequest(obj.get("obj").toString());
                         int id = Integer.valueOf((Integer)obj.get("id"));
                         JSONObject toBeSent = new JSONObject();
                         toBeSent.put("id", id);
-                        toBeSent.put("obj", toBeSent);
+                        toBeSent.put("obj", new JSONObject(response));
                         sendMessage(toBeSent);
                     }
                     else{
                         sendMessage(outQueue.remove(0));
                     }
                 }
+                
+                if (running = false)
+                	break;
             } while (true);
         } catch (UnknownHostException unknownHost) {
             System.err.println("You are trying to connect to an unknown host!");
@@ -105,17 +111,18 @@ public class Client implements Runnable {
         return Integer.parseInt(sb.toString());
     }
     public int addRequest(String req){
-        System.out.println("adding request");
+        System.out.println("adding request: " + req);
     	JSONObject obj = new JSONObject(req);
     	JSONObject toBeSent = new JSONObject();
     	int id = getRandomNumber(8);
     	toBeSent.put("id", id);
     	toBeSent.put("obj", obj);
-    	outQueue.add(obj);
+    	outQueue.add(toBeSent);
     	return id;
     }
 
     public void addRequest(JSONObject obj){
+    	System.out.println("server adding request to queue: " + obj.toString());
         outQueue.add(obj);
     }
 
@@ -126,6 +133,10 @@ public class Client implements Runnable {
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
+    }
+    
+    public void stop(){
+    	running = false;
     }
 
 }

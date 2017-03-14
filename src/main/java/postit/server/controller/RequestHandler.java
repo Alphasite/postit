@@ -61,9 +61,13 @@ public class RequestHandler {
 				DirectoryAndKey dak = new DirectoryAndKey(obj.getInt("directoryEntryId"), obj.getString("name"), 
 						obj.getString("encryptionKey"), obj.getInt("directoryId"), obj.getString("password"), obj.getString("metadata"));
 				JSONObject js = kh.createKeychain(username, dak);
-				dak.setDirectoryEntryId(js.getInt("directoryEntryId")); 
-				dak.setDirectoryId(js.getInt("directoryId"));
-				return MessagePackager.createResponse(true, username, "", asset, dak);
+				if (js.getString("status").equals("success")){
+					dak.setDirectoryEntryId(js.getInt("directoryEntryId")); 
+					dak.setDirectoryId(js.getInt("directoryId"));
+					return MessagePackager.createResponse(true, username, "", asset, dak);
+				}
+				else 
+					return js.toString();
 			default:
 				break;
 			}
