@@ -80,6 +80,7 @@ public class KeychainViewer {
         GUIKeyService keyService = new GUIKeyService();
         BackingStoreImpl backingStore = new BackingStoreImpl(keyService);
 
+
         if (!Crypto.init()) {
             // TODO
         }
@@ -88,6 +89,16 @@ public class KeychainViewer {
         }
 
         KeychainViewer kv = new KeychainViewer(backingStore, keyService);
+
+        // FOR CONNECTING TO THE POSTIT SERVER
+        Client sender = new Client(2048, false);
+        Server listener = new Server(4880, false, sender);
+
+        Thread t1 = new Thread(listener);
+        Thread t2 = new Thread(sender);
+
+        t2.start();
+        t1.start();
     }
 
     /**
@@ -164,7 +175,7 @@ public class KeychainViewer {
                 serverController.sync();
             }
         });
-        menuItem.setEnabled(false);
+//        menuItem.setEnabled(false);
         fileMenu.add(menuItem);
 
         menuItem = new JMenuItem("Close");
