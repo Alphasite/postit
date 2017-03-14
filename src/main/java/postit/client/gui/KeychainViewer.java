@@ -77,19 +77,6 @@ public class KeychainViewer {
     }
 
     public static void main(String[] args) {
-        GUIKeyService keyService = new GUIKeyService();
-        BackingStoreImpl backingStore = new BackingStoreImpl(keyService);
-
-
-        if (!Crypto.init()) {
-            // TODO
-        }
-        if (!backingStore.init()) {
-            // TODO
-        }
-
-        KeychainViewer kv = new KeychainViewer(backingStore, keyService);
-
         // FOR CONNECTING TO THE POSTIT SERVER
         Client sender = new Client(2048, false);
         Server listener = new Server(4880, false, sender);
@@ -99,6 +86,24 @@ public class KeychainViewer {
 
         t2.start();
         t1.start();
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                GUIKeyService keyService = new GUIKeyService();
+                BackingStoreImpl backingStore = new BackingStoreImpl(keyService);
+
+
+                if (!Crypto.init()) {
+                    // TODO
+                }
+                if (!backingStore.init()) {
+                    // TODO
+                }
+
+                KeychainViewer kv = new KeychainViewer(backingStore, keyService);
+            }
+
+        });
     }
 
     /**
