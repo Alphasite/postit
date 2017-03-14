@@ -1,6 +1,5 @@
 package postit.communication;
 
-import jdk.nashorn.internal.parser.JSONParser;
 import org.json.JSONObject;
 
 import javax.json.JsonObject;
@@ -43,15 +42,17 @@ public class clientReceiver implements Runnable {
             in = new DataInputStream(connection.getInputStream());
 
             while (true){
-                try {
-                    JSONObject obj = readBuffer(in);
-                    int id = (int) obj.get("id");
-                    synchronized (table) {
-                        table.put(id, (String) obj.get("response"));
-                    }
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
+            	if (in.available() > 0){
+            		try {
+            			JSONObject obj = readBuffer(in);
+            			int id = (int) obj.get("id");
+            			synchronized (table) {
+            				table.put(id, (String) obj.get("response"));
+            			}
+            		} catch (Exception e){
+            			e.printStackTrace();
+            		}
+            	}
             }
         }
         catch(IOException ioException){
@@ -86,7 +87,7 @@ public class clientReceiver implements Runnable {
 
     JSONObject readBuffer(DataInputStream in) throws Exception{
         String line = in.readUTF();
-        System.out.println("get response: " + line);
+        System.out.println("Got response: " + line);
         JSONObject rtn = new JSONObject(line);
         return rtn;
     }

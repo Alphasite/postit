@@ -37,17 +37,18 @@ public class serverReceiver implements Runnable{
             in = new DataInputStream(connection.getInputStream());
             //4. The two parts communicate via the input and output streams
             while (true){
+            	if (in.available() > 0){
+            		try {
+            			Thread.sleep(2000);
+            			JSONObject obj = readBuffer(in);
 
-                try {
-                    Thread.sleep(2000);
-                    JSONObject obj = readBuffer(in);
+            			if (obj == null) continue;
+            			else client.addRequest(obj);
 
-                    if (obj == null) continue;
-                    else client.addRequest(obj);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            		} catch (Exception e) {
+            			e.printStackTrace();
+            		}
+            	}
             }
         } catch(IOException ioException){
             ioException.printStackTrace();
@@ -62,11 +63,11 @@ public class serverReceiver implements Runnable{
     }
 
     JSONObject readBuffer(DataInputStream in) throws Exception{
-        System.out.println("read buffer function");
+        //System.out.println("read buffer function");
         String line = in.readUTF();
         if (line.length() == 0) return null;
         JSONObject rtn = new JSONObject(line);
-        System.out.println(rtn.get("id").toString() + rtn.get("req").toString());
+        System.out.println(rtn.toString());
         return rtn;
     }
 

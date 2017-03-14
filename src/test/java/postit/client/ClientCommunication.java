@@ -30,7 +30,7 @@ public class ClientCommunication implements Runnable{
 		while(true){ // block until request is received
 			try {
 				Thread.sleep(2000);
-				System.out.println("sleeping.....");
+				//System.out.println("sleeping.....");
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -56,7 +56,7 @@ public class ClientCommunication implements Runnable{
 		testRequest(req, s, r);
 		req = RequestMessenger.createAuthenticateMessage("mc", "5431");
 		testRequest(req, s, r);
-		req = RequestMessenger.createAddKeychainsMessage("ning", "fb", null, "1234", "");
+		req = RequestMessenger.createAddKeychainsMessage("ning", "fb", "hihi", "1234", "");
 		testRequest(req, s, r);
 		req = RequestMessenger.createUpdateKeychainMessage("ning", "fb", "lala", "4321", "nothing");
 		testRequest(req, s, r);

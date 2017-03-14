@@ -84,7 +84,7 @@ public class clientSender implements Runnable {
         return Integer.parseInt(sb.toString());
     }
     public int addRequest(String req){
-        System.out.println("adding request");
+        //System.out.println("adding request");
         JSONObject toBeSent = new JSONObject();
         int id = getRandomNumber(8);
         toBeSent.put("id", id);
@@ -100,7 +100,7 @@ public class clientSender implements Runnable {
     void sendMessage(JSONObject obj) {
         try {
             out.writeUTF(obj.toString());
-            System.out.println("sent");
+            //System.out.println("sent");
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }

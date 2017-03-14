@@ -57,7 +57,7 @@ public class serverSender implements Runnable {
 
                 }
 
-                System.out.println("server sender loop");
+                //System.out.println("server sender loop");
                 boolean ifEmpty;
 
                 synchronized (outQueue) {
@@ -104,16 +104,16 @@ public class serverSender implements Runnable {
 
     public void addRequest(JSONObject obj){
         synchronized (outQueue) {
-            System.out.println("server sender adding requests");
+            //System.out.println("server sender adding requests");
             outQueue.add(obj);
-            System.out.println(outQueue.size());
+            //System.out.println(outQueue.size());
         }
     }
 
     void sendMessage(JSONObject obj) {
         try {
             out.writeUTF(obj.toString());
-            System.out.println("Response sent");
+            //System.out.println("Response sent");
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
