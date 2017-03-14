@@ -24,10 +24,9 @@ public class PasswordViewer {
     private JButton saveButton;
     private JButton deleteButton;
 
-    public PasswordViewer(DirectoryController c, Keychain k, Password p) {
+    public PasswordViewer(KeychainViewer kv, DirectoryController c, Keychain k, Password p) {
         // TODO: place custom component creation code here
         titleField = new JTextField();
-        titleField.setEditable(false);
         userField = new JTextField();
         passField = new JPasswordField();
         comments = new JTextArea(7,10);
@@ -43,8 +42,8 @@ public class PasswordViewer {
                 passField.setEchoChar((char)0);
         });
         saveButton.addActionListener(e -> {
-            //String newTitle = String.valueOf(titleField.getText();
-            //c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
+            String newTitle = String.valueOf(titleField.getText());
+            c.updatePasswordTitle(p,newTitle);
 
             String newUser = String.valueOf(userField.getText());
             c.updateMetadataEntry(p,"username",newUser);
@@ -54,7 +53,10 @@ public class PasswordViewer {
 
             String newKey = String.valueOf(passField.getPassword());
             c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
+
+
             frame.dispose();
+            kv.refreshTabbedPanes();
         });
     }
 
