@@ -72,7 +72,7 @@ public class AccountHandler {
 	public boolean removeAccount(String username, String pwd){
 		Account account = db.getAccount(username);
 		// TODO pwd = generateKey(pwd);
-		if (pwd.equals(account.getPassword())){
+		if (account != null && pwd.equals(account.getPassword())){
 			return db.removeAccount(username) && db.removeDirectory(username);
 		}
 		return false;
