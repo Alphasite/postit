@@ -134,7 +134,6 @@ public class ServerController {
      * @return
      */
     private String sendRequestAndWait(String request){
-        System.out.println("check response");
     	int reqId = clientToServer.addRequest(request);
     	String response = null;
     	while(true){ // block until request is received
