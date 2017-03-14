@@ -27,6 +27,7 @@ public class Server implements Runnable {
     boolean postitServer;
     Client client;
     HashMap<Integer, JSONObject> table;
+    public static Object syncObject;
 
     public Server(int port, boolean postitServer, Client client){
         this.port = port;
@@ -46,6 +47,7 @@ public class Server implements Runnable {
             System.out.println("Waiting for connection");
             connection = serverSocket.accept();
             System.out.println("Connection received from " + connection.getInetAddress().getHostName());
+
             //3. get Input and Output streams
             out = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8);
             out.flush();
@@ -87,6 +89,7 @@ public class Server implements Runnable {
      * @return
      */
     public String getResponse(int requestId){
+        if (table.get(requestId) == null) return null;
         return table.get(requestId).toString();
     	// to create timeout message: MessagePackager.createTimeoutMessage();
     }

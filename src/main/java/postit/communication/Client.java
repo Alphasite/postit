@@ -3,6 +3,7 @@ package postit.communication;
 import org.json.JSONObject;
 import postit.server.controller.RequestHandler;
 import java.io.*;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -35,9 +36,22 @@ public class Client implements Runnable {
     @Override
     public void run() {
         try {
-            wait(5000);
             //1. creating a socket to connect to the server
-            clientSocket = new Socket("localhost", port);
+            System.out.println("before connecting");
+            boolean trying = true;
+            while(trying){
+                try{
+                    clientSocket = new Socket("localhost", port);
+                    trying = false;
+                } catch (ConnectException e) {
+                    System.out.println("Connect failed, waiting and trying again");
+                    try {
+                        Thread.sleep(2000);//2 seconds
+                    } catch (InterruptedException ie) {
+                        ie.printStackTrace();
+                    }
+                }
+            }
             System.out.println("Connected to localhost in port " + port);
             //2. get Input and Output streams
             out = new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8);
@@ -64,8 +78,6 @@ public class Client implements Runnable {
             System.err.println("You are trying to connect to an unknown host!");
         } catch (IOException ioException) {
             ioException.printStackTrace();
-        } catch (InterruptedException to){
-            to.printStackTrace();
         } finally{
             //4: Closing connection
             try {
@@ -93,6 +105,7 @@ public class Client implements Runnable {
         return Integer.parseInt(sb.toString());
     }
     public int addRequest(String req){
+        System.out.println("adding request");
     	JSONObject obj = new JSONObject(req);
     	JSONObject toBeSent = new JSONObject();
     	int id = getRandomNumber(8);
