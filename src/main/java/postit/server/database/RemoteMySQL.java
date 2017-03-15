@@ -5,11 +5,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Functions related to local MySQL database.
+ * Functions related to remote MySQL database.
  * @author Ning
  *
  */
-public class LocalMySQL {
+public class RemoteMySQL {
 
 	private static Connection conn;
 	public static Connection getConnection(String database, String user, String pwd) throws SQLException {
@@ -19,7 +19,7 @@ public class LocalMySQL {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + database + "?useSSL=false", user, pwd);
+		conn = DriverManager.getConnection("jdbc:mysql://nishadmathur.com:3306/" + database + "?useSSL=false", user, pwd);
 		return conn;
 	}
 

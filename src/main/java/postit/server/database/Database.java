@@ -19,11 +19,15 @@ public class Database {
 	 * @throws SQLException 
 	 */
 	public static Connection connectToDefault() throws SQLException {
-		return connectToLocal("pwddb", "root", "5431");
+		return connectToRemote("postit", "postit", "xDljSX8Ojk");
 	}
 
 	public static Connection connectToLocal(String database, String username, String password) throws SQLException{
 		return LocalMySQL.getConnection(database, username, password);
+	}
+	
+	public static Connection connectToRemote(String database, String username, String password) throws SQLException{
+		return RemoteMySQL.getConnection(database, username, password);
 	}
 
 }
