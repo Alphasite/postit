@@ -15,15 +15,16 @@ import postit.communication.Client;
 import postit.communication.Server;
 import postit.shared.Crypto;
 
-import javax.json.JsonObject;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by jackielaw on 2/27/17.
@@ -32,6 +33,7 @@ public class KeychainViewer {
     BackingStore backingStore;
     KeyService keyService;
 
+    KeychainViewer kv = this;
     Directory dir;
     DirectoryController directoryController;
     ServerController serverController;
@@ -56,7 +58,8 @@ public class KeychainViewer {
         Optional<Directory> directory = backingStore.readDirectory();
 
         if (!directory.isPresent()) {
-            JOptionPane.showMessageDialog(null, "Could not load directory");
+            JOptionPane.showMessageDialog(null,
+                    "Could not load directory. Master password may be wrong or data has been compromised");
         } else {
             dir = directory.get();
             directoryController = new DirectoryController(directory.get(), keyService);
@@ -74,20 +77,6 @@ public class KeychainViewer {
     }
 
     public static void main(String[] args) {
-        GUIKeyService keyService = new GUIKeyService();
-        BackingStoreImpl backingStore = new BackingStoreImpl(keyService);
-
-
-        if (!Crypto.init()) {
-            // TODO
-        }
-
-        if (!backingStore.init()) {
-            // TODO
-        }
-
-        KeychainViewer kv = new KeychainViewer(backingStore, keyService);
-
         // FOR CONNECTING TO THE POSTIT SERVER
         Client sender = new Client(2048, false);
         Server listener = new Server(4880, false, sender);
@@ -97,6 +86,24 @@ public class KeychainViewer {
 
         t2.start();
         t1.start();
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                GUIKeyService keyService = new GUIKeyService();
+                BackingStoreImpl backingStore = new BackingStoreImpl(keyService);
+
+
+                if (!Crypto.init()) {
+                    // TODO
+                }
+                if (!backingStore.init()) {
+                    // TODO
+                }
+
+                KeychainViewer kv = new KeychainViewer(backingStore, keyService);
+            }
+
+        });
     }
 
     /**
@@ -295,7 +302,7 @@ public class KeychainViewer {
                 }
                 else if (e.getClickCount() == 2) {
                     Password activePassword = getActivePassword(passwords, e);
-                    PasswordViewer pv = new PasswordViewer(directoryController,getActiveKeychain(),activePassword);
+                    PasswordViewer pv = new PasswordViewer(kv, directoryController,getActiveKeychain(),activePassword);
                 }
             }
         });
