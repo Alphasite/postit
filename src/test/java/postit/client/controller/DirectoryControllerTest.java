@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -1043,6 +1044,56 @@ public class DirectoryControllerTest {
         reloadPersistent();
 
         assertThat(controller.getKeychains().get(0).serverid, is(100L));
+    }
+
+    @Test
+    public void updatePasswordTitle() throws Exception {
+        LOGGER.info("----updatePasswordTitle");
+
+        controller.createKeychain("test10");
+        Keychain keychain = controller.getKeychain("test10").get();
+        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            if (password.identifier.equals("password8")) {
+                controller.updatePasswordTitle(password, "banana");
+            }
+        }
+
+        passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            assertThat(password.identifier, anyOf(is("banana"), is("password7")));
+        }
+    }
+
+    @Test
+    public void updatePasswordTitlePersistent() throws Exception {
+        LOGGER.info("----updatePasswordTitlePersistent");
+
+        controller.createKeychain("test10");
+        Keychain keychain = controller.getKeychain("test10").get();
+        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+
+        List<Password> passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            if (password.identifier.equals("password8")) {
+                controller.updatePasswordTitle(password, "banana");
+            }
+        }
+
+        reloadPersistent();
+
+        passwords = controller.getPasswords(keychain);
+
+        for (Password password : passwords) {
+            assertThat(password.identifier, anyOf(is("banana"), is("password7")));
+        }
     }
 
     private boolean keychainExists(String name) {

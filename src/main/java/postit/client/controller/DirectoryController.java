@@ -67,6 +67,11 @@ public class DirectoryController {
         return store.save();
     }
 
+    public boolean updatePasswordTitle(Password pass, String title) {
+        pass.identifier = title;
+        return store.save();
+    }
+
     public boolean updateMetadataEntry(Password password, String name, String entry) {
         password.metadata.put(name, entry);
         return store.save();

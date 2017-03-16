@@ -5,6 +5,7 @@ import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 import postit.client.keychain.Directory;
 
+
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -20,6 +21,7 @@ public class App {
     public static void main(String[] args) {
         CLIKeyService keyService = new CLIKeyService();
         App app = new App(keyService, new BackingStore(keyService));
+
 
         if (app.init()) {
             app.run(args);

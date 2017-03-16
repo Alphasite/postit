@@ -1,7 +1,6 @@
 package postit.communication;
 
-import javax.json.JsonObject;
-import java.util.Vector;
+import postit.communication.*;
 
 /**
  * Created by dog on 3/8/2017.
@@ -11,9 +10,13 @@ public class serverApp {
         int rePort = 2048;
         int outPort = 4880;
 
-        Client processor = new Client(outPort, true);
-        Server receiver = new Server(rePort, true, processor);
-        receiver.run();
-        processor.run();
+        serverSender processor = new serverSender(4880);
+        serverReceiver receiver = new serverReceiver(2048, processor);
+        Thread t1 = new Thread(processor);
+        Thread t2 = new Thread(receiver);
+
+        t1.start();
+        t2.start();
+
     }
 }

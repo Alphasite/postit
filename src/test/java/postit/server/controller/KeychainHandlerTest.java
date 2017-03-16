@@ -2,6 +2,8 @@ package postit.server.controller;
 
 import org.json.JSONObject;
 
+import postit.server.model.Directory;
+
 /**
  * 
  * @author Ning
@@ -13,7 +15,7 @@ public class KeychainHandlerTest {
 		JSONObject js = kh.createKeychain(username, name, ".", "123456");
 		boolean res = js.getString("status").equals("success");
 		System.out.printf("Adding keychain to %s: (%s, %s) %s\n", username, name, pwd, res ? "successful" : "failed");
-		return js.getInt("directoryEntryId");
+		return js.getString("status").equals("failure") ? -1 : js.getInt("directoryEntryId");
 	}
 	
 	public static void testUpdateKeychain(KeychainHandler kh, int directoryEntryId, String name, 
@@ -34,9 +36,12 @@ public class KeychainHandlerTest {
 		
 		String username = "mc";
 		boolean res = ah.addAccount(username, "cs5431", "mc@cornell.edu", "m", "c");
-		int dirId = db.getDirectory(username).getDirectoryId();
-		System.out.println("directoryId: " + dirId);
-		
+		Directory dir = db.getDirectory(username);
+		if (dir != null){
+			int dirId = dir.getDirectoryId();
+			System.out.println("directoryId: " + dirId);
+		}
+
 		int id1 = testAddKeychain(kh, username, "netflix", "password");
 		testUpdateKeychain(kh, id1, null, null, "netflixpwd", null);
 		int id2 = testAddKeychain(kh, username, "fb", "123456"); 

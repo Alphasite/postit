@@ -27,6 +27,8 @@ public class Server implements Runnable {
     boolean postitServer;
     Client client;
     HashMap<Integer, JSONObject> table;
+    public static Object syncObject;
+    boolean running = false;
 
     public Server(int port, boolean postitServer, Client client){
         this.port = port;
@@ -39,6 +41,7 @@ public class Server implements Runnable {
 
     @Override
     public void run(){
+    	running = true;
         try{
             //1. creating a server socket
             serverSocket = new ServerSocket(port);
@@ -46,20 +49,29 @@ public class Server implements Runnable {
             System.out.println("Waiting for connection");
             connection = serverSocket.accept();
             System.out.println("Connection received from " + connection.getInetAddress().getHostName());
+
             //3. get Input and Output streams
             out = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8);
             out.flush();
             in = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8);
+            //DataInputStream in2 = new DataInputStream(connection.getInputStream());
             //4. The two parts communicate via the input and output streams
             do{
+            	//String msg = in2.readUTF();
+            	//System.out.println("server got message: " + msg);
                 reader = new BufferedReader(in);
+                //String msg = reader.readLine();
+                //System.out.println("server got message: " + msg);
                 JSONObject obj = readBuffer(reader);
+            	//JSONObject obj = new JSONObject(msg);
                 if (this.postitServer) {
+                	System.out.println("server side received: " + obj.toString());
                     client.addRequest(obj);
                 }
                 else {
-                    int id = (int)obj.get("id");
-                    table.put(id, (JSONObject)obj.get("obj"));
+                	System.out.println("Client side received: " + obj.toString());
+                    int id = obj.getInt("id");
+                    table.put(id, obj.getJSONObject("obj"));
                 }
             }while(true);
         }
@@ -87,6 +99,7 @@ public class Server implements Runnable {
      * @return
      */
     public String getResponse(int requestId){
+        if (table.get(requestId) == null) return null;
         return table.get(requestId).toString();
     	// to create timeout message: MessagePackager.createTimeoutMessage();
     }
@@ -97,5 +110,9 @@ public class Server implements Runnable {
         jsonReader.close();
         JSONObject rtn = new JSONObject(obj.toString());
         return rtn;
+    }
+    
+    public void stop(){
+    	running = false;
     }
 }
