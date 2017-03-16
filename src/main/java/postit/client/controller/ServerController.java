@@ -214,8 +214,7 @@ public class ServerController {
             return false;
         }
 
-        entry.serverid = newid.get();
-        entry.save();
+        directoryController.setKeychainOnlineId(entry, newid.get());
 
         return setKeychain(entry);
     }

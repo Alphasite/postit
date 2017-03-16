@@ -60,18 +60,9 @@ public class Password {
         this.password = Crypto.secretKeyFromBytes(password.getBytes());
     }
 
-    public boolean save() {
-        return this.keychain.save();
-    }
-
     public boolean delete() {
         this.keychain.passwords.remove(this);
-        if (this.keychain.save()) {
-            return true;
-        } else {
-            this.keychain.passwords.add(this);
-            return false;
-        }
+        return true;
     }
 
     @Override

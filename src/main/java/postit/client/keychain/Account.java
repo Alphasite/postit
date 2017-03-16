@@ -47,8 +47,4 @@ public class Account {
                 .add("username", username)
                 .add("password", new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(secretKey))));
     }
-
-    public boolean save() {
-        return this.directory.save();
-    }
 }

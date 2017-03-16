@@ -11,7 +11,7 @@ public class Keychain {
     public List<Password> passwords;
     private DirectoryEntry directoryEntry;
 
-    public Keychain(String name, DirectoryEntry directoryEntry) {
+    public Keychain(DirectoryEntry directoryEntry) {
         this.directoryEntry = directoryEntry;
         this.passwords = new ArrayList<>();
     }
@@ -42,10 +42,6 @@ public class Keychain {
 
     public String getName() {
         return directoryEntry.name;
-    }
-
-    public boolean save() {
-        return this.directoryEntry.save();
     }
 
     public boolean delete() {

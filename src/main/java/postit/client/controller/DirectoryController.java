@@ -1,5 +1,6 @@
 package postit.client.controller;
 
+import postit.client.backend.BackingStore;
 import postit.client.keychain.*;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
@@ -13,18 +14,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-/**
- * Created by jackielaw on 3/1/17.
- */
 public class DirectoryController {
     private final static Logger LOGGER = Logger.getLogger(DirectoryController.class.getName());
 
+    private BackingStore store;
     private Directory directory;
     private KeyService keyService;
 
-    public DirectoryController(Directory directory, KeyService keyService) {
+    public DirectoryController(Directory directory, BackingStore store, KeyService keyService) {
         //I'm not 100% if we want to do it this way, so feel free to change the constructor params
         this.directory = directory;
+        this.store = store;
         this.keyService = keyService;
     }
 
@@ -53,40 +53,40 @@ public class DirectoryController {
     }
 
     public boolean createKeychain(String keychainName) {
-        return directory.createKeychain(keyService.getMasterKey(), keychainName).isPresent() && directory.save();
+        return directory.createKeychain(keyService.getMasterKey(), keychainName).isPresent() && store.save();
     }
 
     public boolean createPassword(Keychain keychain, String identifier, SecretKey key) {
         Password password = new Password(identifier, key, keychain);
-        return keychain.passwords.add(password) && password.save();
+        return keychain.passwords.add(password) && store.save();
     }
 
     public boolean updatePassword(Password pass, SecretKey key) {
         pass.password = key;
         System.out.println("edited pass to: " + pass.dump().build());
-        return pass.save();
+        return store.save();
     }
 
     public boolean updateMetadataEntry(Password password, String name, String entry) {
         password.metadata.put(name, entry);
-        return password.save();
+        return store.save();
     }
 
     public boolean removeMetadataEntryIfExists(Password password, String name) {
         password.metadata.remove(name);
-        return password.save();
+        return store.save();
     }
 
     public boolean deleteKeychain(Keychain k) {
-        return k.delete();
+        return k.delete() && store.save();
     }
 
     public boolean deleteEntry(DirectoryEntry entry) {
-        return entry.delete();
+        return entry.delete() && store.save();
     }
 
     public boolean deletePassword(Password p) {
-        return p.delete();
+        return p.delete() && store.save();
     }
 
     public String getPassword(Password p) {
@@ -116,11 +116,12 @@ public class DirectoryController {
             }
         }
 
-        return entry.save();
+        return store.save();
     }
 
     public boolean createKeychain(JsonObject directory, JsonObject keychain) {
-        return this.directory.createKeychain(directory, keychain).isPresent() && this.directory.save();
+        this.directory.createKeychain(directory, keychain);
+        return store.save();
     }
 
     public Account getAccount() {
@@ -141,5 +142,10 @@ public class DirectoryController {
                         .add("directory", entry.dump())
                         .add("keychain", keychain.get().dump())
         );
+    }
+
+    public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {
+        entry.serverid = id;
+        return store.save();
     }
 }

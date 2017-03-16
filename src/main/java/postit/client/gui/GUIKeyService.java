@@ -39,7 +39,7 @@ public class GUIKeyService implements KeyService {
             }
         }
 
-        key = Crypto.hashedSecretKeyFromBytes(password.getBytes());
+        key = Crypto.secretKeyFromBytes(password.getBytes());
         retrieved = Instant.now();
 
         return key;
@@ -60,7 +60,7 @@ public class GUIKeyService implements KeyService {
                 key = null;
             }
 
-            key = Crypto.hashedSecretKeyFromBytes(getKey("Please enter master password: "));
+            key = Crypto.secretKeyFromBytes(getKey("Please enter master password: "));
         }
 
         retrieved = Instant.now();

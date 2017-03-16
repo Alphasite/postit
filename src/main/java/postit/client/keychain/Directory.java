@@ -14,8 +14,8 @@ import java.util.logging.Logger;
 public class Directory {
     private final static Logger LOGGER = Logger.getLogger(Directory.class.getName());
 
-    BackingStore backingStore;
-    KeyService keyService;
+    private BackingStore backingStore;
+    private KeyService keyService;
 
     public List<DirectoryEntry> keychains;
     public List<Long> deletedKeychains;
@@ -82,8 +82,6 @@ public class Directory {
                 backingStore
         );
 
-        Keychain keychain = new Keychain(name, entry);
-
         if (keychains.stream().map(k -> k.name).anyMatch(n -> n.equals(name))) {
             LOGGER.warning("Keychain " + name +  "is a duplicate, not adding.");
             return Optional.empty();
@@ -91,52 +89,23 @@ public class Directory {
 
         this.keychains.add(entry);
 
-        if (entry.save()) {
-            if (this.save()) {
-                return Optional.of(keychain);
-            } else {
-                if (!entry.delete()) {
-                    LOGGER.severe("Failed to delete entry after failing to save directory, please clean up :" + entry.getPath());
-                }
-
-                return Optional.empty();
-            }
-        } else {
-            return Optional.empty();
-        }
+        return entry.readKeychain();
     }
 
-    public Optional<DirectoryEntry> createKeychain(JsonObject entryObject, JsonObject keychainObject) {
+    public DirectoryEntry createKeychain(JsonObject entryObject, JsonObject keychainObject) {
         DirectoryEntry entry = new DirectoryEntry(entryObject, this, keyService, backingStore);
         entry.keychain = new Keychain(keychainObject, entry);
         this.keychains.add(entry);
 
-
-        if (entry.save()) {
-            if (this.save()) {
-                return Optional.of(entry);
-            } else {
-                if (!entry.delete()) {
-                    LOGGER.severe("Failed to delete entry after failing to save directory, please clean up :" + entry.getPath());
-                }
-
-                return Optional.empty();
-            }
-        } else {
-            return Optional.empty();
-        }
+        return entry;
     }
 
     public boolean delete(DirectoryEntry keychain) {
-        if (keychain.serverid != 0L) {
+        if (keychain.serverid != -1L) {
             deletedKeychains.add(keychain.serverid);
         }
 
-        return keychain.delete();
-    }
-
-    public boolean save() {
-        LOGGER.info("Saving directory");
-        return backingStore.writeDirectory(this);
+        this.keychains.remove(keychain);
+        return this.backingStore.deleteKeychain(keychain.name);
     }
 }

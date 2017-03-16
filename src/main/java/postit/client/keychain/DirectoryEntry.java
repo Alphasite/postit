@@ -4,14 +4,10 @@ import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 
-import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
@@ -80,106 +76,40 @@ public class DirectoryEntry {
     public Optional<Keychain> readKeychain() {
         LOGGER.info("Reading keychain " + name);
 
-        if (!Files.exists(getPath())) {
-            LOGGER.info("Keychain file doesn't exist... creating it: " + name);
-
-            keychain = new Keychain(name, this);
-            this.save();
-
-            return Optional.of(keychain);
-        }
-
+        // If it has already been loaded, return that.
         if (keychain != null) {
             return Optional.of(keychain);
         }
 
-        Optional<Cipher> cipher = Crypto.getGCMDecryptCipher(encryptionKey, nonce);
+        Optional<String> backingStore = this.backingStore.readKeychain(name);
 
-        if (!cipher.isPresent()) {
-            LOGGER.warning("Invalid password entered, unable to initialise encryption key.");
-            return Optional.empty();
+        // Create the keychain file if it doesnt already exist.
+        if (!backingStore.isPresent()) {
+            LOGGER.info("Keychain file doesn't exist... creating it: " + name);
+
+            keychain = new Keychain(this);
+
+            return Optional.of(keychain);
         }
 
-        Optional<JsonObject> jsonObject = Crypto.readJsonObjectFromCipherStream(getPath(), cipher.get());
+        // otherwise load and decrypt it.
+        Optional<JsonObject> object = Crypto.decryptJsonObject(
+                this.encryptionKey,
+                this.nonce,
+                Base64.getDecoder().decode(backingStore.get())
+        );
 
-        if (jsonObject.isPresent()) {
+        if (object.isPresent()) {
             LOGGER.info("Succeeded in reading keychain " + name + " from disk.");
-            keychain = new Keychain(jsonObject.get(), this);
+            keychain = new Keychain(object.get(), this);
             return Optional.of(keychain);
         } else {
             return Optional.empty();
         }
     }
 
-    public boolean save() {
-        LOGGER.info("Saving Directory Entry " + name);
-
-        if (keychain == null) {
-            return this.readKeychain().isPresent();
-        }
-
-        nonce = Crypto.getNonce();
-
-        SecretKey newKey = Crypto.generateKey();
-        SecretKey oldKey = encryptionKey;
-
-        Optional<Cipher> cipher = Crypto.getGCMEncryptCipher(newKey, nonce);
-
-        if (!cipher.isPresent()) {
-            return false;
-        }
-
-        Path path = getPath();
-        boolean success = Crypto.writeJsonObjectToCipherStream(cipher.get(), path, keychain.dump().build());
-        System.out.println("Saved keychain as: " + keychain.dump().build());
-
-        if (success) {
-            encryptionKey = newKey;
-
-            if (!directory.save()) {
-                encryptionKey = oldKey;
-
-                LOGGER.severe("Failed to save keychain.");
-
-                success = false;
-            }
-        }
-
-        if (!success) {
-            try {
-                Files.delete(path);
-            } catch (IOException e) {
-                LOGGER.severe("Failed to delete orphan keychain: " + e.getMessage());
-            }
-
-            return false;
-        }
-
-        LOGGER.info("Succeeded in writing keychain " + name + " to disk.");
-        return true;
-    }
-
     public boolean delete() {
-        try {
-            if (serverid != -1L) {
-                this.directory.deletedKeychains.add(serverid);
-            }
-
-            directory.keychains.remove(this);
-            if (directory.save()) {
-                Files.delete(getPath());
-                return true;
-            } else {
-                return false;
-            }
-        } catch (IOException e) {
-            LOGGER.severe("Failed while deleting keychain " + name + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    public Path getPath() {
-        return backingStore.getKeychainsPath().resolve(name + ".keychain");
+        return this.directory.delete(this);
     }
 
     @Override

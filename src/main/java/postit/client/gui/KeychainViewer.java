@@ -3,7 +3,6 @@ package postit.client.gui;
 
 
 import postit.client.backend.BackingStore;
-import postit.client.backend.BackingStoreImpl;
 import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
 import postit.client.controller.ServerController;
@@ -15,7 +14,6 @@ import postit.communication.Client;
 import postit.communication.Server;
 import postit.shared.Crypto;
 
-import javax.json.JsonObject;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -59,7 +57,7 @@ public class KeychainViewer {
             JOptionPane.showMessageDialog(null, "Could not load directory");
         } else {
             dir = directory.get();
-            directoryController = new DirectoryController(directory.get(), keyService);
+            directoryController = new DirectoryController(directory.get(), backingStore, keyService);
             this.keychains = directoryController.getKeychains();
 
             int rePort = 2048;
@@ -75,7 +73,7 @@ public class KeychainViewer {
 
     public static void main(String[] args) {
         GUIKeyService keyService = new GUIKeyService();
-        BackingStoreImpl backingStore = new BackingStoreImpl(keyService);
+        BackingStore backingStore = new BackingStore(keyService);
 
         if (!Crypto.init()) {
             // TODO

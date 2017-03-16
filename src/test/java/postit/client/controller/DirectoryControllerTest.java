@@ -2,13 +2,14 @@ package postit.client.controller;
 
 import postit.client.backend.*;
 import postit.client.keychain.*;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
+import javax.json.JsonObject;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
@@ -34,7 +35,7 @@ public class DirectoryControllerTest {
     SecretKey key;
 
     MockKeyService keyService;
-    BackingStore backingStore;
+    MockBackingStore backingStore;
     Directory directory;
 
     DirectoryController controller;
@@ -47,18 +48,19 @@ public class DirectoryControllerTest {
         try {
             Crypto.init(false);
 
-            keyService = new MockKeyService(Crypto.hashedSecretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
+            keyService = new MockKeyService(Crypto.secretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
             keyService.account = "test";
 
-            backingStore = new MockBackingStoreImpl(keyService);
-            directory = new Directory(keyService, backingStore);
-            controller = new DirectoryController(directory, keyService);
-
-
+            backingStore = new MockBackingStore(keyService);
             backingStore.init();
+
+            directory = backingStore.readDirectory().get();
+            controller = new DirectoryController(directory, backingStore, keyService);
+
+
+            Crypto.init();
         } catch (Exception e) {
-            Files.deleteIfExists(backingStore.getDirectoryPath());
-            FileUtils.deleteDirectory(backingStore.getKeychainsPath().toFile());
+            Files.deleteIfExists(backingStore.getContainer());
             throw e;
         }
 
@@ -69,8 +71,7 @@ public class DirectoryControllerTest {
     public void tearDown() throws Exception {
         LOGGER.info("----Tear down");
 
-        Files.deleteIfExists(backingStore.getDirectoryPath());
-        FileUtils.deleteDirectory(backingStore.getKeychainsPath().toFile());
+        Files.deleteIfExists(backingStore.getContainer());
         Files.deleteIfExists(backingStore.getVolume());
     }
 
@@ -107,7 +108,6 @@ public class DirectoryControllerTest {
         LOGGER.info("Check keychain");
 
         assertThat(keychain.isPresent(), is(true));
-//        assertThat(keychain.get().name, is("test3"));
     }
 
     @Test
@@ -170,8 +170,8 @@ public class DirectoryControllerTest {
         assertThat(names.contains("test6"), is(true));
         assertThat(names.contains("test7"), is(true));
 
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test6.keychain")), is(true));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test7.keychain")), is(true));
+        assertThat(keychainExists("test6"), is(true));
+        assertThat(keychainExists("test7"), is(true));
     }
 
     @Test
@@ -188,7 +188,7 @@ public class DirectoryControllerTest {
         assertThat(names.size(), is(1));
         assertThat(names.contains("test6"), is(true));
 
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test6.keychain")), is(true));
+        assertThat(keychainExists("test6"), is(true));
     }
 
     @Test
@@ -198,7 +198,7 @@ public class DirectoryControllerTest {
         assertThat(controller.createKeychain("test6"), is(true));
         assertThat(controller.createKeychain("test7"), is(true));
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         List<String> names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -208,8 +208,8 @@ public class DirectoryControllerTest {
         assertThat(names.contains("test6"), is(true));
         assertThat(names.contains("test7"), is(true));
 
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test6.keychain")), is(true));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test7.keychain")), is(true));
+        assertThat(keychainExists("test6"), is(true));
+        assertThat(keychainExists("test7"), is(true));
     }
 
     @Test
@@ -243,7 +243,7 @@ public class DirectoryControllerTest {
         assertThat(controller.createPassword(keychain, "password3", Crypto.secretKeyFromBytes("secret3".getBytes())), is(true));
         assertThat(controller.createPassword(keychain, "password4", Crypto.secretKeyFromBytes("secret4".getBytes())), is(true));
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         List<Password> passwords = controller.getKeychain("test8").get().passwords;
         assertThat(passwords.size(), is(2));
@@ -336,7 +336,7 @@ public class DirectoryControllerTest {
             ), is(true));
         }
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
         passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
@@ -353,7 +353,6 @@ public class DirectoryControllerTest {
         controller.createKeychain("test12");
 
         Keychain keychain11 = controller.getKeychain("test11").get();
-        Keychain keychain12 = controller.getKeychain("test12").get();
 
         List<String> names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -363,11 +362,11 @@ public class DirectoryControllerTest {
         assertThat(names.contains("test11"), is(true));
         assertThat(names.contains("test12"), is(true));
 
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(true));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+        assertThat(keychainExists("test11"), is(true));
+        assertThat(keychainExists("test12"), is(true));
         assertThat(controller.deleteKeychain(keychain11), is(true));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(false));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+        assertThat(keychainExists("test11"), is(false));
+        assertThat(keychainExists("test12"), is(true));
 
         names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -386,7 +385,6 @@ public class DirectoryControllerTest {
         controller.createKeychain("test12");
 
         Keychain keychain11 = controller.getKeychain("test11").get();
-        Keychain keychain12 = controller.getKeychain("test12").get();
 
         List<String> names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -396,14 +394,14 @@ public class DirectoryControllerTest {
         assertThat(names.contains("test11"), is(true));
         assertThat(names.contains("test12"), is(true));
 
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(true));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+        assertThat(keychainExists("test11"), is(true));
+        assertThat(keychainExists("test12"), is(true));
         assertThat(controller.deleteKeychain(keychain11), is(true));
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(false));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+        assertThat(keychainExists("test11"), is(false));
+        assertThat(keychainExists("test12"), is(true));
 
         names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -481,7 +479,7 @@ public class DirectoryControllerTest {
 
         assertThat(controller.deletePassword(password11), is(true));
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
         passwords = controller.getPasswords(keychain);
 
         assertThat(passwords.size(), is(2));
@@ -507,7 +505,6 @@ public class DirectoryControllerTest {
         controller.createKeychain("test12");
 
         Keychain keychain11 = controller.getKeychain("test11").get();
-        Keychain keychain12 = controller.getKeychain("test12").get();
 
         DirectoryEntry entry1 = controller.getKeychains().get(0);
         DirectoryEntry entry2 = controller.getKeychains().get(1);
@@ -523,8 +520,8 @@ public class DirectoryControllerTest {
         assertThat(names.contains("test12"), is(true));
 
         assertThat(controller.deleteKeychain(keychain11), is(true));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(false));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+        assertThat(keychainExists("test11"), is(false));
+        assertThat(keychainExists("test12"), is(true));
 
         names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -546,7 +543,6 @@ public class DirectoryControllerTest {
         controller.createKeychain("test12");
 
         Keychain keychain11 = controller.getKeychain("test11").get();
-        Keychain keychain12 = controller.getKeychain("test12").get();
 
         DirectoryEntry entry1 = controller.getKeychains().get(0);
         DirectoryEntry entry2 = controller.getKeychains().get(1);
@@ -563,10 +559,10 @@ public class DirectoryControllerTest {
 
         assertThat(controller.deleteKeychain(keychain11), is(true));
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test11.keychain")), is(false));
-        assertThat(Files.exists(backingStore.getKeychainsPath().resolve("test12.keychain")), is(true));
+        assertThat(keychainExists("test11"), is(false));
+        assertThat(keychainExists("test12"), is(true));
 
         names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -602,7 +598,7 @@ public class DirectoryControllerTest {
 
         entry1.serverid = 5L;
 
-        Keychain keychain1 = new Keychain("json", entry1);
+        Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
 
         DirectoryEntry entry = controller.getKeychains().get(0);
@@ -647,7 +643,7 @@ public class DirectoryControllerTest {
 
         entry1.serverid = 5L;
 
-        Keychain keychain1 = new Keychain("json", entry1);
+        Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
 
         DirectoryEntry entry = controller.getKeychains().get(0);
@@ -658,7 +654,7 @@ public class DirectoryControllerTest {
                 keychain1.dump().build()
         ), is(true));
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         assertThat(controller.getKeychains().size(), is(1));
         DirectoryEntry oldEntry = controller.getKeychains().get(0);
@@ -686,7 +682,7 @@ public class DirectoryControllerTest {
 
         entry1.serverid = 5L;
 
-        Keychain keychain1 = new Keychain("json", entry1);
+        Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
 
         assertThat(controller.createKeychain(entry1.dump().build(), keychain1.dump().build()), is(true));
@@ -717,12 +713,12 @@ public class DirectoryControllerTest {
 
         entry1.serverid = 5L;
 
-        Keychain keychain1 = new Keychain("json", entry1);
+        Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
 
         assertThat(controller.createKeychain(entry1.dump().build(), keychain1.dump().build()), is(true));
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         assertThat(controller.getKeychains().size(), is(1));
         DirectoryEntry oldEntry = controller.getKeychains().get(0);
@@ -783,7 +779,7 @@ public class DirectoryControllerTest {
             }
         }
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         for (Password password : passwords) {
             String number = password.identifier.substring(8);
@@ -867,7 +863,7 @@ public class DirectoryControllerTest {
             }
         }
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         for (Password password : passwords) {
             String number = password.identifier.substring(8);
@@ -972,7 +968,7 @@ public class DirectoryControllerTest {
             }
         }
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         for (Password password : passwords) {
             String number = password.identifier.substring(8);
@@ -982,7 +978,7 @@ public class DirectoryControllerTest {
             }
         }
 
-        controller = new DirectoryController(backingStore.readDirectory().get(), keyService);
+        reloadPersistent();
 
         for (Password password : passwords) {
             String number = password.identifier.substring(8);
@@ -992,5 +988,70 @@ public class DirectoryControllerTest {
                 assertThat(password.metadata.get("test2"), is("asdasd"));
             }
         }
+    }
+
+    @Test
+    public void getAccount() throws Exception {
+        LOGGER.info("----getAccount");
+
+        assertThat(controller.getAccount(), notNullValue());
+
+        assertThat(controller.getAccount().getUsername(), is("test"));
+        assertThat(controller.getAccount().getSecretKey(), notNullValue());
+    }
+
+    @Test
+    public void getAccountPersistent() throws Exception {
+        LOGGER.info("----getAccountPersistent");
+
+        reloadPersistent();
+
+        assertThat(controller.getAccount(), notNullValue());
+
+        assertThat(controller.getAccount().getUsername(), is("test"));
+        assertThat(controller.getAccount().getSecretKey(), notNullValue());
+    }
+
+    @Test
+    public void buildKeychainEntryObject() throws Exception {
+
+    }
+
+    @Test
+    public void setKeychainOnlineId() throws Exception {
+            LOGGER.info("----setKeychainOnlineId");
+
+            assertThat(controller.createKeychain("test3"), is(true));
+
+            assertThat(controller.getKeychains().size(), is(1));
+
+            assertThat(controller.setKeychainOnlineId(controller.getKeychains().get(0), 100), is(true));
+
+            assertThat(controller.getKeychains().get(0).serverid, is(100L));
+    }
+
+    @Test
+    public void setKeychainOnlineIdPersistent() throws Exception {
+        LOGGER.info("----setKeychainOnlineId");
+
+        assertThat(controller.createKeychain("test3"), is(true));
+
+        assertThat(controller.getKeychains().size(), is(1));
+
+        assertThat(controller.setKeychainOnlineId(controller.getKeychains().get(0), 100L), is(true));
+
+        reloadPersistent();
+
+        assertThat(controller.getKeychains().get(0).serverid, is(100L));
+    }
+
+    private boolean keychainExists(String name) {
+        JsonObject container = Crypto.readJsonObjectFromFile(backingStore.getContainer()).get();
+        return container.getJsonObject("keychains").containsKey(name);
+    }
+
+    private void reloadPersistent() throws IOException {
+        backingStore = backingStore.freshBackingStore();
+        controller = new DirectoryController(backingStore.readDirectory().get(), backingStore, keyService);
     }
 }

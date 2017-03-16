@@ -7,12 +7,18 @@ import java.nio.file.Path;
 /**
  * Created by nishadmathur on 2/3/17.
  */
-public class MockBackingStoreImpl extends BackingStoreImpl {
+public class MockBackingStore extends BackingStore {
     Path rootDirectory;
 
-    public MockBackingStoreImpl(KeyService keyService) throws IOException {
+    public MockBackingStore(KeyService keyService) throws IOException {
         super(keyService);
         rootDirectory = Files.createTempDirectory("PostItTest");
+    }
+
+    public MockBackingStore freshBackingStore() throws IOException {
+        MockBackingStore store = new MockBackingStore(keyService);
+        store.rootDirectory = rootDirectory;
+        return store;
     }
 
     @Override

@@ -1,7 +1,6 @@
 package postit.client.cli;
 
 import postit.client.backend.BackingStore;
-import postit.client.backend.BackingStoreImpl;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 import postit.client.keychain.Directory;
@@ -20,7 +19,7 @@ public class App {
 
     public static void main(String[] args) {
         CLIKeyService keyService = new CLIKeyService();
-        App app = new App(keyService, new BackingStoreImpl(keyService));
+        App app = new App(keyService, new BackingStore(keyService));
 
         if (app.init()) {
             app.run(args);
