@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static javax.swing.SwingUtilities.invokeLater;
+
 /**
  * Created by jackielaw on 2/27/17.
  */
@@ -86,7 +88,7 @@ public class KeychainViewer {
         t2.start();
         t1.start();
 
-        SwingUtilities.invokeLater(new Runnable() {
+        invokeLater(new Runnable() {
             public void run() {
                 GUIKeyService keyService = new GUIKeyService();
                 BackingStore backingStore = new BackingStore(keyService);
@@ -172,12 +174,7 @@ public class KeychainViewer {
 
 
         menuItem = new JMenuItem(("Sync"));
-        menuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                serverController.sync();
-            }
-        });
+        menuItem.addActionListener(e -> serverController.sync(() -> invokeLater(this::refreshTabbedPanes)));
 //        menuItem.setEnabled(false);
         fileMenu.add(menuItem);
 

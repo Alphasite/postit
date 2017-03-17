@@ -12,6 +12,7 @@ import javax.json.*;
 
 import java.io.StringReader;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -33,134 +34,147 @@ public class ServerController {
     private Server serverToClient;
     private DirectoryController directoryController;
 
+    private Thread syncThread;
+
     public ServerController(Client clientToServer, Server serverToClient, DirectoryController directoryController, KeyService keyService) {
         this.clientToServer = clientToServer;
         this.serverToClient = serverToClient;
         this.directoryController = directoryController;
+        this.syncThread = null;
     }
 
-    public boolean sync() {
-        this.login(Crypto.secretKeyFromBytes("temp".getBytes())); // TODO
+    public void sync(Runnable callback) {
 
-        Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
-        List<Long> serverDeletedKeychains = getDeletedKeychains();
+        Runnable sync = () -> {
 
-        List<DirectoryEntry> clientKeychains = directoryController.getKeychains();
+            this.login(Crypto.secretKeyFromBytes("temp".getBytes())); // TODO
 
-        Set<Long> clientKeychainNames = clientKeychains.stream()
-                .map(keychain -> keychain.serverid)
-                .collect(Collectors.toSet());
+            Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
+            List<Long> serverDeletedKeychains = getDeletedKeychains();
 
-        // Figure out which keychains are here but deleted on the server
-        Set<Long> localKeychainsToDelete = new HashSet<>(serverDeletedKeychains);
-        localKeychainsToDelete.retainAll(clientKeychainNames);
+            List<DirectoryEntry> clientKeychains = directoryController.getKeychains();
 
-        // Figure out which keychains have been deleted here
-        Set<Long> serverKeychainsToDelete = new HashSet<>(directoryController.getDeletedKeychains());
-        serverKeychainsToDelete.removeAll(serverDeletedKeychains);
+            Set<Long> clientKeychainNames = clientKeychains.stream()
+                    .map(keychain -> keychain.serverid)
+                    .collect(Collectors.toSet());
 
-        Set<Long> keychainsToDownload = new HashSet<>(serverKeychains);
-        keychainsToDownload.removeAll(clientKeychainNames);
-        keychainsToDownload.removeAll(serverKeychainsToDelete);
+            // Figure out which keychains are here but deleted on the server
+            Set<Long> localKeychainsToDelete = new HashSet<>(serverDeletedKeychains);
+            localKeychainsToDelete.retainAll(clientKeychainNames);
 
-        Set<Long> keychainsToUpload = new HashSet<>(clientKeychainNames);
-        keychainsToUpload.removeAll(serverKeychains);
-        keychainsToUpload.removeAll(localKeychainsToDelete);
+            // Figure out which keychains have been deleted here
+            Set<Long> serverKeychainsToDelete = new HashSet<>(directoryController.getDeletedKeychains());
+            serverKeychainsToDelete.removeAll(serverDeletedKeychains);
 
-        Set<Long> keychainsToUpdate = new HashSet<>(clientKeychainNames);
-        keychainsToUpdate.retainAll(serverKeychains);
+            Set<Long> keychainsToDownload = new HashSet<>(serverKeychains);
+            keychainsToDownload.removeAll(clientKeychainNames);
+            keychainsToDownload.removeAll(serverKeychainsToDelete);
 
-        for (Long serverid : serverKeychainsToDelete) {
-            if (!deleteKeychain(serverid)) {
-                LOGGER.warning("Failed to delete keychain (" + serverid + ") from server.");
-                return false;
-            }
-        }
+            Set<Long> keychainsToUpload = new HashSet<>(clientKeychainNames);
+            keychainsToUpload.removeAll(serverKeychains);
+            keychainsToUpload.removeAll(localKeychainsToDelete);
 
-        for (DirectoryEntry entry : clientKeychains) {
-            if (!createKeychain(entry)) {
-                LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
-                return false;
-            }
-        }
+            Set<Long> keychainsToUpdate = new HashSet<>(clientKeychainNames);
+            keychainsToUpdate.retainAll(serverKeychains);
 
-        for (Long serverid : keychainsToDownload) {
-            JsonObject directoryKeychainObject = getDirectoryKeychainObject(serverid);
-
-            if (directoryKeychainObject != null) {
-                if (!directoryController.createKeychain(
-                        directoryKeychainObject.getJsonObject("entry"),
-                        directoryKeychainObject.getJsonObject("keychain") // TODO encrypt decrypt??
-                )) {
-                    LOGGER.warning("Failed to merge keychain (" + serverid + ") merge keychain.");
-                    return false;
+            for (Long serverid : serverKeychainsToDelete) {
+                if (!deleteKeychain(serverid)) {
+                    LOGGER.warning("Failed to delete keychain (" + serverid + ") from server.");
+                    return;
                 }
-            } else {
-                LOGGER.warning("Failed to download keychain (" + serverid + ") from server.");
-                return false;
-            }
-        }
-
-        for (DirectoryEntry entry : new ArrayList<>(directoryController.getKeychains())) {
-            if (localKeychainsToDelete.contains(entry.serverid)) {
-                directoryController.deleteEntry(entry);
-                continue;
             }
 
-            if (keychainsToUpdate.contains(entry.serverid)) {
-                JsonObject directoryKeychainObject = getDirectoryKeychainObject(entry.serverid);
+            for (DirectoryEntry entry : clientKeychains) {
+                if (!createKeychain(entry)) {
+                    LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
+                    return;
+                }
+            }
 
-                directoryController.updateLocalIfIsOlder(
-                        entry,
-                        directoryKeychainObject.getJsonObject("entry"),
-                        directoryKeychainObject.getJsonObject("keychain") // TODO encrypt decrypt??
-                );
+            for (Long serverid : keychainsToDownload) {
+                JsonObject directoryKeychainObject = getDirectoryKeychainObject(serverid);
 
-                if (setKeychain(entry)) {
-                    continue;
+                if (directoryKeychainObject != null) {
+                    if (!directoryController.createKeychain(
+                            directoryKeychainObject.getJsonObject("entry"),
+                            directoryKeychainObject.getJsonObject("keychain") // TODO encrypt decrypt??
+                    )) {
+                        LOGGER.warning("Failed to merge keychain (" + serverid + ") merge keychain.");
+                        return;
+                    }
                 } else {
-                    LOGGER.warning("Failed to update keychain (" + entry.name + ")  on server...");
-                    return false;
+                    LOGGER.warning("Failed to download keychain (" + serverid + ") from server.");
+                    return;
                 }
             }
-        }
 
-        return true;
+            for (DirectoryEntry entry : new ArrayList<>(directoryController.getKeychains())) {
+                if (localKeychainsToDelete.contains(entry.serverid)) {
+                    directoryController.deleteEntry(entry);
+                    continue;
+                }
+
+                if (keychainsToUpdate.contains(entry.serverid)) {
+                    JsonObject directoryKeychainObject = getDirectoryKeychainObject(entry.serverid);
+
+                    directoryController.updateLocalIfIsOlder(
+                            entry,
+                            directoryKeychainObject.getJsonObject("entry"),
+                            directoryKeychainObject.getJsonObject("keychain") // TODO encrypt decrypt??
+                    );
+
+                    if (setKeychain(entry)) {
+                        continue;
+                    } else {
+                        LOGGER.warning("Failed to update keychain (" + entry.name + ")  on server...");
+                        return;
+                    }
+                }
+            }
+
+            callback.run();
+        };
+
+        if (syncThread != null) {
+            syncThread = new Thread(sync);
+            syncThread.run();
+        }
     }
-    
+
     /**
      * Sends request to server and wait until response is received.
+     *
      * @param request
      * @return
      */
-    private String sendRequestAndWait(String request){
-    	int reqId = clientToServer.addRequest(request);
-    	String response = null;
-    	while(true){ // block until request is received
-    		try {
-				this.wait(2000);
-				response = serverToClient.getResponse(reqId);
-				if (response != null)
-					break;
-			} catch (InterruptedException e) {
-				e.printStackTrace(); // should not happen in the current implementation
-			}
-    	}
-    	
-    	return response;
+    private String sendRequestAndWait(String request) {
+        int reqId = clientToServer.addRequest(request);
+        String response = null;
+        while (true) { // block until request is received
+            try {
+                this.wait(2000);
+                response = serverToClient.getResponse(reqId);
+                if (response != null)
+                    break;
+            } catch (InterruptedException e) {
+                e.printStackTrace(); // should not happen in the current implementation
+            }
+        }
+
+        return response;
     }
 
-    private JsonObject stringToJsonObject(String msg){
-    	JsonReader jsonReader = Json.createReader(new StringReader(msg));
-    	JsonObject object = jsonReader.readObject();
-    	jsonReader.close();
-    	return object;
+    private JsonObject stringToJsonObject(String msg) {
+        JsonReader jsonReader = Json.createReader(new StringReader(msg));
+        JsonObject object = jsonReader.readObject();
+        jsonReader.close();
+        return object;
     }
-    
+
     private boolean login(SecretKey password) {
-    	String req = RequestMessenger.createAuthenticateMessage(getUsername(), password.toString());
-    	JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-    	return res.getString("status").equals("success");
+        String req = RequestMessenger.createAuthenticateMessage(getUsername(), password.toString());
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
     }
 
     private String getUsername() {
@@ -172,11 +186,11 @@ public class ServerController {
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));
         JsonArray list = res.getJsonArray("keychains");
         List<Long> keys = new ArrayList<Long>();
-        
-        for (int i = 0; i < list.size(); i++){
-        	JsonObject key = list.getJsonObject(i);
-        	if (key.containsKey("directoryEntryId"))
-        		keys.add((long) key.getInt("directoryEntryId"));
+
+        for (int i = 0; i < list.size(); i++) {
+            JsonObject key = list.getJsonObject(i);
+            if (key.containsKey("directoryEntryId"))
+                keys.add((long) key.getInt("directoryEntryId"));
         }
         return keys;
     }
@@ -201,11 +215,11 @@ public class ServerController {
         }
 
         // TODO fill this in?
-    	String req = RequestMessenger.createAddKeychainsMessage(getUsername(), entry.name, entry.getEncryptionKey().toString(), "", "");
-    	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
-    	DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(res.getJsonObject("keychain"));
-    	long id = dak.getDirectoryEntryId();
-    	
+        String req = RequestMessenger.createAddKeychainsMessage(getUsername(), entry.name, entry.getEncryptionKey().toString(), "", "");
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(res.getJsonObject("keychain"));
+        long id = dak.getDirectoryEntryId();
+
         // ask server for new keychain id;
         Optional<Long> newid = Optional.of(id);
 
@@ -228,14 +242,14 @@ public class ServerController {
 
         // TODO fill this in?
         String req = RequestMessenger.createUpdateKeychainMessage(getUsername(), entry.name, entry.getEncryptionKey().toString(), "", "");
-    	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
-    	return res.getString("status").equals("success");
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
     }
 
     private boolean deleteKeychain(long id) {
-    	String req = RequestMessenger.createRemoveKeychainMessage(getUsername(), id);
-    	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
-    	return res.getString("status").equals("success");
+        String req = RequestMessenger.createRemoveKeychainMessage(getUsername(), id);
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
     }
 
     private Optional<Long> getNewKeychainId() {
