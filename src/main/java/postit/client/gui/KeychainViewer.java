@@ -91,7 +91,6 @@ public class KeychainViewer {
                 GUIKeyService keyService = new GUIKeyService();
                 BackingStore backingStore = new BackingStore(keyService);
 
-
                 if (!Crypto.init()) {
                     // TODO
                 }

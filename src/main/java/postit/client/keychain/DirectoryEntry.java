@@ -23,8 +23,8 @@ public class DirectoryEntry {
     public String name;
     public long serverid;
 
-    public SecretKey encryptionKey;
-    public byte[] nonce;
+    private SecretKey encryptionKey;
+    private byte[] nonce;
 
     Directory directory;
     Keychain keychain;
@@ -36,7 +36,7 @@ public class DirectoryEntry {
 
     public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, KeyService keyService, BackingStore backingStore) {
         this.name = name;
-        this.encryptionKey = encryptionKey;
+        this.setEncryptionKey(encryptionKey);
         this.directory = directory;
         this.keychain = null;
         this.keyService = keyService;
@@ -54,19 +54,21 @@ public class DirectoryEntry {
     }
 
     public void updateFrom(JsonObject object) {
+        Base64.Decoder decoder = Base64.getDecoder();
         this.name = object.getString("name");
-        this.encryptionKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("encryption-key").getBytes()));
-        this.nonce = Base64.getDecoder().decode(object.getString("nonce"));
+        this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
+        this.setNonce(decoder.decode(object.getString("nonce")));
         this.serverid = object.getJsonNumber("serverid").longValue();
         this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
     }
 
     public JsonObjectBuilder dump() {
         JsonObjectBuilder builder = Json.createObjectBuilder();
+        Base64.Encoder encoder = Base64.getEncoder();
 
         builder.add("name", name);
-        builder.add("encryption-key", new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(encryptionKey))));
-        builder.add("nonce", Base64.getEncoder().encodeToString(nonce));
+        builder.add("encryption-key", encoder.encodeToString(Crypto.secretKeyToBytes(getEncryptionKey())));
+        builder.add("nonce", encoder.encodeToString(getNonce()));
         builder.add("serverid", serverid);
         builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
 
@@ -77,32 +79,16 @@ public class DirectoryEntry {
         LOGGER.info("Reading keychain " + name);
 
         // If it has already been loaded, return that.
-        if (keychain != null) {
+        if (this.keychain != null) {
             return Optional.of(keychain);
         }
 
-        Optional<String> backingStore = this.backingStore.readKeychain(name);
+        Optional<Keychain> keychain = this.backingStore.readKeychain(this);
 
-        // Create the keychain file if it doesnt already exist.
-        if (!backingStore.isPresent()) {
-            LOGGER.info("Keychain file doesn't exist... creating it: " + name);
-
-            keychain = new Keychain(this);
-
-            return Optional.of(keychain);
-        }
-
-        // otherwise load and decrypt it.
-        Optional<JsonObject> object = Crypto.decryptJsonObject(
-                this.encryptionKey,
-                this.nonce,
-                Base64.getDecoder().decode(backingStore.get())
-        );
-
-        if (object.isPresent()) {
+        if (keychain.isPresent()) {
             LOGGER.info("Succeeded in reading keychain " + name + " from disk.");
-            keychain = new Keychain(object.get(), this);
-            return Optional.of(keychain);
+            this.keychain = keychain.get();
+            return keychain;
         } else {
             return Optional.empty();
         }
@@ -121,8 +107,8 @@ public class DirectoryEntry {
 
         if (serverid != entry.serverid) return false;
         if (!name.equals(entry.name)) return false;
-        if (!encryptionKey.equals(entry.encryptionKey)) return false;
-        if (!Arrays.equals(nonce, entry.nonce)) return false;
+        if (!getEncryptionKey().equals(entry.getEncryptionKey())) return false;
+        if (!Arrays.equals(getNonce(), entry.getNonce())) return false;
         return lastModified.equals(entry.lastModified);
     }
 
@@ -130,9 +116,26 @@ public class DirectoryEntry {
     public int hashCode() {
         int result = name.hashCode();
         result = 31 * result + (int) (serverid ^ (serverid >>> 32));
-        result = 31 * result + encryptionKey.hashCode();
-        result = 31 * result + Arrays.hashCode(nonce);
+        result = 31 * result + getEncryptionKey().hashCode();
+        result = 31 * result + Arrays.hashCode(getNonce());
         result = 31 * result + lastModified.hashCode();
         return result;
+    }
+
+
+    public SecretKey getEncryptionKey() {
+        return encryptionKey;
+    }
+
+    public void setEncryptionKey(SecretKey encryptionKey) {
+        this.encryptionKey = encryptionKey;
+    }
+
+    public byte[] getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(byte[] nonce) {
+        this.nonce = nonce;
     }
 }
