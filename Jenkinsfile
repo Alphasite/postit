@@ -46,7 +46,8 @@ pipeline {
                 setBuildStatus("Build complete", "SUCCESS");
 
                 archiveArtifacts artifacts: 'build/distributions/*.zip'
-                archiveArtifacts artifacts: 'build/pit-reports/'
+
+                zip zipFile: 'pit-test.zip', glob: 'build/pit-reports/**/*', archive: true
 
                 sh "rm -rf targets/"
             }
