@@ -57,7 +57,7 @@ pitest {
     pitestVersion = "1.1.0" //not needed when a default PIT version should be used
     threads = 4
     outputFormats = ['XML', 'HTML']
-    reportDir = "target/pit-reports/"
+    reportDir = "build/pit-reports/"
 }
 
 tasks.withType(Test) {

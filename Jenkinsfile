@@ -41,9 +41,12 @@ pipeline {
         stage('Results') {
             steps {
                 junit '**/test-results/test/TEST-*.xml'
-                // step([$class: 'PitPublisher', mutationStatsFile: 'target/pit-reports/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
+                // step([$class: 'PitPublisher', mutationStatsFile: 'build/pit-reports/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
                 archive 'target/*.jar'
                 setBuildStatus("Build complete", "SUCCESS");
+
+                archiveArtifacts artifacts: 'build/distributions/*.zip''
+                archiveArtifacts artifacts: 'build/pit-reports/'
 
                 sh "rm -rf targets/"
             }
