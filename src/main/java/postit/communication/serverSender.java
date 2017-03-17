@@ -2,11 +2,12 @@ package postit.communication;
 
 import org.json.JSONObject;
 import postit.server.controller.RequestHandler;
-import java.io.*;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -38,7 +39,7 @@ public class serverSender implements Runnable {
                     clientSocket = new Socket("localhost", port);
                     trying = false;
                 } catch (ConnectException e) {
-                    System.out.println("Connect failed, waiting and trying again");
+                    System.out.println("Connect failed, waiting and trying again - serverSender");
                     try {
                         Thread.sleep(2000);//2 seconds
                     } catch (InterruptedException ie) {

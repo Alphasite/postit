@@ -175,7 +175,10 @@ public class KeychainViewer {
         menuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 serverController.sync();
+                refreshTabbedPanes();
+
             }
         });
 //        menuItem.setEnabled(false);
@@ -328,6 +331,11 @@ public class KeychainViewer {
     private Password getActivePassword(List<Password> passwords, MouseEvent e){
         JTable target = (JTable) e.getSource();
         int row = target.getSelectedRow();
-        return passwords.get(row);
+        try {
+            return passwords.get(row);
+        }
+        catch(IndexOutOfBoundsException ex){
+            return null;
+        }
     }
 }
