@@ -8,11 +8,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import org.json.JSONObject;
 
 import postit.server.database.Database;
 import postit.server.model.*;
+import postit.shared.model.Account;
 
 public class DatabaseController {
 
@@ -26,9 +26,13 @@ public class DatabaseController {
 		PreparedStatement stmt = null;
 		ResultSet rset = null;
 		Account account = null;
-		
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return null;
+		}
+		try {
 			stmt = conn.prepareStatement("SELECT * FROM "+ACCOUNT+" WHERE "
 					+ "`user_name`=?;");
 
@@ -58,7 +62,12 @@ public class DatabaseController {
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int add = 0;
-			conn = Database.connectToDefault();
+			try {
+				conn = Database.connectToDefault();
+			} catch (SQLException e1) {
+				System.out.println("Connection to database failed");
+				return false;
+			}
 			try {
 				stmt = conn.prepareStatement("INSERT INTO "+ACCOUNT+" "
 						+ "(`user_name`, `pwd_key`, `email`, `first_name`, `last_name`)"
@@ -86,7 +95,12 @@ public class DatabaseController {
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int modify = 0;
-		conn = Database.connectToDefault();
+		try {
+			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
 		try {
 			stmt = conn.prepareStatement("UPDATE "+ACCOUNT+" SET `user_name`=?, `pwd_key`=?, `email`=?, "
 					+ "`first_name`=?, `last_name`=? WHERE `user_name`=?;");
@@ -116,6 +130,11 @@ public class DatabaseController {
 		int remove = 0;
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
+		try {
 			stmt = conn.prepareStatement("DELETE FROM "+ACCOUNT+" WHERE "
 					+ "`user_name`=?;");
 			stmt.setString(1, username);
@@ -136,9 +155,13 @@ public class DatabaseController {
 		PreparedStatement stmt = null;
 		ResultSet rset = null;
 		Directory dir = null;
-		
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return dir;
+		}
+		try {
 			stmt = conn.prepareStatement("SELECT * FROM "+DIRECTORY+" WHERE "
 					+ "`user_name`=?;");
 
@@ -169,7 +192,7 @@ public class DatabaseController {
 	 * @param ownPath
 	 * @return
 	 */
-	public JsonObject addDirectory(String username, String ownPath){
+	public JSONObject addDirectory(String username, String ownPath){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int add = 0;
@@ -177,6 +200,13 @@ public class DatabaseController {
 		boolean success = true;
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			JSONObject res = new JSONObject();
+			res.put("status", "failure");
+			return res;
+		}
+		try {
 			stmt = conn.prepareStatement("INSERT INTO "+DIRECTORY+" "
 					+ "(`user_name`, `own_path`)"
 					+ "VALUES (?,?);", 
@@ -203,16 +233,27 @@ public class DatabaseController {
 			closeQuietly(stmt);
 			closeQuietly(conn);
 		}
-		return Json.createObjectBuilder()
-			     .add("status", success ? "success" : "failure")
-			     .add("directory_id", id)
-			     .build();
+		
+		JSONObject res = new JSONObject();
+		if (success){
+			res.put("status", "success");
+			res.put("directory_id", id);
+		}
+		else
+			res.put("status", "failure");
+		return res;
 	}
 	
 	public boolean removeDirectory(String username){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int remove = 0;
+		try {
+			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
 		try {
 			conn = Database.connectToDefault();
 			stmt = conn.prepareStatement("DELETE FROM "+DIRECTORY+" WHERE "
@@ -229,7 +270,8 @@ public class DatabaseController {
 		return remove == 1;
 	}
 	
-	public JsonObject addDirectoryEntry(String name, String encryptKey, int directoryId){
+	//TODO change this from JSONObject to DirectoryEntry
+	public JSONObject addDirectoryEntry(String name, String encryptKey, int directoryId){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int add = 0;
@@ -237,6 +279,13 @@ public class DatabaseController {
 		boolean success = false;
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			JSONObject res = new JSONObject();
+			res.put("status", "failure");
+			return res;
+		}
+		try {
 			stmt = conn.prepareStatement("INSERT INTO "+DIRECTORY_ENTRY+" "
 					+ "(`directory_id`, `name`, `encryption_key`)"
 					+ "VALUES (?,?,?);", 
@@ -265,20 +314,27 @@ public class DatabaseController {
 			closeQuietly(conn);
 		}
 		
-		if (success)
-			return Json.createObjectBuilder()
-					.add("status", "success")
-					.add("directory_entry_id", id)
-					.build();
+		JSONObject res = new JSONObject();
+		if (success){
+			res.put("status", "success");
+			res.put("directoryEntryId", id);
+		}
 		else
-			return Json.createObjectBuilder().add("status", "failure").build();
+			res.put("status", "failure");
+		
+		return res;
 	}
 	
 	public boolean updateDirectoryEntry(DirectoryEntry de){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int modify = 0;
-		conn = Database.connectToDefault();
+		try {
+			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
 		try {
 			stmt = conn.prepareStatement("UPDATE "+DIRECTORY_ENTRY+" SET `name`=?, `encryption_key`=? WHERE `directory_entry_id`=?;");
 			stmt.setString(1, de.getName());
@@ -303,9 +359,13 @@ public class DatabaseController {
 		PreparedStatement stmt = null;
 		ResultSet rset = null;
 		DirectoryEntry de = null;
-		
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return de;
+		}
+		try {
 			stmt = conn.prepareStatement("SELECT * FROM "+DIRECTORY_ENTRY+" WHERE "
 					+ "`directory_entry_id`=?;");
 
@@ -330,14 +390,55 @@ public class DatabaseController {
 		return de;
 	}
 	
+	public DirectoryEntry getDirectoryEntry(int directoryId, String name){
+		Connection conn = null;
+		PreparedStatement stmt = null;
+		ResultSet rset = null;
+		DirectoryEntry de = null;
+		try {
+			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return de;
+		}
+		try {
+			stmt = conn.prepareStatement("SELECT * FROM "+DIRECTORY_ENTRY+" WHERE "
+					+ "`directory_id`=? AND `name`=?;");
+
+			stmt.setInt(1, directoryId);
+			stmt.setString(2, name);
+			rset = stmt.executeQuery();
+			
+			if (rset.next()){
+				de = new DirectoryEntry(rset.getInt("directory_entry_id"), name, rset.getString("encryption_key"), directoryId);
+			}		
+		}
+		catch(SQLException e){
+			System.out.println("An error occurred in getDirectoryEntry"); 
+		}
+		catch(Exception e){
+			System.out.println("An error occurred"); 
+		}
+		finally{
+			closeQuietly(stmt);
+			closeQuietly(conn);
+		}
+		
+		return de;
+	}
+	
 	public List<DirectoryEntry> getDirectoryEntries(int directoryId){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rset = null;
-		ArrayList<DirectoryEntry> list = new ArrayList<DirectoryEntry>();
-		
+		ArrayList<DirectoryEntry> list = new ArrayList<>();
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return list;
+		}
+		try {
 			stmt = conn.prepareStatement("SELECT * FROM "+DIRECTORY_ENTRY+" WHERE "
 					+ "`directory_id`=?;");
 
@@ -369,6 +470,11 @@ public class DatabaseController {
 		int remove = 0;
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
+		try {
 			stmt = conn.prepareStatement("DELETE FROM "+DIRECTORY_ENTRY+" WHERE "
 					+ "`directory_entry_id`=?;");
 			stmt.setInt(1, directoryEntryId);
@@ -384,12 +490,17 @@ public class DatabaseController {
 		return remove == 1;
 	}
 	
-	public JsonObject addKeychain(int deId, String password, String metadata){
+	public boolean addKeychain(int deId, String password, String metadata){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int add = 0;
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
+		try {
 			stmt = conn.prepareStatement("INSERT INTO "+KEYCHAIN+" "
 					+ "(`directory_entry_id`, `password`, `metadata`)"
 					+ "VALUES (?,?,?);");
@@ -407,16 +518,19 @@ public class DatabaseController {
 			closeQuietly(stmt);
 			closeQuietly(conn);
 		}
-		return Json.createObjectBuilder()
-			     .add("status", add == 1 ? "success" : "failure")
-			     .build();
+		return add == 1;
 	}
 	
 	public boolean updateKeychain(Keychain key){
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		int modify = 0;
-		conn = Database.connectToDefault();
+		try {
+			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
 		
 		try {
 			stmt = conn.prepareStatement("UPDATE "+KEYCHAIN+" SET `password`=?, `metadata`=? WHERE `directory_entry_id`=?;");
@@ -442,9 +556,13 @@ public class DatabaseController {
 		PreparedStatement stmt = null;
 		ResultSet rset = null;
 		Keychain de = null;
-		
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return null;
+		}
+		try {
 			stmt = conn.prepareStatement("SELECT * FROM "+KEYCHAIN+" WHERE "
 					+ "`directory_entry_id`=?;");
 
@@ -475,6 +593,11 @@ public class DatabaseController {
 		int remove = 0;
 		try {
 			conn = Database.connectToDefault();
+		} catch (SQLException e1) {
+			System.out.println("Connection to database failed");
+			return false;
+		}
+		try {
 			stmt = conn.prepareStatement("DELETE FROM "+KEYCHAIN+" WHERE "
 					+ "`directory_entry_id`=?;");
 			stmt.setInt(1, directoryEntryId);
@@ -492,7 +615,8 @@ public class DatabaseController {
 	
 	public void closeQuietly(PreparedStatement stmt){
 		try {
-			stmt.close();
+			if (stmt != null)
+				stmt.close();
 		} catch (SQLException e) {
 			// do nothing
 		}
@@ -500,7 +624,8 @@ public class DatabaseController {
 	
 	public void closeQuietly(Connection conn){
 		try {
-			conn.close();
+			if (conn != null)
+				conn.close();
 		} catch (SQLException e) {
 			// do nothing
 		}

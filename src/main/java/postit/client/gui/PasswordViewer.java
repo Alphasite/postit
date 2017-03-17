@@ -1,7 +1,7 @@
 package postit.client.gui;
 
 
-import postit.client.handler.DirectoryController;
+import postit.client.controller.DirectoryController;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
 import postit.shared.Crypto;
@@ -9,8 +9,6 @@ import postit.shared.Crypto;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Map;
 /**
  * Created by jackielaw on 2/26/17.
@@ -26,36 +24,39 @@ public class PasswordViewer {
     private JButton saveButton;
     private JButton deleteButton;
 
-    public PasswordViewer(DirectoryController c, Keychain k, Password p) {
+    public PasswordViewer(KeychainViewer kv, DirectoryController c, Keychain k, Password p) {
         // TODO: place custom component creation code here
         titleField = new JTextField();
-        titleField.setEditable(false);
         userField = new JTextField();
-        userField.setEditable(false);
         passField = new JPasswordField();
         comments = new JTextArea(7,10);
-        comments.setEditable(false);
         toggleView = new JButton("<o>");
 
         saveButton = new JButton("Save");
 
         createUIComponents(p);
-        toggleView.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(passField.getEchoChar()==(char)0)
-                    passField.setEchoChar((char)9679); //(char)9679 is the black dot symbol
-                else
-                    passField.setEchoChar((char)0);
-            }
+        toggleView.addActionListener(e -> {
+            if(passField.getEchoChar()==(char)0)
+                passField.setEchoChar((char)9679); //(char)9679 is the black dot symbol
+            else
+                passField.setEchoChar((char)0);
         });
-        saveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String newKey = String.valueOf(passField.getPassword());
-                c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
-                frame.dispose();
-            }
+        saveButton.addActionListener(e -> {
+            String newTitle = String.valueOf(titleField.getText());
+            c.updatePasswordTitle(p,newTitle);
+
+            String newUser = String.valueOf(userField.getText());
+            c.updateMetadataEntry(p,"username",newUser);
+
+            String newComments = String.valueOf(comments.getText());
+            c.updateMetadataEntry(p,"comments",newComments);
+
+            String newKey = String.valueOf(passField.getPassword());
+            c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
+
+
+            frame.dispose();
+            kv.refreshTabbedPanes();
         });
     }
 
@@ -63,7 +64,7 @@ public class PasswordViewer {
     private void createUIComponents(Password p) {
         // TODO: place custom component creation code here
         frame = new JFrame("Password");
-
+        frame.setMinimumSize(new Dimension(300,400));
 
         Map<String,String> metadata = p.metadata;
 
@@ -71,10 +72,11 @@ public class PasswordViewer {
         if (metadata.containsKey("username"))
             userField.setText(metadata.get("username"));
         else
-            userField.setText("user");
+            userField.setText("");
 
         byte[] bytes = Crypto.secretKeyToBytes(p.password);
         passField.setText(new String(bytes));
+
         if (metadata.containsKey("comments"))
             comments.setText(metadata.get("comments"));
         else

@@ -5,7 +5,6 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import java.util.HashMap;
 import java.util.Map;
-import javax.crypto.spec.SecretKeySpec;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -43,8 +42,10 @@ public class Password {
     public JsonObjectBuilder dump() {
 
         JsonObjectBuilder metadataObject = Json.createObjectBuilder();
-        metadata.entrySet().stream().map(entry -> metadataObject.add(entry.getKey(), entry.getValue()));
-        System.out.println("Dumping :" + this);
+        for (Map.Entry<String, String> entry : metadata.entrySet()) {
+            metadataObject.add(entry.getKey(), entry.getValue());
+        }
+
         return Json.createObjectBuilder()
                 .add("identifier", identifier)
                 .add("password", new String(Crypto.secretKeyToBytes(password)))
@@ -59,18 +60,9 @@ public class Password {
         this.password = Crypto.secretKeyFromBytes(password.getBytes());
     }
 
-    public boolean save() {
-        return this.keychain.save();
-    }
-
     public boolean delete() {
         this.keychain.passwords.remove(this);
-        if (this.keychain.save()) {
-            return true;
-        } else {
-            this.keychain.passwords.add(this);
-            return false;
-        }
+        return true;
     }
 
     @Override

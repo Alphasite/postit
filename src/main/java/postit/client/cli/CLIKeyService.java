@@ -4,6 +4,7 @@ import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.DestroyFailedException;
 import java.io.Console;
 import java.time.*;
@@ -50,7 +51,7 @@ public class CLIKeyService implements KeyService {
             }
 
 
-            key = Crypto.hashedSecretKeyFromBytes(getKey("Please enter master password: "));
+            key = Crypto.secretKeyFromBytes(getKey("Please enter master password: "));
         }
 
         retrieved = Instant.now();
@@ -60,6 +61,12 @@ public class CLIKeyService implements KeyService {
     @Override
     public SecretKey getClientKey() {
         return Crypto.secretKeyFromBytes(getKey("Please enter client password: "));
+    }
+
+    @Override
+    public String getAccount() {
+        System.out.println("Please enter username: ");
+        return new Scanner(System.in).nextLine();
     }
 
     @Override
@@ -75,7 +82,7 @@ public class CLIKeyService implements KeyService {
             }
         }
 
-        key = Crypto.hashedSecretKeyFromBytes(password.getBytes());
+        key = Crypto.secretKeyFromBytes(password.getBytes());
         retrieved = Instant.now();
 
         return key;

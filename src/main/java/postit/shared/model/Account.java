@@ -1,4 +1,4 @@
-package postit.server.model;
+package postit.shared.model;
 import javax.json.*;
 
 import postit.server.model.Customer;
@@ -35,7 +35,10 @@ public class Account {
 //        return id;
 //    }
 
-    public String getUsername(){
+    public Account() {
+	}
+
+	public String getUsername(){
     	return username;
     }
     
@@ -72,6 +75,10 @@ public class Account {
     }
 
     // SETTERS
+    public void setUsername(String username){
+    	this.username = username;
+    }
+    
     public void setPassword(String password) {
         this.password = password;
     }
@@ -82,5 +89,10 @@ public class Account {
 
     public void setLog(Log log) {
         this.log = log;
+    }
+    
+    public static Account fromJSONObject(JsonObject act){
+    	return new Account(act.getString("username"), act.getString("password"), 
+    			act.getString("email"), act.getString("firstname"), act.getString("lastname"));
     }
 }

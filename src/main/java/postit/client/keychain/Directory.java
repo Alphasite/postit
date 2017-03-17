@@ -14,25 +14,38 @@ import java.util.logging.Logger;
 public class Directory {
     private final static Logger LOGGER = Logger.getLogger(Directory.class.getName());
 
-    BackingStore backingStore;
-    KeyService keyService;
+    private BackingStore backingStore;
+    private KeyService keyService;
 
-    List<DirectoryEntry> keychains;
+    public List<DirectoryEntry> keychains;
+    public List<Long> deletedKeychains;
+
+    public Account account;
 
     public Directory(KeyService keyService, BackingStore backingStore) {
         this.keyService = keyService;
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
+        this.deletedKeychains = new ArrayList<>();
+        this.account = new Account(keyService.getAccount(), this);
     }
 
     public Directory(JsonObject object, KeyService keyService, BackingStore backingStore) {
         this.keyService = keyService;
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
+        this.deletedKeychains = new ArrayList<>();
+
+        this.account = new Account(object.getJsonObject("account"), this);
 
         JsonArray keychainArray = object.getJsonArray("keychains");
         for (int i = 0; i < keychainArray.size(); i++) {
             keychains.add(new DirectoryEntry(keychainArray.getJsonObject(i), this, keyService, backingStore));
+        }
+
+        JsonArray deletedKeychainsArray = object.getJsonArray("deleted");
+        for (int i = 0; i < deletedKeychainsArray.size(); i++) {
+            deletedKeychains.add(deletedKeychainsArray.getJsonNumber(i).longValue());
         }
     }
 
@@ -42,16 +55,23 @@ public class Directory {
             keychainArray.add(keychain.dump());
         }
 
+        JsonArrayBuilder deletedKeychainsArray = Json.createArrayBuilder();
+        for (Long deletedKeychain : deletedKeychains) {
+            deletedKeychainsArray.add(deletedKeychain);
+        }
+
         return Json.createObjectBuilder()
                 .add("version", "1.0.0")
-                .add("keychains", keychainArray);
+                .add("account", account.dump())
+                .add("keychains", keychainArray)
+                .add("deleted", deletedKeychainsArray);
     }
 
     public List<DirectoryEntry> getKeychains() {
         return keychains;
     }
 
-    public Optional<Keychain> createKeychain(SecretKey encryptionKey, String name) {
+    public boolean createKeychain(SecretKey encryptionKey, String name) {
         LOGGER.info("Creating keychain: " + name);
 
         DirectoryEntry entry = new DirectoryEntry(
@@ -62,36 +82,30 @@ public class Directory {
                 backingStore
         );
 
-        Keychain keychain = new Keychain(name, entry);
-
         if (keychains.stream().map(k -> k.name).anyMatch(n -> n.equals(name))) {
-            LOGGER.warning("Keychian " + name +  "is a duplicate, not adding.");
-            return Optional.empty();
+            LOGGER.warning("Keychain " + name +  "is a duplicate, not adding.");
+            return false;
         }
 
         this.keychains.add(entry);
 
-        if (entry.save()) {
-            if (this.save()) {
-                return Optional.of(keychain);
-            } else {
-                if (!entry.delete()) {
-                    LOGGER.severe("Failed to delete entry after fialing to save directory, please clean up :" + entry.getPath());
-                }
+        return true;
+    }
 
-                return Optional.empty();
-            }
-        } else {
-            return Optional.empty();
-        }
+    public DirectoryEntry createKeychain(JsonObject entryObject, JsonObject keychainObject) {
+        DirectoryEntry entry = new DirectoryEntry(entryObject, this, keyService, backingStore);
+        entry.keychain = new Keychain(keychainObject, entry);
+        this.keychains.add(entry);
+
+        return entry;
     }
 
     public boolean delete(DirectoryEntry keychain) {
-        return keychain.delete();
-    }
+        if (keychain.serverid != -1L) {
+            deletedKeychains.add(keychain.serverid);
+        }
 
-    public boolean save() {
-        LOGGER.info("Saving directory");
-        return backingStore.writeDirectory(this);
+        this.keychains.remove(keychain);
+        return this.backingStore.deleteKeychain(keychain.name);
     }
 }

@@ -4,14 +4,12 @@ import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 
-import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -23,7 +21,9 @@ public class DirectoryEntry {
     private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
     public String name;
-    public SecretKey encryptionKey;
+    public long serverid;
+
+    private SecretKey encryptionKey;
     private byte[] nonce;
 
     Directory directory;
@@ -32,31 +32,45 @@ public class DirectoryEntry {
     KeyService keyService;
     BackingStore backingStore;
 
+    public LocalDateTime lastModified;
+
     public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, KeyService keyService, BackingStore backingStore) {
         this.name = name;
-        this.encryptionKey = encryptionKey;
+        this.setEncryptionKey(encryptionKey);
         this.directory = directory;
         this.keychain = null;
         this.keyService = keyService;
         this.backingStore = backingStore;
+        this.lastModified = LocalDateTime.now();
+        this.serverid = -1L;
     }
 
     public DirectoryEntry(JsonObject object, Directory directory, KeyService keyService, BackingStore backingStore) {
-        this.name = object.getString("name");
-        this.encryptionKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("encryption-key").getBytes()));
         this.directory = directory;
         this.keychain = null;
         this.keyService = keyService;
         this.backingStore = backingStore;
-        this.nonce = Base64.getDecoder().decode(object.getString("nonce"));
+        this.updateFrom(object);
+    }
+
+    public void updateFrom(JsonObject object) {
+        Base64.Decoder decoder = Base64.getDecoder();
+        this.name = object.getString("name");
+        this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
+        this.setNonce(decoder.decode(object.getString("nonce")));
+        this.serverid = object.getJsonNumber("serverid").longValue();
+        this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
     }
 
     public JsonObjectBuilder dump() {
         JsonObjectBuilder builder = Json.createObjectBuilder();
+        Base64.Encoder encoder = Base64.getEncoder();
 
         builder.add("name", name);
-        builder.add("encryption-key", new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(encryptionKey))));
-        builder.add("nonce", Base64.getEncoder().encodeToString(nonce));
+        builder.add("encryption-key", encoder.encodeToString(Crypto.secretKeyToBytes(getEncryptionKey())));
+        builder.add("nonce", encoder.encodeToString(getNonce()));
+        builder.add("serverid", serverid);
+        builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
 
         return builder;
     }
@@ -64,101 +78,64 @@ public class DirectoryEntry {
     public Optional<Keychain> readKeychain() {
         LOGGER.info("Reading keychain " + name);
 
-        if (!Files.exists(getPath())) {
-            LOGGER.info("Keychain file doesn't exist... creating it: " + name);
-
-            keychain = new Keychain(name, this);
-            this.save();
-
+        // If it has already been loaded, return that.
+        if (this.keychain != null) {
             return Optional.of(keychain);
         }
 
-        if (keychain != null) {
-            return Optional.of(keychain);
-        }
+        Optional<Keychain> keychain = this.backingStore.readKeychain(this);
 
-        Optional<Cipher> cipher = Crypto.getGCMDecryptCipher(encryptionKey, nonce);
-
-        if (!cipher.isPresent()) {
-            LOGGER.warning("Invalid password entered, unable to initialise encryption key.");
-            return Optional.empty();
-        }
-
-        Optional<JsonObject> jsonObject = Crypto.readJsonObjectFromCipherStream(getPath(), cipher.get());
-
-        if (jsonObject.isPresent()) {
+        if (keychain.isPresent()) {
             LOGGER.info("Succeeded in reading keychain " + name + " from disk.");
-            keychain = new Keychain(jsonObject.get(), this);
-            return Optional.of(keychain);
+            this.keychain = keychain.get();
+            return keychain;
         } else {
             return Optional.empty();
         }
     }
 
-    public boolean save() {
-        LOGGER.info("Saving Directory Entry " + name);
-
-        if (keychain == null) {
-            return this.readKeychain().isPresent();
-        }
-
-        nonce = Crypto.getNonce();
-
-        SecretKey newKey = Crypto.generateKey();
-        SecretKey oldKey = encryptionKey;
-
-        Optional<Cipher> cipher = Crypto.getGCMEncryptCipher(newKey, nonce);
-
-        if (!cipher.isPresent()) {
-            return false;
-        }
-
-        Path path = getPath();
-        boolean success = Crypto.writeJsonObjectToCipherStream(cipher.get(), path, keychain.dump().build());
-        System.out.println("Saved keychain as: " + keychain.dump().build());
-
-        if (success) {
-            encryptionKey = newKey;
-
-            if (!directory.save()) {
-                encryptionKey = oldKey;
-
-                LOGGER.severe("Failed to save keychain.");
-
-                success = false;
-            }
-        }
-
-        if (!success) {
-            try {
-                Files.delete(path);
-            } catch (IOException e) {
-                LOGGER.severe("Failed to delete orphan keychain: " + e.getMessage());
-            }
-
-            return false;
-        }
-
-        LOGGER.info("Succeeded in writing keychain " + name + " to disk.");
-        return true;
-    }
-
     public boolean delete() {
-        try {
-            directory.keychains.remove(this);
-            if (directory.save()) {
-                Files.delete(getPath());
-                return true;
-            } else {
-                return false;
-            }
-        } catch (IOException e) {
-            LOGGER.severe("Failed while deleting keychain " + name + ": " + e.getMessage());
-            return false;
-        }
+        return this.directory.delete(this);
     }
 
-    public Path getPath() {
-        return backingStore.getKeychainsPath().resolve(name + ".keychain");
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DirectoryEntry entry = (DirectoryEntry) o;
+
+        if (serverid != entry.serverid) return false;
+        if (!name.equals(entry.name)) return false;
+        if (!getEncryptionKey().equals(entry.getEncryptionKey())) return false;
+        if (!Arrays.equals(getNonce(), entry.getNonce())) return false;
+        return lastModified.equals(entry.lastModified);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (int) (serverid ^ (serverid >>> 32));
+        result = 31 * result + getEncryptionKey().hashCode();
+        result = 31 * result + Arrays.hashCode(getNonce());
+        result = 31 * result + lastModified.hashCode();
+        return result;
+    }
+
+
+    public SecretKey getEncryptionKey() {
+        return encryptionKey;
+    }
+
+    public void setEncryptionKey(SecretKey encryptionKey) {
+        this.encryptionKey = encryptionKey;
+    }
+
+    public byte[] getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(byte[] nonce) {
+        this.nonce = nonce;
     }
 }

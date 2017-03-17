@@ -1,44 +1,45 @@
 package postit.shared;
 
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.generators.SCrypt;
+import org.bouncycastle.crypto.io.CipherInputStream;
+import org.bouncycastle.crypto.io.CipherOutputStream;
+import org.bouncycastle.crypto.modes.AEADBlockCipher;
+import org.bouncycastle.crypto.modes.GCMBlockCipher;
+import org.bouncycastle.crypto.params.AEADParameters;
+import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import javax.crypto.*;
-import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
+import javax.json.*;
+import javax.json.stream.JsonParsingException;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Created by nishadmathur on 22/2/17.
- */
 public class Crypto {
     private final static Logger LOGGER = Logger.getLogger(Crypto.class.getName());
 
-    public static final int GCM_NONCE_LENGTH = 12;
-    public static final int GCM_TAG_LENGTH = 16;
-    public static final String WRAP_CIPHER = "AESWrap";
-    public static final String ENCRYPTION_CIPHER = "AES";
-    public static final String GCM_CIPHER = "AES/GCM/NoPadding";
-    public static final String DIGEST_ALGORITHM = "SHA-256";
+    private static final int GCM_NONCE_LENGTH = 12;
+    private static final String ENCRYPTION_CIPHER = "AES";
+
+    private static final int CPU_SCALING_FACTOR = 10;
+    private static final int MEMORY_SCALING_FACTOR = 10;
+    private static final int PARALLELISM_SCALING_FACTOR = 10;
+    private static final int KEY_LENGTH = 32;
 
     private static SecureRandom random;
     private static KeyGenerator keyGenerator;
-    private static Cipher wrapCipher;
-    private static Cipher gcmCipher;
-
-    private static MessageDigest sha;
 
     public static boolean init() {
         return init(true);
@@ -67,28 +68,6 @@ public class Crypto {
             return false;
         }
 
-        try {
-            // TODO Investigate AESWrap vs AES256 + GCM mode
-            wrapCipher = Cipher.getInstance(WRAP_CIPHER);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            LOGGER.log(Level.SEVERE, "Failed to initialise AESWrap.");
-            return false;
-        }
-
-        try {
-            gcmCipher = Cipher.getInstance(GCM_CIPHER);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            LOGGER.log(Level.SEVERE, "Failed to initialise AES GCM.");
-            return false;
-        }
-
-        try {
-            sha = MessageDigest.getInstance(DIGEST_ALGORITHM);
-        } catch (NoSuchAlgorithmException e) {
-            LOGGER.log(Level.SEVERE, "Failed to initialise SHA256");
-            return false;
-        }
-
         return true;
     }
 
@@ -100,64 +79,21 @@ public class Crypto {
         return keyGenerator.generateKey();
     }
 
-    public static Optional<Cipher> getWrapCipher(SecretKey key) {
-        try {
-            wrapCipher.init(Cipher.WRAP_MODE, key);
-        } catch (InvalidKeyException e) {
-            LOGGER.warning("Wrap cipher key is invalid: " + e.getMessage());
-            return Optional.empty();
-        }
-
-        return Optional.of(wrapCipher);
-    }
-
-    public static Optional<Cipher> getUnwrapCipher(SecretKey key) {
-        try {
-            wrapCipher.init(Cipher.UNWRAP_MODE, key);
-        } catch (InvalidKeyException e) {
-            LOGGER.warning("Unwrap cipher key is invalid: " + e.getMessage());
-            return Optional.empty();
-        }
-
-        return Optional.of(wrapCipher);
-    }
-
-    public static Optional<Cipher> getGCMEncryptCipher(SecretKey key, byte[] nonce) {
-        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, nonce);
-        try {
-            gcmCipher.init(Cipher.ENCRYPT_MODE, key, spec);
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            LOGGER.warning("Unable to init GCM encryption cipher.");
-            return Optional.empty();
-        }
-
-        return Optional.of(gcmCipher);
-    }
-
-    public static Optional<Cipher> getGCMDecryptCipher(SecretKey key, byte[] nonce) {
-        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, nonce);
-        try {
-            gcmCipher.init(Cipher.DECRYPT_MODE, key, spec);
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            LOGGER.warning("Unable to init GCM decryption cipher: " + e.getMessage());
-            return Optional.empty();
-        }
-
-        return Optional.of(gcmCipher);
-    }
-
     public static byte[] getNonce() {
         byte[] nonce = new byte[GCM_NONCE_LENGTH];
         random.nextBytes(nonce);
         return nonce;
     }
 
-    public static MessageDigest getSha() {
-        return sha;
-    }
-
-    public static SecretKey hashedSecretKeyFromBytes(byte key[]) {
-        return secretKeyFromBytes(sha.digest(key));
+    public static SecretKey hashedSecretKeyFromBytes(byte[] key, byte[] salt) {
+        return Crypto.secretKeyFromBytes(SCrypt.generate(
+                key,
+                salt,
+                CPU_SCALING_FACTOR,
+                MEMORY_SCALING_FACTOR,
+                PARALLELISM_SCALING_FACTOR,
+                KEY_LENGTH
+        ));
     }
 
     public static SecretKey secretKeyFromBytes(byte key[]) {
@@ -169,77 +105,85 @@ public class Crypto {
         return key.getEncoded();
     }
 
-    public static boolean writeJsonObjectToCipherStream(Cipher cipher, Path path, JsonObject jsonObject) {
-        try (JsonWriter out = Json.createWriter(new CipherOutputStream(new FileOutputStream(path.toFile()), cipher))) {
+    public static Optional<byte[]> encryptJsonObject(SecretKey key, byte[] nonce, JsonObject object) {
+        AEADBlockCipher cipher = new GCMBlockCipher(new AESEngine());
+        KeyParameter keyParameter = new KeyParameter(key.getEncoded());
+        AEADParameters parameters = new AEADParameters(keyParameter, 128, nonce);
+
+        try {
+            cipher.init(true, parameters);
+        } catch (IllegalArgumentException e) {
+            LOGGER.warning("Failed to initialise cipher: " + e.getMessage());
+            return Optional.empty();
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try (JsonWriter out = Json.createWriter(new CipherOutputStream(baos, cipher))) {
+            out.write(object);
+        } catch (JsonException | IllegalStateException e) {
+            LOGGER.warning("Couldn't write json object, error in underlying streams: " + e.getMessage());
+            return Optional.empty();
+        }
+
+        return Optional.of(baos.toByteArray());
+    }
+
+    public static Optional<JsonObject> decryptJsonObject(SecretKey key, byte[] nonce, byte[] bytes) {
+        AEADBlockCipher cipher = new GCMBlockCipher(new AESEngine());
+        KeyParameter keyParameter = new KeyParameter(key.getEncoded());
+        AEADParameters parameters = new AEADParameters(keyParameter, 128, nonce);
+
+        try {
+            cipher.init(false, parameters);
+        } catch (IllegalArgumentException e) {
+            LOGGER.warning("Failed to initialise cipher: " + e.getMessage());
+            return Optional.empty();
+        }
+
+        try (JsonReader out = Json.createReader(new CipherInputStream(new ByteArrayInputStream(bytes), cipher))) {
+            return Optional.of(out.readObject());
+        } catch (JsonParsingException e) {
+            LOGGER.warning("Mac Check Failed or Malformed json for object: " + e.getMessage());
+            e.printStackTrace();
+            return Optional.empty();
+        } catch (JsonException | IllegalStateException e) {
+            LOGGER.warning("Couldn't read json object, error in underlying streams: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public static boolean writeJsonObjectToFile(Path path, JsonObject jsonObject) {
+        try (JsonWriter out = Json.createWriter(new FileOutputStream(path.toFile()))) {
             out.writeObject(jsonObject);
         } catch (IOException e) {
             e.printStackTrace();
-            LOGGER.severe("Error writing to file " + path + ": " + e.getMessage());
+            LOGGER.severe("Error writing json object to file [" + path + "]: " + e.getMessage());
             return false;
         }
 
         return true;
     }
 
-    public static boolean writeJsonObjectToWrapCipher(Cipher cipher, Path path, JsonObject jsonObject) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        JsonWriter out = Json.createWriter(baos);
-        out.writeObject(jsonObject);
-        out.close();
-
-        try {
-            // Zero pad the key.
-            int length = baos.toByteArray().length;
-            baos.write(new byte[8 - length % 8]);
-
-            Files.write(path, cipher.wrap(new SecretKeySpec(baos.toByteArray(), "RAW")));
-        } catch (IOException e) {
-            LOGGER.warning("Error writing file: " + e.getMessage());
-            return false;
-        } catch (InvalidKeyException | IllegalBlockSizeException e) {
-            LOGGER.warning("Error wrapping cipher: " + e.getMessage());
-            return false;
+    public static Optional<JsonObject> readJsonObjectFromFile(Path path) {
+        if (!Files.exists(path)) {
+            return Optional.empty();
         }
 
-        return true;
-    }
-
-    public static Optional<JsonObject> readJsonObjectFromCipherStream(Path path, Cipher unwrapCipher) {
-        try (JsonReader in = Json.createReader(new CipherInputStream(new FileInputStream(path.toFile()), unwrapCipher))) {
-
+        try (JsonReader in = Json.createReader(new FileInputStream(path.toFile()))) {
             return Optional.of(in.readObject());
-
         } catch (IOException e) {
-            // TODO figure this out?
-            LOGGER.severe("Invalid password?");
             e.printStackTrace();
-            return Optional.empty();
-        }
-    }
-
-    public static Optional<JsonObject> readJsonObjectFromWrapCipher(Path path, Cipher cipher) {
-        try {
-            byte[] bytes = Files.readAllBytes(path);
-
-            bytes = cipher.unwrap(bytes, WRAP_CIPHER, Cipher.SECRET_KEY).getEncoded();
-
-            return Optional.of(Json.createReader(new ByteArrayInputStream(bytes)).readObject());
-
-        } catch (IOException e) {
-            // TODO figure this out?
-            LOGGER.severe("Error reading file: " + e.getMessage());
-            return Optional.empty();
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            LOGGER.severe("Error decrypting file: " + e.getMessage());
+            LOGGER.severe("Error reading json object from file [" + path + "]: " + e.getMessage());
             return Optional.empty();
         }
     }
 
     /**
      * A method of disabling the java crypto strength restrictions.
-     *
+     * <p>
      * Installing the policy file isn't practical for user code. So this approach is better
-     *
+     * <p>
      * Source: http://stackoverflow.com/questions/1179672/
      */
     private static void removeCryptographyRestrictions() {

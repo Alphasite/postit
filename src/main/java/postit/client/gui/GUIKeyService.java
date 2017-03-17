@@ -1,12 +1,11 @@
 package postit.client.gui;
 
-import postit.shared.Crypto;
 import postit.client.backend.KeyService;
-
-import javax.swing.*;
+import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.security.auth.DestroyFailedException;
+import javax.swing.*;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -37,7 +36,7 @@ public class GUIKeyService implements KeyService {
             }
         }
 
-        key = Crypto.hashedSecretKeyFromBytes(password.getBytes());
+        key = Crypto.secretKeyFromBytes(password.getBytes());
         retrieved = Instant.now();
 
         return key;
@@ -58,7 +57,11 @@ public class GUIKeyService implements KeyService {
                 key = null;
             }
 
-            key = Crypto.hashedSecretKeyFromBytes(getKey("Please enter master password: "));
+            key = null;
+
+            while (key == null) {
+                key = Crypto.secretKeyFromBytes(getKey("Please enter master password: "));
+            }
         }
 
         retrieved = Instant.now();
@@ -67,7 +70,18 @@ public class GUIKeyService implements KeyService {
 
     @Override
     public SecretKey getClientKey() {
-        return Crypto.secretKeyFromBytes(getKey("Please enter client password: "));
+        SecretKey key = null;
+        while (key == null)
+            key = Crypto.secretKeyFromBytes(getKey("Please enter client password: "));
+        return key;
 
+    }
+
+    @Override
+    public String getAccount() {
+        String user = null;
+        while (user == null)
+            user = JOptionPane.showInputDialog("Please enter username: ");
+        return user;
     }
 }

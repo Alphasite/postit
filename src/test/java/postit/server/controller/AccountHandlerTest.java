@@ -10,40 +10,40 @@ import postit.server.controller.DatabaseController;
  */
 public class AccountHandlerTest {
 
-	public static void testAuthentication(DatabaseController db, AccountHandler ah, String username, String pwd){
-		boolean res = ah.authenticate(db, username, pwd);
+	public static void testAuthentication(AccountHandler ah, String username, String pwd){
+		boolean res = ah.authenticate(username, pwd);
 		System.out.printf("Authenticate %s with %s %s\n", username, pwd, res ? "successful" : "failed");
 	}
 	
-	public static void testAddAccount(DatabaseController db, AccountHandler ah, String username, String pwd, String email, String fName, String lName){
-		boolean res = ah.addAccount(db, username, pwd, email, fName, lName);
+	public static void testAddAccount(AccountHandler ah, String username, String pwd, String email, String fName, String lName){
+		boolean res = ah.addAccount(username, pwd, email, fName, lName);
 		System.out.printf("Adding account %s with %s %s\n", username, pwd, res ? "successful" : "failed");
 	}
 	
-	public static void testUpdateAccount(DatabaseController db, AccountHandler ah, String username, String pwd, String email, String fName, String lName){
-		boolean res = ah.updateAccount(db, username, pwd, email, fName, lName);
+	public static void testUpdateAccount(AccountHandler ah, String username, String pwd, String email, String fName, String lName){
+		boolean res = ah.updateAccount(username, pwd, email, fName, lName);
 		System.out.printf("Updating account %s with %s %s\n", username, pwd, res ? "successful" : "failed");
 	}
 	
-	public static void testRemoveAccount(DatabaseController db, AccountHandler ah, String username, String pwd){
-		boolean res = ah.removeAccount(db, username, pwd);
+	public static void testRemoveAccount(AccountHandler ah, String username, String pwd){
+		boolean res = ah.removeAccount(username, pwd);
 		System.out.printf("Removing account %s with %s %s\n", username, pwd, res ? "successful" : "failed");
 	}
 	
 	public static void main(String[] args){
 		DatabaseController db = new DatabaseController();
-		AccountHandler ah = new AccountHandler();
+		AccountHandler ah = new AccountHandler(db);
 		
 		// authentication
-		testAuthentication(db, ah, "ning", "5431");
-		testAuthentication(db, ah, "ning", "wrong!");
-		testAuthentication(db, ah, "mc", "cs5431");
+		testAuthentication(ah, "ning", "5431");
+		testAuthentication(ah, "ning", "wrong!");
+		testAuthentication(ah, "mc", "cs5431");
 		
-		testUpdateAccount(db, ah, "mc", "cs5431", "mc@cornell.edu", "m", "c");
-		testAddAccount(db, ah, "mc", "lalala", "mc@cornell.edu", "m", "c");
-		testUpdateAccount(db, ah, "mc", "cs5431", "mc@cornell.edu", "m", "c");
-		testAuthentication(db, ah, "mc", "cs5431");
-		testRemoveAccount(db, ah, "mc", "lalalal");
-		testRemoveAccount(db, ah, "mc", "cs5431");
+		testUpdateAccount(ah, "mc", "cs5431", "mc@cornell.edu", "m", "c");
+		testAddAccount(ah, "mc", "lalala", "mc@cornell.edu", "m", "c");
+		testUpdateAccount(ah, "mc", "cs5431", "mc@cornell.edu", "m", "c");
+		testAuthentication(ah, "mc", "cs5431");
+		testRemoveAccount(ah, "mc", "lalalal");
+		testRemoveAccount(ah, "mc", "cs5431");
 	}
 }
