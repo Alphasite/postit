@@ -201,7 +201,7 @@ public class ServerController {
         }
 
         // TODO fill this in?
-    	String req = RequestMessenger.createAddKeychainsMessage(getUsername(), entry.name, entry.encryptionKey.toString(), "", "");
+    	String req = RequestMessenger.createAddKeychainsMessage(getUsername(), entry.name, entry.getEncryptionKey().toString(), "", "");
     	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
     	DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(res.getJsonObject("keychain"));
     	long id = dak.getDirectoryEntryId();
@@ -227,7 +227,7 @@ public class ServerController {
         }
 
         // TODO fill this in?
-        String req = RequestMessenger.createUpdateKeychainMessage(getUsername(), entry.name, entry.encryptionKey.toString(), "", "");
+        String req = RequestMessenger.createUpdateKeychainMessage(getUsername(), entry.name, entry.getEncryptionKey().toString(), "", "");
     	JsonObject res = stringToJsonObject(sendRequestAndWait(req)); 
     	return res.getString("status").equals("success");
     }

@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -175,14 +174,38 @@ public class BackingStore {
         return true;
     }
 
-    public Optional<String> readKeychain(String name) {
-        Optional<Container> keychain = loadContainer();
+    public Optional<Keychain> readKeychain(DirectoryEntry entry) {
+        LOGGER.info("Reading keychain " + entry.name);
 
-        if (keychain.isPresent() && keychain.get().keychains.containsKey(name)) {
-            return Optional.of(keychain.get().keychains.get(name));
+        Optional<Container> container = loadContainer();
+
+        if (container.isPresent() && container.get().keychains.containsKey(entry.name)) {
+
+            String backingStore = container.get().keychains.get(entry.name);
+
+            System.out.println("Loading   key: " + Base64.getEncoder().encodeToString(entry.getEncryptionKey().getEncoded()));
+            System.out.println("Loading nonce: " + Base64.getEncoder().encodeToString(entry.getNonce()));
+            System.out.println("Loading  data: " + backingStore);
+
+
+            // otherwise load and decrypt it.
+            Optional<JsonObject> object = Crypto.decryptJsonObject(
+                    entry.getEncryptionKey(),
+                    entry.getNonce(),
+                    Base64.getDecoder().decode(backingStore)
+            );
+
+            if (object.isPresent()) {
+                LOGGER.info("Succeeded in reading keychain " + entry.name + " from disk.");
+                return Optional.of(new Keychain(object.get(), entry));
+            } else {
+                return Optional.empty();
+            }
+        } else {
+            LOGGER.info("Keychain file doesn't exist... creating it: " + entry.name);
+
+            return Optional.of(new Keychain(entry));
         }
-
-        return Optional.empty();
     }
 
     public boolean writeKeychain(DirectoryEntry entry) {
@@ -190,15 +213,15 @@ public class BackingStore {
 
         Optional<Container> container = loadContainer();
 
-        entry.encryptionKey = Crypto.generateKey();
-        entry.nonce = Crypto.getNonce();
-
         Optional<Keychain> keychain = entry.readKeychain();
         if (keychain.isPresent()) {
 
+            entry.setEncryptionKey(Crypto.generateKey());
+            entry.setNonce(Crypto.getNonce());
+
             Optional<byte[]> bytes = Crypto.encryptJsonObject(
-                    entry.encryptionKey,
-                    entry.nonce,
+                    entry.getEncryptionKey(),
+                    entry.getNonce(),
                     keychain.get().dump().build()
             );
 
@@ -229,7 +252,14 @@ public class BackingStore {
 
     public boolean save() {
 
-        for (DirectoryEntry entry : directory.getKeychains()) {
+        Optional<Directory> directory = readDirectory();
+
+        if (!directory.isPresent()) {
+            LOGGER.warning("Failed to load directory.");
+            return false;
+        }
+
+        for (DirectoryEntry entry : directory.get().getKeychains()) {
             writeKeychain(entry);
         }
 

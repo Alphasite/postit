@@ -144,7 +144,8 @@ public class Crypto {
         try (JsonReader out = Json.createReader(new CipherInputStream(new ByteArrayInputStream(bytes), cipher))) {
             return Optional.of(out.readObject());
         } catch (JsonParsingException e) {
-            LOGGER.warning("Malformed json for object: " + e.getMessage());
+            LOGGER.warning("Mac Check Failed or Malformed json for object: " + e.getMessage());
+            e.printStackTrace();
             return Optional.empty();
         } catch (JsonException | IllegalStateException e) {
             LOGGER.warning("Couldn't read json object, error in underlying streams: " + e.getMessage());

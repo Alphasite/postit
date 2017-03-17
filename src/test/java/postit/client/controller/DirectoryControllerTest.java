@@ -595,7 +595,7 @@ public class DirectoryControllerTest {
                 null
         );
 
-        entry1.nonce = new byte[16];
+        entry1.setNonce(new byte[16]);
 
         entry1.serverid = 5L;
 
@@ -640,7 +640,7 @@ public class DirectoryControllerTest {
                 null
         );
 
-        entry1.nonce = new byte[16];
+        entry1.setNonce(new byte[16]);
 
         entry1.serverid = 5L;
 
@@ -679,7 +679,7 @@ public class DirectoryControllerTest {
                 null
         );
 
-        entry1.nonce = new byte[16];
+        entry1.setNonce(new byte[16]);
 
         entry1.serverid = 5L;
 
@@ -710,7 +710,7 @@ public class DirectoryControllerTest {
                 null
         );
 
-        entry1.nonce = new byte[16];
+        entry1.setNonce(new byte[16]);
 
         entry1.serverid = 5L;
 

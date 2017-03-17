@@ -71,7 +71,7 @@ public class Directory {
         return keychains;
     }
 
-    public Optional<Keychain> createKeychain(SecretKey encryptionKey, String name) {
+    public boolean createKeychain(SecretKey encryptionKey, String name) {
         LOGGER.info("Creating keychain: " + name);
 
         DirectoryEntry entry = new DirectoryEntry(
@@ -84,12 +84,12 @@ public class Directory {
 
         if (keychains.stream().map(k -> k.name).anyMatch(n -> n.equals(name))) {
             LOGGER.warning("Keychain " + name +  "is a duplicate, not adding.");
-            return Optional.empty();
+            return false;
         }
 
         this.keychains.add(entry);
 
-        return entry.readKeychain();
+        return true;
     }
 
     public DirectoryEntry createKeychain(JsonObject entryObject, JsonObject keychainObject) {
