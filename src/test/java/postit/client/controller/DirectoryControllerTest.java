@@ -59,7 +59,7 @@ public class DirectoryControllerTest {
             controller = new DirectoryController(directory, backingStore, keyService);
 
 
-            Crypto.init();
+            Crypto.init(false);
         } catch (Exception e) {
             Files.deleteIfExists(backingStore.getContainer());
             throw e;
