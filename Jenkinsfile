@@ -17,6 +17,7 @@ pipeline {
                 checkout scm
                 sh "rm -f keychains.directory"
                 sh "rm -rf keychains/"
+                sh "rm -f pit-test.zip"
             }
         }
 
@@ -41,9 +42,13 @@ pipeline {
         stage('Results') {
             steps {
                 junit '**/test-results/test/TEST-*.xml'
-                // step([$class: 'PitPublisher', mutationStatsFile: 'target/pit-reports/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
+                // step([$class: 'PitPublisher', mutationStatsFile: 'build/pit-reports/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
                 archive 'target/*.jar'
                 setBuildStatus("Build complete", "SUCCESS");
+
+                archiveArtifacts artifacts: 'build/distributions/*.zip'
+
+                zip zipFile: 'pit-test.zip', dir: 'build/pit-reports/', archive: true
 
                 sh "rm -rf targets/"
             }

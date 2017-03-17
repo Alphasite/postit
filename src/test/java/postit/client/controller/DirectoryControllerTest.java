@@ -57,9 +57,6 @@ public class DirectoryControllerTest {
 
             directory = backingStore.readDirectory().get();
             controller = new DirectoryController(directory, backingStore, keyService);
-
-
-            Crypto.init();
         } catch (Exception e) {
             Files.deleteIfExists(backingStore.getContainer());
             throw e;
