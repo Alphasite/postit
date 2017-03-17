@@ -45,7 +45,7 @@ pipeline {
                 archive 'target/*.jar'
                 setBuildStatus("Build complete", "SUCCESS");
 
-                archiveArtifacts artifacts: 'build/distributions/*.zip''
+                archiveArtifacts artifacts: 'build/distributions/*.zip'
                 archiveArtifacts artifacts: 'build/pit-reports/'
 
                 sh "rm -rf targets/"
