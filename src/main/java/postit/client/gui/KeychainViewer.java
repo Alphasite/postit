@@ -10,8 +10,8 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
-import postit.communication.Client;
-import postit.communication.Server;
+import postit.communication.clientSender;
+import postit.communication.clientReceiver;
 import postit.shared.Crypto;
 
 import javax.swing.*;
@@ -67,8 +67,8 @@ public class KeychainViewer {
             int rePort = 2048;
             int outPort = 4880;
 
-            Client processor = new Client(outPort, false);
-            Server receiver = new Server(rePort, false, processor);
+            clientSender processor = new clientSender(outPort);
+            clientReceiver receiver = new clientReceiver(rePort);
             serverController = new ServerController(processor,receiver,directoryController,keyService);
             createUIComponents();
         }
@@ -77,8 +77,8 @@ public class KeychainViewer {
 
     public static void main(String[] args) {
         // FOR CONNECTING TO THE POSTIT SERVER
-        Client sender = new Client(2048, false);
-        Server listener = new Server(4880, false, sender);
+        clientSender sender = new clientSender(2048);
+        clientReceiver listener = new clientReceiver(4880);
 
         Thread t1 = new Thread(listener);
         Thread t2 = new Thread(sender);

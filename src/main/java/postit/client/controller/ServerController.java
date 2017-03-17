@@ -2,8 +2,8 @@ package postit.client.controller;
 
 import postit.client.backend.KeyService;
 import postit.client.keychain.DirectoryEntry;
-import postit.communication.Client;
-import postit.communication.Server;
+import postit.communication.clientSender;
+import postit.communication.clientReceiver;
 import postit.shared.Crypto;
 import postit.shared.model.DirectoryAndKey;
 
@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
 public class ServerController {
     private final static Logger LOGGER = Logger.getLogger(ServerController.class.getName());
 
-    private Client clientToServer;
-    private Server serverToClient;
+    private clientSender clientToServer;
+    private clientReceiver serverToClient;
     private DirectoryController directoryController;
 
-    public ServerController(Client clientToServer, Server serverToClient, DirectoryController directoryController, KeyService keyService) {
+    public ServerController(clientSender clientToServer, clientReceiver serverToClient, DirectoryController directoryController, KeyService keyService) {
         this.clientToServer = clientToServer;
         this.serverToClient = serverToClient;
         this.directoryController = directoryController;
@@ -138,7 +138,9 @@ public class ServerController {
     	String response = null;
     	while(true){ // block until request is received
     		try {
-				this.wait(2000);
+				//this.wait(2000);
+                Thread.sleep(2000);
+                System.out.println("Syncing...");
 				response = serverToClient.getResponse(reqId);
 				if (response != null)
 					break;
