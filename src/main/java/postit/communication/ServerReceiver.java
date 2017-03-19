@@ -11,14 +11,14 @@ import java.net.Socket;
 /**
  * Created by dog on 3/14/2017.
  */
-public class serverReceiver implements Runnable{
+public class ServerReceiver implements Runnable{
     ServerSocket serverSocket;
     Socket connection = null;
     DataInputStream in;
     int port;
-    serverSender client;
+    ServerSender client;
 
-    public serverReceiver(int port, serverSender client){
+    public ServerReceiver(int port, ServerSender client){
         this.port = port;
         this.client = client;
     }

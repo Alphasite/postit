@@ -2,10 +2,10 @@ package postit.client.controller;
 
 import postit.client.backend.KeyService;
 import postit.client.keychain.DirectoryEntry;
-import postit.communication.clientSender;
-import postit.communication.clientReceiver;
-import postit.communication.clientSender;
-import postit.communication.clientReceiver;
+import postit.communication.ClientSender;
+import postit.communication.ClientReceiver;
+import postit.communication.ClientSender;
+import postit.communication.ClientReceiver;
 import postit.shared.Crypto;
 import postit.shared.model.DirectoryAndKey;
 
@@ -32,14 +32,14 @@ import java.util.stream.Collectors;
 public class ServerController {
     private final static Logger LOGGER = Logger.getLogger(ServerController.class.getName());
 
-    private clientSender clientToServer;
-    private clientReceiver serverToClient;
+    private ClientSender clientToServer;
+    private ClientReceiver serverToClient;
     private DirectoryController directoryController;
 
 
     private Thread syncThread;
 
-    public ServerController(clientSender clientToServer, clientReceiver serverToClient, DirectoryController directoryController, KeyService keyService) {
+    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient, DirectoryController directoryController, KeyService keyService) {
 
         this.clientToServer = clientToServer;
         this.serverToClient = serverToClient;

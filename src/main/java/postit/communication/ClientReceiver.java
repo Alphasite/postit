@@ -15,7 +15,7 @@ import java.util.HashMap;
 /**
  * Created by dog on 3/14/2017.
  */
-public class clientReceiver implements Runnable {
+public class ClientReceiver implements Runnable {
 
     ServerSocket serverSocket;
     Socket connection = null;
@@ -24,7 +24,7 @@ public class clientReceiver implements Runnable {
     int port;
     HashMap<Integer, String> table;
 
-    public clientReceiver(int port){
+    public ClientReceiver(int port){
         this.port = port;
         table = new HashMap<>();
     }
