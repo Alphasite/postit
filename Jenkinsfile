@@ -53,5 +53,12 @@ pipeline {
                 sh "rm -rf targets/"
             }
         }
+
+        stage('Docker') {
+            steps {
+                sh "docker build --tag=postit-server docker/Dockerfile.server"
+                sh "docker image push nishadmathur.com/postit-server"
+            }
+        }
     }
 }
