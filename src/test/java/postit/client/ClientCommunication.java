@@ -13,8 +13,8 @@ import postit.communication.*;
 
 
 public class ClientCommunication implements Runnable{
-	clientSender s;
-	clientReceiver r;
+	ClientSender s;
+	ClientReceiver r;
 
 	public static JsonObject stringToJsonObject(String msg){
 		JsonReader jsonReader = Json.createReader(new StringReader(msg));
@@ -23,7 +23,7 @@ public class ClientCommunication implements Runnable{
 		return object;
 	}
 
-	public static void testRequest(String request, clientSender sender, clientReceiver listener){
+	public static void testRequest(String request, ClientSender sender, ClientReceiver listener){
 		int reqId = sender.addRequest(request);
 		System.out.println("Sending to server: " + request);
 		String response = null;
@@ -43,7 +43,7 @@ public class ClientCommunication implements Runnable{
 		System.out.println("Response: " + response);
 	}
 
-	public ClientCommunication(clientSender s, clientReceiver r){
+	public ClientCommunication(ClientSender s, ClientReceiver r){
 		this.s = s;
 		this.r = r;
 	}
@@ -76,8 +76,8 @@ public class ClientCommunication implements Runnable{
 	public static void main(String[] args) {
 
 		// FOR CONNECTING TO THE POSTIT SERVER
-		clientSender sender = new clientSender(2048);
-		clientReceiver listener = new clientReceiver(4880);
+		ClientSender sender = new ClientSender(2048);
+		ClientReceiver listener = new ClientReceiver(4880);
 
 		Thread t1 = new Thread(listener);
 		Thread t2 = new Thread(sender);

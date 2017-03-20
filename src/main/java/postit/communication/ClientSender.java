@@ -14,13 +14,13 @@ import java.util.Random;
 /**
  * Created by dog on 3/14/2017.
  */
-public class clientSender implements Runnable {
+public class ClientSender implements Runnable {
     Queue<JSONObject> outQueue;
     Socket clientSocket;
     DataOutputStream out;
     int port;
 
-    public clientSender(int port){
+    public ClientSender(int port){
         this.outQueue = new ArrayDeque<>();
         this.port = port;
     }

@@ -2,6 +2,9 @@ package postit.server.database;
 
 import java.sql.*;
 
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 /**
  * 
  * @author Ning
@@ -9,9 +12,12 @@ import java.sql.*;
  */
 public class DatabaseConnectionTest {
 	
-	public static void main(String[] args) {
+	@Test
+	public void runTest(){
 		try {
 			Connection conn = Database.connectToDefault();
+			
+			assertNotNull(conn);
 
 			Statement st = conn.createStatement();
 

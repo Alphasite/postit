@@ -14,7 +14,7 @@ import java.util.Queue;
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class serverSender implements Runnable {
+public class ServerSender implements Runnable {
 
     Queue<JSONObject> outQueue;
     Socket clientSocket;
@@ -22,7 +22,7 @@ public class serverSender implements Runnable {
     int port;
     RequestHandler requestHandler;
 
-    public serverSender(int port){
+    public ServerSender(int port){
         this.outQueue = new ArrayDeque<>();
         this.port = port;
         requestHandler = new RequestHandler();
