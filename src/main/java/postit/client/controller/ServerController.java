@@ -47,7 +47,7 @@ public class ServerController {
         this.syncThread = null;
     }
 
-    public void sync(Runnable callback) {
+    public boolean sync(Runnable callback) {
 
         Runnable sync = () -> {
 
@@ -142,6 +142,9 @@ public class ServerController {
         if (syncThread != null) {
             syncThread = new Thread(sync);
             syncThread.run();
+            return true;
+        } else {
+            return false;
         }
     }
 

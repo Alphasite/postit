@@ -1,0 +1,10 @@
+FROM openjdk:8
+ADD build/distributions/postit.zip /usr/src/
+WORKDIR /usr/src/
+RUN unzip postit.zip
+WORKDIR /usr/src/postit
+
+EXPOSE 4880
+EXPOSE 2048
+
+CMD java -cp 'lib/*' postit.communication.serverApp
