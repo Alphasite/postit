@@ -9,8 +9,8 @@ import java.awt.event.ActionListener;
  * Created by jackielaw on 3/16/17.
  */
 public class LoginViewer extends JFrame implements ActionListener{
-    JLabel l_account, l_password, r_account, r_password1, r_password2, r_email;
-    JTextField l_accountfield, r_accountfield, r_emailfield;
+    JLabel l_account, l_password, r_account, r_password1, r_password2, r_email, r_first, r_last;
+    JTextField l_accountfield, r_accountfield, r_emailfield, r_firstfield, r_lastfield;
     JButton l_submitbtn, r_submitbtn, clearbtn;
     JPasswordField l_passfield, r_pass1field, r_pass2field;
 
@@ -42,7 +42,7 @@ public class LoginViewer extends JFrame implements ActionListener{
     }
 
     private void createLoginPanel(JPanel l){
-        l_account = new JLabel("Name:");
+        l_account = new JLabel("Username:");
         l_password = new JLabel("Password:");
         l_accountfield = new JTextField();
         l_passfield = new JPasswordField();
@@ -66,39 +66,50 @@ public class LoginViewer extends JFrame implements ActionListener{
     }
 
     private void createRegistrationPanel(JPanel r){
-        r_account = new JLabel("Name:");
+        r_account = new JLabel("Username:");
+        r_first = new JLabel("First Name:");
+        r_last = new JLabel("Last Name:");
         r_email = new JLabel("Email-ID:");
         r_password1 = new JLabel("Create Password:");
         r_password2 = new JLabel("Confirm Password:");
         r_accountfield = new JTextField();
+        r_firstfield = new JTextField();
+        r_lastfield = new JTextField();
         r_emailfield = new JTextField();
         r_pass1field = new JPasswordField();
         r_pass2field = new JPasswordField();
 
+
         r_submitbtn = new JButton("Submit");
         clearbtn = new JButton("Clear");
 
-        r_account.setBounds(80, 50, 150, 30);
-        r_email.setBounds(80, 90, 150, 30);
-        r_password1.setBounds(80, 130, 150, 30);
-        r_password2.setBounds(80, 170, 150, 30);
+        r_first.setBounds(80, 10, 150, 30);
+        r_last.setBounds(80, 50, 150, 30);
+        r_account.setBounds(80, 90, 150, 30);
+        r_email.setBounds(80, 130, 150, 30);
+        r_password1.setBounds(80, 170, 150, 30);
+        r_password2.setBounds(80, 210, 150, 30);
 
-        r_accountfield.setBounds(200, 50, 200, 30);
-        r_emailfield.setBounds(200, 90, 200, 30);
-        r_pass1field.setBounds(200, 130, 200, 30);
-        r_pass2field.setBounds(200, 170, 200, 30);
-
-        r_submitbtn.setBounds(200, 210, 100, 30);
-        clearbtn.setBounds(300, 210, 100, 30);
+        r_firstfield.setBounds(200, 10, 200, 30);
+        r_lastfield.setBounds(200, 50, 200, 30);
+        r_accountfield.setBounds(200, 90, 200, 30);
+        r_emailfield.setBounds(200, 130, 200, 30);
+        r_pass1field.setBounds(200, 170, 200, 30);
+        r_pass2field.setBounds(200, 210, 200, 30);
+        r_submitbtn.setBounds(200, 250, 100, 30);
+        clearbtn.setBounds(300, 250, 100, 30);
 
         r_submitbtn.addActionListener(this);
         clearbtn.addActionListener(this);
 
-
+        r.add(r_first);
+        r.add(r_last);
         r.add(r_account);
         r.add(r_email);
         r.add(r_password1);
         r.add(r_password2);
+        r.add(r_firstfield);
+        r.add(r_lastfield);
         r.add(r_accountfield);
         r.add(r_emailfield);
         r.add(r_pass1field);
