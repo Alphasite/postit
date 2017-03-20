@@ -1,5 +1,6 @@
 package postit.server.controller;
 
+import org.junit.Test;
 import postit.server.controller.AccountHandler;
 import postit.server.controller.DatabaseController;
 
@@ -29,7 +30,13 @@ public class AccountHandlerTest {
 		boolean res = ah.removeAccount(username, pwd);
 		System.out.printf("Removing account %s with %s %s\n", username, pwd, res ? "successful" : "failed");
 	}
-	
+
+	@Test
+	public void authentication() throws Exception {
+
+
+	}
+
 	public static void main(String[] args){
 		DatabaseController db = new DatabaseController();
 		AccountHandler ah = new AccountHandler(db);
