@@ -179,6 +179,12 @@ public class ServerController {
         return object;
     }
 
+    private boolean addUser(String username, String password, String email, String firstname, String lastname){
+    	String req = RequestMessenger.createAddUserMessage(username, password, email, firstname, lastname);
+    	JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+    	return res.getString("status").equals("success");
+    }
+    
     private boolean login(SecretKey password) {
         String req = RequestMessenger.createAuthenticateMessage(getUsername(), password.toString());
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));

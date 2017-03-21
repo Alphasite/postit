@@ -14,6 +14,16 @@ public class RequestMessenger {
 		return MessagePackager.createRequest(Action.AUTHENTICATE, username, Asset.ACCOUNT, account);
 	}
 	
+	public static String createAddUserMessage(String username, String password, String email, String firstname, String lastname){
+		Account account = new Account();
+		account.setUsername(username);
+		account.setPassword(password);
+		account.setEmail(email);
+		account.setFirstname(firstname);
+		account.setLastname(lastname);
+		return MessagePackager.createRequest(Action.ADD, username, Asset.ACCOUNT, account);
+	}
+	
 	public static String createGetDirectoryMessage(String username){
 	
 		return "";

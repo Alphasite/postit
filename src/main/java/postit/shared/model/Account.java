@@ -83,10 +83,22 @@ public class Account {
         this.password = password;
     }
 
+    public void setEmail(String email){
+    	this.email = email;
+    }
+    
     public void setKeychains(JsonObject keychains) {
         this.keychains = keychains;
     }
 
+    public void setFirstname(String firstname){
+    	this.firstName = firstname;
+    }
+    
+    public void setLastname(String lastname){
+    	this.lastName = lastname;
+    }
+    
     public void setLog(Log log) {
         this.log = log;
     }
