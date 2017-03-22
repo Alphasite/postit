@@ -8,6 +8,7 @@ import org.bouncycastle.crypto.modes.AEADBlockCipher;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.KeyGenerator;
@@ -15,12 +16,20 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.json.*;
 import javax.json.stream.JsonParsingException;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import javax.security.cert.X509Certificate;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
+import java.security.cert.*;
+import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +46,7 @@ public class Crypto {
     private static final int MEMORY_SCALING_FACTOR = 10;
     private static final int PARALLELISM_SCALING_FACTOR = 10;
     private static final int KEY_LENGTH = 32;
+    public static final String CERT_PATH = "load-der.crt";
 
     private static SecureRandom random;
     private static KeyGenerator keyGenerator;
@@ -177,6 +187,50 @@ public class Crypto {
             LOGGER.severe("Error reading json object from file [" + path + "]: " + e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private Optional<HttpsURLConnection> sslConnection() {
+        CertificateFactory cf = new CertificateFactory();
+        Certificate ca;
+
+        SSLContext context;
+
+        try (InputStream caInput = new BufferedInputStream(new FileInputStream(CERT_PATH))) {
+            ca = cf.engineGenerateCertificate(caInput);
+
+            // Create a KeyStore containing our trusted CAs
+            String keyStoreType = KeyStore.getDefaultType();
+            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("ca", ca);
+
+            // Create a TrustManager that trusts the CAs in our KeyStore
+            String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+            tmf.init(keyStore);
+
+            // Create an SSLContext that uses our TrustManager
+            context = SSLContext.getInstance("TLS");
+            context.init(null, tmf.getTrustManagers(), null);
+
+            // Tell the URLConnection to use a SocketFactory from our SSLContext
+            URL url = new URL("https://certs.cac.washington.edu/CAtest/");
+            HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+            urlConnection.setSSLSocketFactory(context.getSocketFactory());
+
+            return Optional.of(urlConnection);
+
+        } catch (CertificateException e) {
+            LOGGER.severe("Error handling certificate!: " + e.getMessage());
+        } catch (FileNotFoundException e) {
+            LOGGER.severe("Certificate not found!!: " + e.getMessage());
+        } catch (IOException e) {
+            LOGGER.severe("Error handling IO: " + e.getMessage());
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            LOGGER.severe("Error in crypto protocols: " + e.getMessage());
+        }
+
+        return Optional.empty();
     }
 
     /**
