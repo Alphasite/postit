@@ -10,14 +10,12 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
-import postit.communication.ClientSender;
 import postit.communication.ClientReceiver;
+import postit.communication.ClientSender;
 import postit.shared.Crypto;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -58,6 +56,7 @@ public class KeychainViewer {
 
         Optional<Directory> directory = backingStore.readDirectory();
 
+
         if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
@@ -71,7 +70,7 @@ public class KeychainViewer {
 
             ClientSender processor = new ClientSender(outPort);
             ClientReceiver receiver = new ClientReceiver(rePort);
-            serverController = new ServerController(processor, receiver, directoryController, keyService);
+            serverController = new ServerController(processor, receiver, directoryController);
 
             createUIComponents();
         }
@@ -80,6 +79,7 @@ public class KeychainViewer {
 
     public static void main(String[] args) {
         // FOR CONNECTING TO THE POSTIT SERVER
+        
         ClientSender sender = new ClientSender(2048);
         ClientReceiver listener = new ClientReceiver(4880);
 

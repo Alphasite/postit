@@ -1,20 +1,15 @@
 package postit.client.controller;
 
-import postit.client.backend.KeyService;
 import postit.client.keychain.DirectoryEntry;
-import postit.communication.ClientSender;
 import postit.communication.ClientReceiver;
 import postit.communication.ClientSender;
-import postit.communication.ClientReceiver;
 import postit.shared.Crypto;
 import postit.shared.model.DirectoryAndKey;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
-
 import java.io.StringReader;
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -39,7 +34,7 @@ public class ServerController {
 
     private Thread syncThread;
 
-    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient, DirectoryController directoryController, KeyService keyService) {
+    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient, DirectoryController directoryController) {
 
         this.clientToServer = clientToServer;
         this.serverToClient = serverToClient;
@@ -179,14 +174,20 @@ public class ServerController {
         return object;
     }
 
-    private boolean addUser(String username, String password, String email, String firstname, String lastname){
+    public boolean addUser(String username, String password, String email, String firstname, String lastname){
     	String req = RequestMessenger.createAddUserMessage(username, password, email, firstname, lastname);
     	JsonObject res = stringToJsonObject(sendRequestAndWait(req));
     	return res.getString("status").equals("success");
     }
-    
+
     private boolean login(SecretKey password) {
         String req = RequestMessenger.createAuthenticateMessage(getUsername(), password.toString());
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
+    }
+
+    public boolean authenticate(String username, SecretKey password) {
+        String req = RequestMessenger.createAuthenticateMessage(username, password.toString());
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));
         return res.getString("status").equals("success");
     }
