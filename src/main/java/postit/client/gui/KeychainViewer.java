@@ -35,7 +35,7 @@ public class KeychainViewer {
     KeychainViewer kv = this;
     Directory dir;
     DirectoryController directoryController;
-    ServerController serverController;
+    static ServerController serverController;
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -70,8 +70,7 @@ public class KeychainViewer {
 
             ClientSender processor = new ClientSender(outPort);
             ClientReceiver receiver = new ClientReceiver(rePort);
-            serverController = new ServerController(processor, receiver, directoryController);
-
+            serverController.setDirectoryController(directoryController);
             createUIComponents();
         }
 
@@ -89,7 +88,11 @@ public class KeychainViewer {
         t2.start();
         t1.start();
 
+
+        serverController = new ServerController(sender, listener);
+
         invokeLater(() -> {
+
             GUIKeyService keyService = new GUIKeyService();
             BackingStore backingStore = new BackingStore(keyService);
 

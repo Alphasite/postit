@@ -34,6 +34,14 @@ public class ServerController {
 
     private Thread syncThread;
 
+    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient) {
+
+        this.clientToServer = clientToServer;
+        this.serverToClient = serverToClient;
+        this.directoryController = null;
+        this.syncThread = null;
+    }
+
     public ServerController(ClientSender clientToServer, ClientReceiver serverToClient, DirectoryController directoryController) {
 
         this.clientToServer = clientToServer;
@@ -246,6 +254,11 @@ public class ServerController {
         directoryController.setKeychainOnlineId(entry, newid.get());
 
         return setKeychain(entry);
+    }
+
+    public boolean setDirectoryController(DirectoryController d){
+        this.directoryController=d;
+        return true;
     }
 
     private boolean setKeychain(DirectoryEntry entry) {
