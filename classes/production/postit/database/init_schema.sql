@@ -68,7 +68,7 @@ CREATE TABLE `directory` (
 
 LOCK TABLES `directory` WRITE;
 /*!40000 ALTER TABLE `directory` DISABLE KEYS */;
-INSERT INTO `directory` VALUES ('ning','.',1),('mc','.',3);
+INSERT INTO `directory` VALUES ('ning','.',1);
 /*!40000 ALTER TABLE `directory` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -98,7 +98,7 @@ CREATE TABLE `directory_entry` (
 
 LOCK TABLES `directory_entry` WRITE;
 /*!40000 ALTER TABLE `directory_entry` DISABLE KEYS */;
-INSERT INTO `directory_entry` VALUES (2,'pwd','lalalalala','la','0','lala',1),(3,'pwd2','hahahaha','ha','0','haha',1);
+INSERT INTO `directory_entry` VALUES (2,'pwd','lalalalala','la','0','lala',1);
 /*!40000 ALTER TABLE `directory_entry` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -124,7 +124,7 @@ CREATE TABLE `keychain` (
 
 LOCK TABLES `keychain` WRITE;
 /*!40000 ALTER TABLE `keychain` DISABLE KEYS */;
-INSERT INTO `keychain` VALUES (2,'5431','nothing'),(3,'5430','something');
+INSERT INTO `keychain` VALUES (2,'5431','nothing');
 /*!40000 ALTER TABLE `keychain` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

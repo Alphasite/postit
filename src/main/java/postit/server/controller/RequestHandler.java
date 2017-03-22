@@ -1,9 +1,12 @@
 package postit.server.controller;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import org.json.JSONObject;
 
+import postit.server.database.Database;
+import postit.server.database.MySQL;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
 import postit.shared.model.Account;
@@ -19,15 +22,25 @@ public class RequestHandler {
 	private AccountHandler ah;
 	private KeychainHandler kh;
 	
-	public RequestHandler(){
-		DatabaseController db = new DatabaseController();
+	public RequestHandler() throws ExceptionInInitializerError {
+		Database database = null;
+
+		// TODO handle this better where needed. See where used and handle there.
+		try {
+			database = MySQL.defaultDatabase();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new ExceptionInInitializerError(e);
+		}
+
+		DatabaseController db = new DatabaseController(database);
 		ah = new AccountHandler(db);
 		kh = new KeychainHandler(db);
 	}
 
 	/**
 	 * Takes in request, process the request, and outputs the proper response
-	 * @param req
+	 * @param request
 	 * @return
 	 */
 	public String handleRequest(String request){

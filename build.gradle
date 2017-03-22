@@ -43,6 +43,8 @@ dependencies {
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
     testCompile 'commons-io:commons-io:2.5'
+    testCompile 'com.h2database:h2:1.4.194'
+    testCompile 'ch.vorburger.mariaDB4j:mariaDB4j:2.2.2'
 
     compile 'mysql:mysql-connector-java:6.0.+'
     compile 'org.json:json:20160212'
@@ -57,7 +59,7 @@ pitest {
     pitestVersion = "1.1.0" //not needed when a default PIT version should be used
     threads = 4
     outputFormats = ['XML', 'HTML']
-    reportDir = "build/pit-reports/"
+    reportDir = "target/pit-reports/"
 }
 
 tasks.withType(Test) {

@@ -25,7 +25,7 @@ public class DatabaseController {
 
     private final String getAccountSQL = "SELECT * FROM " + ACCOUNT + " WHERE `user_name`=?;";
     private final String addAccountSQL = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`) VALUES (?,?,?,?,?);";
-    private final String updateAccountSQL = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`) VALUES (?,?,?,?,?);";
+    private final String updateAccountSQL = "UPDATE "+ACCOUNT+" SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=? WHERE `user_name`=?;";
     private final String removeAccountSQL = "DELETE FROM " + ACCOUNT + " WHERE `user_name`=?;";
     private final String getDirectorySQL = "SELECT * FROM " + DIRECTORY + " WHERE `user_name`=?;";
     private final String addDirectorySQL = "INSERT INTO " + DIRECTORY + " (`user_name`, `own_path`) VALUES (?,?);";
