@@ -22,17 +22,7 @@ public class RequestHandler {
 	private AccountHandler ah;
 	private KeychainHandler kh;
 	
-	public RequestHandler() throws ExceptionInInitializerError {
-		Database database = null;
-
-		// TODO handle this better where needed. See where used and handle there.
-		try {
-			database = MySQL.defaultDatabase();
-		} catch (SQLException e) {
-			e.printStackTrace();
-			throw new ExceptionInInitializerError(e);
-		}
-
+	public RequestHandler(Database database) throws ExceptionInInitializerError {
 		DatabaseController db = new DatabaseController(database);
 		ah = new AccountHandler(db);
 		kh = new KeychainHandler(db);

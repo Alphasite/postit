@@ -2,6 +2,7 @@ package postit.communication;
 
 import org.json.JSONObject;
 import postit.server.controller.RequestHandler;
+import postit.server.database.Database;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -22,10 +23,10 @@ public class ServerSender implements Runnable {
     int port;
     RequestHandler requestHandler;
 
-    public ServerSender(int port){
+    public ServerSender(int port, Database database){
         this.outQueue = new ArrayDeque<>();
         this.port = port;
-        requestHandler = new RequestHandler();
+        requestHandler = new RequestHandler(database);
     }
 
     @Override

@@ -2,6 +2,9 @@ package postit.communication;
 
 import org.json.JSONObject;
 import postit.server.controller.RequestHandler;
+import postit.server.database.Database;
+import postit.server.database.MySQL;
+
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -25,12 +28,12 @@ public class Client implements Runnable {
     RequestHandler requestHandler;
     boolean running = false;
 
-    public Client(int port, boolean postitServer){
+    public Client(int port, boolean postitServer, Database database){
         this.outQueue = new Vector<>();
         this.port = port;
         this.postitServer = postitServer;
         if (postitServer){
-            requestHandler = new RequestHandler();
+            requestHandler = new RequestHandler(database);
         }
     }
 

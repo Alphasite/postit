@@ -50,8 +50,7 @@ public class DatabaseController {
         ResultSet rset = null;
         Account account = null;
 
-        try {
-            Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL);
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
             statement.setString(1, username);
             rset = statement.executeQuery();
 
