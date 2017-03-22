@@ -20,7 +20,8 @@ public class TestH2 implements Database, Closeable {
 
     public TestH2() throws ManagedProcessException {
         configBuilder = DBConfigurationBuilder.newBuilder();
-        configBuilder.setPort(0); // OR, default: setPort(0); => autom. detect free port
+        configBuilder.setPort(0);
+        configBuilder.addArg("--user=root");
         db = DB.newEmbeddedDB(configBuilder.build());
         db.start();
     }
