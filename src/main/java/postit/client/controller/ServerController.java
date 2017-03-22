@@ -163,7 +163,8 @@ public class ServerController {
         String response = null;
         while (true) { // block until request is received
             try {
-                this.wait(2000);
+                Thread.sleep(2000);
+                //this.wait(2000);
                 response = serverToClient.getResponse(reqId);
                 if (response != null)
                     break;
@@ -193,9 +194,17 @@ public class ServerController {
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));
         return res.getString("status").equals("success");
     }
-
+    //use the authenticate(String username, SecretKey password) when we care about security
     public boolean authenticate(String username, SecretKey password) {
+
         String req = RequestMessenger.createAuthenticateMessage(username, password.toString());
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
+    }
+
+    public boolean authenticate(String username, String password) {
+
+        String req = RequestMessenger.createAuthenticateMessage(username, password);
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));
         return res.getString("status").equals("success");
     }
