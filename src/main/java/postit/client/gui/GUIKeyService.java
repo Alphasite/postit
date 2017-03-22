@@ -93,15 +93,19 @@ public class GUIKeyService implements KeyService {
         String user = null;
         LoginPanel lp = new LoginPanel();
         while (user == null) {
-            /*
             int result = JOptionPane.showConfirmDialog(null, lp,
                     "Login/Registration", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {
                 if(lp.tabbedPane.getSelectedIndex()==0) {
                     // LOGIN
-                    if (sc.authenticate(lp.l_accountfield.getText(),
-                            Crypto.secretKeyFromBytes(lp.l_passfield.getPassword().toString().getBytes()))) {
+                    String username = lp.l_accountfield.getText();
+                    String password = String.valueOf(lp.l_passfield.getPassword());
+                    //if (sc.authenticate(username, Crypto.secretKeyFromBytes(password.getBytes()))) {
+                    if (sc.authenticate(username, password)) {
                         user = lp.l_accountfield.getText();
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(null,"Login credentials invalid");
                     }
                 }
                 else if (lp.tabbedPane.getSelectedIndex()==1){
@@ -110,22 +114,26 @@ public class GUIKeyService implements KeyService {
                     String last = lp.r_lastfield.getText();
                     String username = lp.r_accountfield.getText();
                     String pass1 = String.valueOf(lp.r_pass1field.getPassword());
-                    String pass2 = String.valueOf(lp.r_pass1field.getPassword().toString());
+                    String pass2 = String.valueOf(lp.r_pass2field.getPassword());
                     String email = lp.r_emailfield.getText();
 
-                    if (pass1==pass2 && LoginPanel.isValidEmailAddress(email)) {
+                    if (pass1.equals(pass2) && LoginPanel.isValidEmailAddress(email)) {
                         if(sc.addUser(username, pass1,email,first,last)){
                             user=username;
                         }
                     }
+                    else if (!pass1.equals(pass2)){
+                        JOptionPane.showMessageDialog(null,"Passwords do not match");
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(null,"Email is invalid");
+                    }
                 }
 
             }
-
-*/
+//            user = JOptionPane.showInputDialog("Please enter username: ");
         }
 
-            user = JOptionPane.showInputDialog("Please enter username: ");
         return user;
     }
 }

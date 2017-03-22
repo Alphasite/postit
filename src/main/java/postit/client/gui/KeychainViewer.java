@@ -93,7 +93,7 @@ public class KeychainViewer {
 
         invokeLater(() -> {
 
-            GUIKeyService keyService = new GUIKeyService();
+            GUIKeyService keyService = new GUIKeyService(serverController);
             BackingStore backingStore = new BackingStore(keyService);
 
             if (!Crypto.init()) {
