@@ -14,6 +14,7 @@ import postit.server.database.Database;
 import postit.server.model.*;
 import postit.shared.model.Account;
 
+@SuppressWarnings("FieldCanBeLocal")
 public class DatabaseController {
 
     private static final String ACCOUNT = "account";
@@ -23,23 +24,23 @@ public class DatabaseController {
 
     private Database database;
 
-    private final String getAccountSQL = "SELECT * FROM " + ACCOUNT + " WHERE `user_name`=?;";
-    private final String addAccountSQL = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`) VALUES (?,?,?,?,?);";
-    private final String updateAccountSQL = "UPDATE "+ACCOUNT+" SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=? WHERE `user_name`=?;";
-    private final String removeAccountSQL = "DELETE FROM " + ACCOUNT + " WHERE `user_name`=?;";
-    private final String getDirectorySQL = "SELECT * FROM " + DIRECTORY + " WHERE `user_name`=?;";
-    private final String addDirectorySQL = "INSERT INTO " + DIRECTORY + " (`user_name`, `own_path`) VALUES (?,?);";
-    private final String removeDirectorySQL = "DELETE FROM " + DIRECTORY + " WHERE `user_name`=?;";
-    private final String addDirectoryEntrySQL = "INSERT INTO " + DIRECTORY_ENTRY + " (`directory_id`, `name`, `encryption_key`) VALUES (?,?,?);";
-    private final String updateDirectoryEntrySQL = "UPDATE " + DIRECTORY_ENTRY + " SET `name`=?, `encryption_key`=? WHERE `directory_entry_id`=?;";
-    private final String getDirectoryEntrySQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
-    private final String getDirectoryEntryWithNameSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `directory_id`=? AND `name`=?;";
-    private final String getDirectoryEntriesSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `directory_id`=?;";
-    private final String removeDirectoryEntrySQL = "DELETE FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
-    private final String addKeychainSQL = "INSERT INTO " + KEYCHAIN + " (`directory_entry_id`, `password`, `metadata`) VALUES (?,?,?);";
-    private final String updateKeychainSQL = "UPDATE " + KEYCHAIN + " SET `password`=?, `metadata`=? WHERE `directory_entry_id`=?;";
-    private final String getKeychainSQL = "SELECT * FROM " + KEYCHAIN + " WHERE `directory_entry_id`=?;";
-    private final String removeKeychainSQL = "DELETE FROM " + KEYCHAIN + " WHERE `directory_entry_id`=?;";
+    private static final String getAccountSQL = "SELECT * FROM " + ACCOUNT + " WHERE `user_name`=?;";
+    private static final String addAccountSQL = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`) VALUES (?,?,?,?,?);";
+    private static final String updateAccountSQL = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=? WHERE `user_name`=?;";
+    private static final String removeAccountSQL = "DELETE FROM " + ACCOUNT + " WHERE `user_name`=?;";
+    private static final String getDirectorySQL = "SELECT * FROM " + DIRECTORY + " WHERE `user_name`=?;";
+    private static final String addDirectorySQL = "INSERT INTO " + DIRECTORY + " (`user_name`, `own_path`) VALUES (?,?);";
+    private static final String removeDirectorySQL = "DELETE FROM " + DIRECTORY + " WHERE `user_name`=?;";
+    private static final String addDirectoryEntrySQL = "INSERT INTO " + DIRECTORY_ENTRY + " (`directory_id`, `name`, `encryption_key`) VALUES (?,?,?);";
+    private static final String updateDirectoryEntrySQL = "UPDATE " + DIRECTORY_ENTRY + " " + "SET `name`=?, `encryption_key`=? WHERE `directory_entry_id`=?;";
+    private static final String getDirectoryEntrySQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
+    private static final String getDirectoryEntryWithNameSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `directory_id`=? AND `name`=?;";
+    private static final String getDirectoryEntriesSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `directory_id`=?;";
+    private static final String removeDirectoryEntrySQL = "DELETE FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
+    private static final String addKeychainSQL = "INSERT INTO " + KEYCHAIN + " (`directory_entry_id`, `password`, `metadata`) VALUES (?,?,?);";
+    private static final String updateKeychainSQL = "UPDATE " + KEYCHAIN + " SET `password`=?, `metadata`=? WHERE `directory_entry_id`=?;";
+    private static final String getKeychainSQL = "SELECT * FROM " + KEYCHAIN + " WHERE `directory_entry_id`=?;";
+    private static final String removeKeychainSQL = "DELETE FROM " + KEYCHAIN + " WHERE `directory_entry_id`=?;";
 
 
     public DatabaseController(Database database) {
