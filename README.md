@@ -3,18 +3,23 @@
 CS 5431 Post It Project
 
 To run:
-                > ./gradlew clean
-                > ./gradlew build
-                > cd build/distributions
+```
+postit          > ./gradlew clean
+postit          > ./gradlew build
+postit          > cd build/distributions
 distributions   > unzip postit.zip
 distributions   > cd postit
+```
 
 Macs:
+```
 postit          > java -cp 'lib/*:bin' postit.client.gui.KeychainViewer
-
+```
 
 PC:
+```
 postit          > java -cp 'lib/*;bin' postit.client.gui.KeychainViewer
+```
 
 You will be prompted for a master password (if this is your first time running the system, you will be setting your master password)
   
