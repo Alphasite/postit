@@ -48,9 +48,10 @@ pipeline {
 
                 archiveArtifacts artifacts: 'build/distributions/*.zip'
 
-                zip zipFile: 'pit-test.zip', dir: 'build/pit-reports/', archive: true
+                zip zipFile: 'pit-test.zip', dir: 'build/reports/pit', archive: true
+                zip zipFile: 'coverage.zip', dir: 'build/reports/jacoco/', archive: true
 
-                sh "rm -rf targets/"
+                sh "rm -rf build/reports/"
             }
         }
 
