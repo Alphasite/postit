@@ -12,7 +12,7 @@ import postit.client.controller.RequestMessenger;
 import postit.communication.*;
 
 
-public class ClientCommunication implements Runnable{
+public class ClientCommunication implements Runnable {
 	ClientSender s;
 	ClientReceiver r;
 

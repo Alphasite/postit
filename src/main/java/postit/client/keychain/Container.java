@@ -18,15 +18,11 @@ public class Container {
 
     public Map<String, String> keychains;
 
-    private BackingStore backingStore;
-
-    public Container(BackingStore backingStore) {
-        this.backingStore = backingStore;
+    public Container() {
         this.keychains = new HashMap<>();
     }
 
-    public Container(BackingStore backingStore, JsonObject object) {
-        this.backingStore = backingStore;
+    public Container(JsonObject object) {
 
         this.salt = object.getJsonObject("account").getString("salt");
 

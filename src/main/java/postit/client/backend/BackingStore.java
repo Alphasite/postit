@@ -56,7 +56,7 @@ public class BackingStore {
         }
 
         if (!Files.exists(rootPath.resolve(getContainer()))) {
-            container = new Container(this);
+            container = new Container();
             container.salt = Base64.getEncoder().encodeToString(Crypto.getNonce());
 
             this.directory = new Directory(keyService, this);
@@ -83,7 +83,7 @@ public class BackingStore {
         Optional<JsonObject> object = Crypto.readJsonObjectFromFile(getContainer());
 
         if (object.isPresent()) {
-            container = new Container(this, object.get());
+            container = new Container(object.get());
             return Optional.of(container);
         } else {
             return Optional.empty();
