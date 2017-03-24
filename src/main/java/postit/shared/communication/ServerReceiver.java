@@ -1,4 +1,4 @@
-package postit.communication;
+package postit.shared.communication;
 
 import org.json.JSONObject;
 

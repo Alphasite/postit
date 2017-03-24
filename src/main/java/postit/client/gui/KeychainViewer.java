@@ -10,14 +10,12 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
-import postit.communication.ClientSender;
-import postit.communication.ClientReceiver;
+import postit.shared.communication.ClientSender;
+import postit.shared.communication.ClientReceiver;
 import postit.shared.Crypto;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;

@@ -2,10 +2,8 @@ package postit.client.controller;
 
 import postit.client.backend.KeyService;
 import postit.client.keychain.DirectoryEntry;
-import postit.communication.ClientSender;
-import postit.communication.ClientReceiver;
-import postit.communication.ClientSender;
-import postit.communication.ClientReceiver;
+import postit.shared.communication.ClientSender;
+import postit.shared.communication.ClientReceiver;
 import postit.shared.Crypto;
 import postit.shared.model.DirectoryAndKey;
 
@@ -14,7 +12,6 @@ import javax.json.*;
 
 import java.io.StringReader;
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 

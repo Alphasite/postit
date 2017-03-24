@@ -1,28 +1,32 @@
-package postit.communication;
+package postit.shared.communication;
 
 import org.json.JSONObject;
-import java.io.*;
+import postit.server.controller.RequestHandler;
+import postit.server.database.Database;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.Random;
-
 
 /**
- * Created by dog on 3/14/2017.
+ * Created by Zhan on 3/7/2017.
  */
-public class ClientSender implements Runnable {
+public class ServerSender implements Runnable {
+
     Queue<JSONObject> outQueue;
     Socket clientSocket;
     DataOutputStream out;
     int port;
+    RequestHandler requestHandler;
 
-    public ClientSender(int port){
+    public ServerSender(int port, Database database){
         this.outQueue = new ArrayDeque<>();
         this.port = port;
+        requestHandler = new RequestHandler(database);
     }
 
     @Override
@@ -36,7 +40,7 @@ public class ClientSender implements Runnable {
                     clientSocket = new Socket("localhost", port);
                     trying = false;
                 } catch (ConnectException e) {
-                    System.out.println("Connect failed, waiting and trying again");
+                    System.out.println("Connect failed, waiting and trying again - serverSender");
                     try {
                         Thread.sleep(2000);//2 seconds
                     } catch (InterruptedException ie) {
@@ -45,13 +49,37 @@ public class ClientSender implements Runnable {
                 }
             }
             System.out.println("Connected to localhost in port " + port);
+            //2. get Input and Output streams
             out = new DataOutputStream(clientSocket.getOutputStream());
             //3: Communicating with the server
             while(true) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e){
+
+                }
+
+                //System.out.println("server sender loop");
+                boolean ifEmpty;
+
                 synchronized (outQueue) {
-                    if (!outQueue.isEmpty()) {
-                        sendMessage(outQueue.remove());
+                    ifEmpty = outQueue.isEmpty();
+                }
+
+                if (!ifEmpty) {
+
+                    JSONObject obj = null;
+
+                    synchronized (outQueue) {
+                        obj = outQueue.remove();
                     }
+
+                    String response = requestHandler.handleRequest((String)obj.get("req"));
+                    int id = Integer.valueOf((int)obj.get("id"));
+                    JSONObject toBeSent = new JSONObject();
+                    toBeSent.put("id", id);
+                    toBeSent.put("response", response);
+                    sendMessage(toBeSent);
                 }
             }
         } catch (UnknownHostException unknownHost) {
@@ -72,35 +100,22 @@ public class ClientSender implements Runnable {
     /**
      * Adds the request to be sent to the server.
      * Returns the identification number of the request for retrieval.
-     * @param req
+     * @param obj
      * @return
      */
-    private static Random rnd = new Random();
 
-    public static int getRandomNumber(int digCount) {
-        StringBuilder sb = new StringBuilder(digCount);
-        for(int i=0; i < digCount; i++)
-            sb.append((char)('0' + rnd.nextInt(10)));
-        return Integer.parseInt(sb.toString());
-    }
-    public int addRequest(String req){
-        //System.out.println("adding request");
-        JSONObject toBeSent = new JSONObject();
-        int id = getRandomNumber(8);
-        toBeSent.put("id", id);
-        toBeSent.put("req", req);
-
+    public void addRequest(JSONObject obj){
         synchronized (outQueue) {
-            outQueue.add(toBeSent);
+            //System.out.println("server sender adding requests");
+            outQueue.add(obj);
+            //System.out.println(outQueue.size());
         }
-
-        return id;
     }
 
     void sendMessage(JSONObject obj) {
         try {
             out.writeUTF(obj.toString());
-            //System.out.println("sent");
+            //System.out.println("Response sent");
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
