@@ -21,7 +21,7 @@ public class GUIKeyService implements KeyService {
 
     private ServerController sc;
 
-    GUIKeyService(){
+    public GUIKeyService(){
     }
 
     GUIKeyService(ServerController sc){
