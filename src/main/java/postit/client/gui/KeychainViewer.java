@@ -171,7 +171,6 @@ public class KeychainViewer {
 
         menuItem = new JMenuItem(("Sync"));
         menuItem.addActionListener(e -> serverController.sync(() -> invokeLater(this::refreshTabbedPanes)));
-//        menuItem.setEnabled(false);
         fileMenu.add(menuItem);
 
         menuItem = new JMenuItem("Close");

@@ -1,15 +1,16 @@
 package postit.client.controller;
 
+import postit.client.keychain.Account;
 import postit.client.keychain.DirectoryEntry;
-
-import postit.shared.communication.ClientSender;
-import postit.shared.communication.ClientReceiver;
 import postit.shared.Crypto;
+import postit.shared.communication.ClientReceiver;
+import postit.shared.communication.ClientSender;
 import postit.shared.model.DirectoryAndKey;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
 import java.io.StringReader;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -54,8 +55,9 @@ public class ServerController {
     public boolean sync(Runnable callback) {
 
         Runnable sync = () -> {
-
-            this.login(Crypto.secretKeyFromBytes("temp".getBytes())); // TODO
+            LOGGER.info("Entering sync...");
+            Account account = directoryController.getAccount();
+            this.login(account); // TODO
 
             Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
             List<Long> serverDeletedKeychains = getDeletedKeychains();
@@ -84,6 +86,20 @@ public class ServerController {
 
             Set<Long> keychainsToUpdate = new HashSet<>(clientKeychainNames);
             keychainsToUpdate.retainAll(serverKeychains);
+
+            System.out.println(MessageFormat.format(
+                    "Total [remote: {}, local: {}] Deleting [remote: {}, local: {}] Downloading {} Uploading {} update {}",
+                    serverKeychains.size(),
+                    clientKeychains.size(),
+                    serverKeychainsToDelete.size(),
+                    localKeychainsToDelete.size(),
+                    keychainsToDownload.size(),
+                    keychainsToUpload.size(),
+                    keychainsToUpdate.size()
+            ));
+
+            System.out.println("Server keychains: " + serverKeychains);
+            System.out.println("Client keychains: " + clientKeychainNames);
 
             for (Long serverid : serverKeychainsToDelete) {
                 if (!deleteKeychain(serverid)) {
@@ -143,7 +159,7 @@ public class ServerController {
             callback.run();
         };
 
-        if (syncThread != null) {
+        if (syncThread == null) {
             syncThread = new Thread(sync);
             syncThread.run();
             return true;
@@ -184,17 +200,19 @@ public class ServerController {
         return object;
     }
 
-    public boolean addUser(String username, String password, String email, String firstname, String lastname){
-    	String req = RequestMessenger.createAddUserMessage(username, password, email, firstname, lastname);
-    	JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-    	return res.getString("status").equals("success");
-    }
-
-    private boolean login(SecretKey password) {
-        String req = RequestMessenger.createAuthenticateMessage(getUsername(), password.toString());
+    public boolean addUser(String username, String password, String email, String firstname, String lastname) {
+        String req = RequestMessenger.createAddUserMessage(username, password, email, firstname, lastname);
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));
         return res.getString("status").equals("success");
     }
+
+    private boolean login(Account account) {
+        String req = RequestMessenger.createAuthenticateMessage(account.getUsername(),
+                new String(Crypto.secretKeyToBytes(account.getSecretKey())));
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
+    }
+
     //use the authenticate(String username, SecretKey password) when we care about security
     public boolean authenticate(String username, SecretKey password) {
 
@@ -266,8 +284,8 @@ public class ServerController {
         return setKeychain(entry);
     }
 
-    public boolean setDirectoryController(DirectoryController d){
-        this.directoryController=d;
+    public boolean setDirectoryController(DirectoryController d) {
+        this.directoryController = d;
         return true;
     }
 

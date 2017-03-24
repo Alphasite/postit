@@ -58,7 +58,7 @@ public class AccountHandler {
 	public boolean addAccount(Account account){		
 		if (db.getAccount(account.getUsername()) == null){
 			Account a = new Account(account);
-			a.setSalt(Util.generateSalt(rand, 32));
+			a.setSalt(Util.generateSalt(rand, 4));
 			a.setPassword(Util.hashPassword(a.getPassword(), a.getSalt()));
 			if (db.addAccount(a)){
 				return db.addDirectory(a.getUsername(), ".").getString("status").equals("success");
