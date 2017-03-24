@@ -26,6 +26,7 @@ public class RequestHandler {
 	
 	public RequestHandler(Database database) throws ExceptionInInitializerError {
 		DatabaseController db = new DatabaseController(database);
+		rand = new SecureRandom();
 		ah = new AccountHandler(db, rand);
 		kh = new KeychainHandler(db);
 		rand = new SecureRandom();
