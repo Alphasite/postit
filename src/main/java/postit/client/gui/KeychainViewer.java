@@ -76,32 +76,6 @@ public class KeychainViewer {
 
     }
 
-    public static void main(String[] args) {
-        // FOR CONNECTING TO THE POSTIT SERVER
-        ClientSender sender = new ClientSender(2048);
-        ClientReceiver listener = new ClientReceiver(4880);
-
-        Thread t1 = new Thread(listener);
-        Thread t2 = new Thread(sender);
-
-        t2.start();
-        t1.start();
-
-        invokeLater(() -> {
-            GUIKeyService keyService = new GUIKeyService();
-            BackingStore backingStore = new BackingStore(keyService);
-
-            if (!Crypto.init()) {
-                // TODO
-            }
-            if (!backingStore.init()) {
-                // TODO
-            }
-
-            KeychainViewer kv = new KeychainViewer(backingStore, keyService);
-        });
-    }
-
     /**
      * creatUIComponents()
      * <p>
