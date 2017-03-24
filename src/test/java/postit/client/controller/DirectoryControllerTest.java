@@ -588,7 +588,6 @@ public class DirectoryControllerTest {
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 null,
-                null,
                 null
         );
 
@@ -633,7 +632,6 @@ public class DirectoryControllerTest {
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 null,
-                null,
                 null
         );
 
@@ -672,7 +670,6 @@ public class DirectoryControllerTest {
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 null,
-                null,
                 null
         );
 
@@ -702,7 +699,6 @@ public class DirectoryControllerTest {
         DirectoryEntry entry1 = new DirectoryEntry(
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
-                null,
                 null,
                 null
         );
