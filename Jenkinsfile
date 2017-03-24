@@ -15,9 +15,8 @@ pipeline {
         stage('Preparation') {
             steps {
                 checkout scm
-                sh "rm -f keychains.directory"
-                sh "rm -rf keychains/"
                 sh "rm -f pit-test.zip"
+                sh "rm -f coverage.zip"
             }
         }
 
