@@ -1,11 +1,15 @@
 package postit.server.controller;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 import java.util.List;
 
 import org.json.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
+import postit.server.database.Database;
+import postit.server.database.TestH2;
 import postit.server.model.Directory;
 import postit.shared.model.DirectoryAndKey;
 
@@ -15,6 +19,20 @@ import postit.shared.model.DirectoryAndKey;
  *
  */
 public class KeychainHandlerTest {
+	Database database;
+	DatabaseController db;
+	AccountHandler ah;
+	KeychainHandler kh;
+
+	@Before
+	public void setUp() throws Exception {
+		database = new TestH2();
+		db = new DatabaseController(database);
+		ah = new AccountHandler(db);
+		kh = new KeychainHandler(db);
+
+		assertThat(database.initDatabase(), is(true));
+	}
 
 	public static int testAddKeychain(KeychainHandler kh, String username, String name, String pwd, boolean expected){
 		JSONObject js = kh.createKeychain(username, name, ".", "123456");
@@ -40,9 +58,7 @@ public class KeychainHandlerTest {
 	
 	@Test
 	public void runTest(){
-		DatabaseController db = new DatabaseController();
-		AccountHandler ah = new AccountHandler(db);
-		KeychainHandler kh = new KeychainHandler(db);
+
 		
 		String username = "mc";
 		boolean res = ah.addAccount(username, "cs5431", "mc@cornell.edu", "m", "c");
@@ -67,6 +83,5 @@ public class KeychainHandlerTest {
 		System.out.println(kh.getKeychains(username));
 		
 		db.removeAccount(username);
-		
 	}
 }

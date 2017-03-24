@@ -29,26 +29,23 @@ public class DirectoryEntry {
     Directory directory;
     Keychain keychain;
 
-    KeyService keyService;
     BackingStore backingStore;
 
     public LocalDateTime lastModified;
 
-    public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, KeyService keyService, BackingStore backingStore) {
+    public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, BackingStore backingStore) {
         this.name = name;
         this.setEncryptionKey(encryptionKey);
         this.directory = directory;
         this.keychain = null;
-        this.keyService = keyService;
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
         this.serverid = -1L;
     }
 
-    public DirectoryEntry(JsonObject object, Directory directory, KeyService keyService, BackingStore backingStore) {
+    public DirectoryEntry(JsonObject object, Directory directory, BackingStore backingStore) {
         this.directory = directory;
         this.keychain = null;
-        this.keyService = keyService;
         this.backingStore = backingStore;
         this.updateFrom(object);
     }
@@ -97,31 +94,6 @@ public class DirectoryEntry {
     public boolean delete() {
         return this.directory.delete(this);
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DirectoryEntry entry = (DirectoryEntry) o;
-
-        if (serverid != entry.serverid) return false;
-        if (!name.equals(entry.name)) return false;
-        if (!getEncryptionKey().equals(entry.getEncryptionKey())) return false;
-        if (!Arrays.equals(getNonce(), entry.getNonce())) return false;
-        return lastModified.equals(entry.lastModified);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + (int) (serverid ^ (serverid >>> 32));
-        result = 31 * result + getEncryptionKey().hashCode();
-        result = 31 * result + Arrays.hashCode(getNonce());
-        result = 31 * result + lastModified.hashCode();
-        return result;
-    }
-
 
     public SecretKey getEncryptionKey() {
         return encryptionKey;
