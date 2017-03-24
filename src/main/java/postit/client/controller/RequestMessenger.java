@@ -1,6 +1,7 @@
 package postit.client.controller;
 
 import postit.shared.model.*;
+import postit.server.model.Account;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
 

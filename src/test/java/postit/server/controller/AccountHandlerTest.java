@@ -4,7 +4,10 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import java.security.SecureRandom;
+
 import postit.server.database.Database;
+import postit.server.database.MySQL;
 import postit.server.database.TestH2;
 
 /**
@@ -16,16 +19,14 @@ public class AccountHandlerTest {
     Database database;
     DatabaseController db;
     AccountHandler ah;
-    KeychainHandler kh;
 
     @Before
     public void setUp() throws Exception {
         database = new TestH2();
         db = new DatabaseController(database);
-        ah = new AccountHandler(db);
-        kh = new KeychainHandler(db);
+        ah = new AccountHandler(db, new SecureRandom());
 
-        database.initDatabase();
+        //database.initDatabase();
     }
 
 	public static void testAuthentication(AccountHandler ah, String username, String pwd, boolean expected){

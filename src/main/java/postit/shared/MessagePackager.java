@@ -5,7 +5,6 @@ import java.util.*;
 import org.json.JSONObject;
 
 import postit.server.model.*;
-import postit.shared.model.Account;
 
 /**
  * Packages requests and responses in JsonObject to be sent between client and server

@@ -4,10 +4,7 @@ import java.sql.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import postit.server.controller.AccountHandler;
 import postit.server.controller.DatabaseController;
-import postit.server.controller.KeychainHandler;
-
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
@@ -19,15 +16,11 @@ import static org.junit.Assert.*;
 public class DatabaseConnectionTest {
 	Database database;
 	DatabaseController db;
-	AccountHandler ah;
-	KeychainHandler kh;
 
 	@Before
 	public void setUp() throws Exception {
 		database = new TestH2();
 		db = new DatabaseController(database);
-		ah = new AccountHandler(db);
-		kh = new KeychainHandler(db);
 
 		assertThat(database.initDatabase(), is(true));
 	}

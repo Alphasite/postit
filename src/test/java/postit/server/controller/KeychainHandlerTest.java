@@ -3,6 +3,7 @@ package postit.server.controller;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
+import java.security.SecureRandom;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -28,7 +29,7 @@ public class KeychainHandlerTest {
 	public void setUp() throws Exception {
 		database = new TestH2();
 		db = new DatabaseController(database);
-		ah = new AccountHandler(db);
+		ah = new AccountHandler(db, new SecureRandom());
 		kh = new KeychainHandler(db);
 
 		assertThat(database.initDatabase(), is(true));
