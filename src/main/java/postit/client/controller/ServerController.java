@@ -60,13 +60,19 @@ public class ServerController {
             this.login(account); // TODO
 
             Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
-            List<Long> serverDeletedKeychains = getDeletedKeychains();
 
             List<DirectoryEntry> clientKeychains = directoryController.getKeychains();
 
             Set<Long> clientKeychainNames = clientKeychains.stream()
                     .map(keychain -> keychain.serverid)
                     .collect(Collectors.toSet());
+
+            // Figure out which keychains have been uploaded to the server and are no longer there.
+            Set<Long> serverDeletedKeychains = clientKeychains.stream()
+                            .map(keychain -> keychain.serverid)
+                            .filter(id -> id != -1)
+                            .collect(Collectors.toSet());
+            serverDeletedKeychains.removeAll(serverKeychains);
 
             // Figure out which keychains are here but deleted on the server
             Set<Long> localKeychainsToDelete = new HashSet<>(serverDeletedKeychains);
