@@ -1,8 +1,9 @@
 package postit.client.controller;
 
 import postit.client.keychain.DirectoryEntry;
-import postit.communication.ClientReceiver;
-import postit.communication.ClientSender;
+
+import postit.shared.communication.ClientSender;
+import postit.shared.communication.ClientReceiver;
 import postit.shared.Crypto;
 import postit.shared.model.DirectoryAndKey;
 

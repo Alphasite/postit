@@ -1,7 +1,9 @@
-package postit.communication;
+package postit.shared.communication;
 
 import org.json.JSONObject;
 import postit.server.controller.RequestHandler;
+import postit.server.database.Database;
+
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -9,8 +11,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.Vector;
-import java.util.concurrent.TimeoutException;
-import javax.json.*;
+
 /**
  * Created by Zhan on 3/7/2017.
  */
@@ -25,12 +26,12 @@ public class Client implements Runnable {
     RequestHandler requestHandler;
     boolean running = false;
 
-    public Client(int port, boolean postitServer){
+    public Client(int port, boolean postitServer, Database database){
         this.outQueue = new Vector<>();
         this.port = port;
         this.postitServer = postitServer;
         if (postitServer){
-            requestHandler = new RequestHandler();
+            requestHandler = new RequestHandler(database);
         }
     }
 

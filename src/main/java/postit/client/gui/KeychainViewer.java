@@ -10,8 +10,9 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
-import postit.communication.ClientReceiver;
-import postit.communication.ClientSender;
+
+import postit.shared.communication.ClientSender;
+import postit.shared.communication.ClientReceiver;
 import postit.shared.Crypto;
 
 import javax.swing.*;

@@ -1,8 +1,10 @@
 package postit.server.controller;
 
+import java.security.SecureRandom;
+
 import javax.json.JsonObject;
 
-import postit.shared.model.Account;
+import postit.server.model.Account;
 
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
@@ -16,9 +18,11 @@ import postit.shared.model.Account;
 public class AccountHandler {
 	
 	private DatabaseController db;
+	private SecureRandom rand;
 	
-	public AccountHandler(DatabaseController db){
+	public AccountHandler(DatabaseController db, SecureRandom rand){
 		this.db = db;
+		this.rand = rand;
 	}
 
 	/**
@@ -31,9 +35,9 @@ public class AccountHandler {
 	 */
 	public boolean authenticate(String username, String pwd){
 		Account account = db.getAccount(username);
-		// TODO pwd = generateKey(pwd);
-		if (account != null && pwd.equals(account.getPassword())) 
-			return true;
+		if (account != null) {
+			return Util.comparePasswords(pwd, db.getSalt(username), db.getPassword(username));
+		}
 		return false;
 	}
 	
@@ -48,20 +52,30 @@ public class AccountHandler {
 	 * @return
 	 */
 	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname){
-		return addAccount(new Account(username, pwd, email, firstname, lastname)); //TODO encryption on pwd
+		return addAccount(new Account(username, pwd, email, firstname, lastname)); 
 	}
 	
-	public boolean addAccount(Account account){
+	public boolean addAccount(Account account){		
 		if (db.getAccount(account.getUsername()) == null){
-			if (db.addAccount(account)){
-				return db.addDirectory(account.getUsername(), ".").getString("status").equals("success");
+			Account a = new Account(account);
+			a.setSalt(Util.generateSalt(rand, 32));
+			a.setPassword(Util.hashPassword(a.getPassword(), a.getSalt()));
+			if (db.addAccount(a)){
+				return db.addDirectory(a.getUsername(), ".").getString("status").equals("success");
 			}
 		}
 		return false;
 	}
 	
 	public boolean updateAccount(String username, String pwd, String email, String firstname, String lastname){
-		Account account = new Account(username, pwd, email, firstname, lastname); //TODO encryption on pwd
+		Account account = new Account(username, pwd, email, firstname, lastname); 
+		if (pwd != null){
+			Account a = db.getAccount(username);
+			if (a != null)
+				account.setPassword(Util.hashPassword(pwd, db.getSalt(username)));
+			else
+				return false;
+		}
 		return updateAccount(account);
 	}
 	
@@ -71,8 +85,7 @@ public class AccountHandler {
 	
 	public boolean removeAccount(String username, String pwd){
 		Account account = db.getAccount(username);
-		// TODO pwd = generateKey(pwd);
-		if (account != null && pwd.equals(account.getPassword())){
+		if (account != null && Util.comparePasswords(pwd, db.getSalt(username), db.getPassword(username))){
 			return db.removeAccount(username) && db.removeDirectory(username);
 		}
 		return false;

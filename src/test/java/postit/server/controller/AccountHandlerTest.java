@@ -1,10 +1,14 @@
 package postit.server.controller;
 
+import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import postit.server.controller.AccountHandler;
-import postit.server.controller.DatabaseController;
+import java.security.SecureRandom;
+
+import postit.server.database.Database;
+import postit.server.database.MySQL;
+import postit.server.database.TestH2;
 
 /**
  * 
@@ -12,6 +16,18 @@ import postit.server.controller.DatabaseController;
  *
  */
 public class AccountHandlerTest {
+    Database database;
+    DatabaseController db;
+    AccountHandler ah;
+
+    @Before
+    public void setUp() throws Exception {
+        database = new TestH2();
+        db = new DatabaseController(database);
+        ah = new AccountHandler(db, new SecureRandom());
+
+        //database.initDatabase();
+    }
 
 	public static void testAuthentication(AccountHandler ah, String username, String pwd, boolean expected){
 		boolean res = ah.authenticate(username, pwd);
@@ -41,9 +57,6 @@ public class AccountHandlerTest {
 	
 	@Test
 	public void runTest(){
-		DatabaseController db = new DatabaseController();
-		AccountHandler ah = new AccountHandler(db);
-		
 		// authentication
 		testAuthentication(ah, "ning", "5431", true);
 		testAuthentication(ah, "ning", "wrong!", false);

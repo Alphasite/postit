@@ -1,12 +1,16 @@
 package postit.server.controller;
 
+import java.security.SecureRandom;
+import java.sql.SQLException;
 import java.util.List;
 
 import org.json.JSONObject;
 
+import postit.server.database.Database;
+import postit.server.database.MySQL;
+import postit.server.model.Account;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
-import postit.shared.model.Account;
 import postit.shared.model.DirectoryAndKey;
 
 /**
@@ -18,16 +22,18 @@ public class RequestHandler {
 	
 	private AccountHandler ah;
 	private KeychainHandler kh;
+	private SecureRandom rand;
 	
-	public RequestHandler(){
-		DatabaseController db = new DatabaseController();
-		ah = new AccountHandler(db);
+	public RequestHandler(Database database) throws ExceptionInInitializerError {
+		DatabaseController db = new DatabaseController(database);
+		ah = new AccountHandler(db, rand);
 		kh = new KeychainHandler(db);
+		rand = new SecureRandom();
 	}
 
 	/**
 	 * Takes in request, process the request, and outputs the proper response
-	 * @param req
+	 * @param request
 	 * @return
 	 */
 	public String handleRequest(String request){
@@ -53,8 +59,9 @@ public class RequestHandler {
 			case ACCOUNT:
 				Account account = new Account(obj.getString("username"), obj.getString("password"), obj.getString("email"),
 						obj.getString("firstname"), obj.getString("lastname")); 
-				if (ah.addAccount(account)) 
+				if (ah.addAccount(account)) {
 					return MessagePackager.createResponse(true, account.getUsername(), "", asset, account); 
+				}
 				else
 					return MessagePackager.createResponse(false, "", "Failed to create new account", asset, null);
 			case KEYCHAIN:

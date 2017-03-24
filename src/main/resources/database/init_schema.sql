@@ -68,7 +68,7 @@ CREATE TABLE `directory` (
 
 LOCK TABLES `directory` WRITE;
 /*!40000 ALTER TABLE `directory` DISABLE KEYS */;
-INSERT INTO `directory` VALUES ('ning','.',1),('mc','.',3);
+INSERT INTO `directory` VALUES ('ning','.',1);
 /*!40000 ALTER TABLE `directory` ENABLE KEYS */;
 UNLOCK TABLES;
 
