@@ -10,15 +10,14 @@ import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import sun.tools.java.ClassPath;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.json.*;
 import javax.json.stream.JsonParsingException;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
 import java.io.*;
 import java.lang.reflect.Field;
@@ -58,6 +57,17 @@ public class Crypto {
     public static boolean init(boolean useSecureRandom) {
         Crypto.removeCryptographyRestrictions();
         Security.addProvider(new BouncyCastleProvider());
+
+        URL keyPath = Crypto.class.getClassLoader().getResource("keys/test-certificate.jks");// TODO unfix this.
+        if (keyPath == null) {
+            LOGGER.severe("FAILED TO LOAD CERTIFICATE.");
+            return false;
+        }
+
+        System.setProperty("javax.net.ssl.keyStore", keyPath.getPath());
+        System.setProperty("javax.net.ssl.trustStore", keyPath.getPath());
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
         try {
             if (useSecureRandom) {
@@ -189,7 +199,18 @@ public class Crypto {
         }
     }
 
-    private Optional<HttpsURLConnection> sslConnection() {
+    private void sslSocket() {
+        try {
+            SSLSocketFactory factory=(SSLSocketFactory) SSLSocketFactory.getDefault();
+
+            SSLSocket sslsocket=(SSLSocket) factory.createSocket("127.0.0.1",1234);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private Optional<SSLSocketFactory> sslConnection() {
         CertificateFactory cf = new CertificateFactory();
         Certificate ca;
 
@@ -213,12 +234,14 @@ public class Crypto {
             context = SSLContext.getInstance("TLS");
             context.init(null, tmf.getTrustManagers(), null);
 
-            // Tell the URLConnection to use a SocketFactory from our SSLContext
-            URL url = new URL("https://certs.cac.washington.edu/CAtest/");
-            HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
-            urlConnection.setSSLSocketFactory(context.getSocketFactory());
+            return Optional.of(context.getSocketFactory());
 
-            return Optional.of(urlConnection);
+//            // Tell the URLConnection to use a SocketFactory from our SSLContext
+//            URL url = new URL("https://certs.cac.washington.edu/CAtest/");
+//            HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+//            urlConnection.setSSLSocketFactory(context.getSocketFactory());
+//
+//            return Optional.of(urlConnection);
 
         } catch (CertificateException e) {
             LOGGER.severe("Error handling certificate!: " + e.getMessage());
