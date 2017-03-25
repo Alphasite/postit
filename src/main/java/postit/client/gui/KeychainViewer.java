@@ -10,14 +10,13 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
-import postit.communication.ClientSender;
-import postit.communication.ClientReceiver;
+
+import postit.shared.communication.ClientSender;
+import postit.shared.communication.ClientReceiver;
 import postit.shared.Crypto;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ public class KeychainViewer {
     KeychainViewer kv = this;
     Directory dir;
     DirectoryController directoryController;
-    ServerController serverController;
+    static ServerController serverController;
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -58,6 +57,7 @@ public class KeychainViewer {
 
         Optional<Directory> directory = backingStore.readDirectory();
 
+
         if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
@@ -71,8 +71,7 @@ public class KeychainViewer {
 
             ClientSender processor = new ClientSender(outPort);
             ClientReceiver receiver = new ClientReceiver(rePort);
-            serverController = new ServerController(processor, receiver, directoryController, keyService);
-
+            serverController.setDirectoryController(directoryController);
             createUIComponents();
         }
 
@@ -80,6 +79,7 @@ public class KeychainViewer {
 
     public static void main(String[] args) {
         // FOR CONNECTING TO THE POSTIT SERVER
+        
         ClientSender sender = new ClientSender(2048);
         ClientReceiver listener = new ClientReceiver(4880);
 
@@ -89,8 +89,12 @@ public class KeychainViewer {
         t2.start();
         t1.start();
 
+
+        serverController = new ServerController(sender, listener);
+
         invokeLater(() -> {
-            GUIKeyService keyService = new GUIKeyService();
+
+            GUIKeyService keyService = new GUIKeyService(serverController);
             BackingStore backingStore = new BackingStore(keyService);
 
             if (!Crypto.init()) {
@@ -167,7 +171,6 @@ public class KeychainViewer {
 
         menuItem = new JMenuItem(("Sync"));
         menuItem.addActionListener(e -> serverController.sync(() -> invokeLater(this::refreshTabbedPanes)));
-//        menuItem.setEnabled(false);
         fileMenu.add(menuItem);
 
         menuItem = new JMenuItem("Close");

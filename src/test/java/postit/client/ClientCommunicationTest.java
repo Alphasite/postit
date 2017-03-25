@@ -9,7 +9,7 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 
 import postit.client.controller.RequestMessenger;
-import postit.communication.*;
+import postit.shared.communication.*;
 
 
 public class ClientCommunicationTest implements Runnable {

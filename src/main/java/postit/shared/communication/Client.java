@@ -1,9 +1,8 @@
-package postit.communication;
+package postit.shared.communication;
 
 import org.json.JSONObject;
 import postit.server.controller.RequestHandler;
 import postit.server.database.Database;
-import postit.server.database.MySQL;
 
 import java.io.*;
 import java.net.ConnectException;
@@ -12,8 +11,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.Vector;
-import java.util.concurrent.TimeoutException;
-import javax.json.*;
+
 /**
  * Created by Zhan on 3/7/2017.
  */

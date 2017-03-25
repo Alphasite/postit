@@ -1,6 +1,7 @@
 package postit.client.gui;
 
 import postit.client.backend.KeyService;
+import postit.client.controller.ServerController;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -17,6 +18,16 @@ public class GUIKeyService implements KeyService {
 
     private SecretKey key;
     private Instant retrieved;
+
+    private ServerController sc;
+
+    public GUIKeyService(){
+    }
+
+    GUIKeyService(ServerController sc){
+        super();
+        this.sc=sc;
+    }
 
     @Override
     public byte[] getKey(String displayMessage) {
@@ -80,8 +91,49 @@ public class GUIKeyService implements KeyService {
     @Override
     public String getAccount() {
         String user = null;
-        while (user == null)
-            user = JOptionPane.showInputDialog("Please enter username: ");
+        LoginPanel lp = new LoginPanel();
+        while (user == null) {
+            int result = JOptionPane.showConfirmDialog(null, lp,
+                    "Login/Registration", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+                if(lp.tabbedPane.getSelectedIndex()==0) {
+                    // LOGIN
+                    String username = lp.l_accountfield.getText();
+                    String password = String.valueOf(lp.l_passfield.getPassword());
+                    //if (sc.authenticate(username, Crypto.secretKeyFromBytes(password.getBytes()))) {
+                    if (sc.authenticate(username, password)) {
+                        user = lp.l_accountfield.getText();
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(null,"Login credentials invalid");
+                    }
+                }
+                else if (lp.tabbedPane.getSelectedIndex()==1){
+                    // REGISTRATION
+                    String first = lp.r_firstfield.getText();
+                    String last = lp.r_lastfield.getText();
+                    String username = lp.r_accountfield.getText();
+                    String pass1 = String.valueOf(lp.r_pass1field.getPassword());
+                    String pass2 = String.valueOf(lp.r_pass2field.getPassword());
+                    String email = lp.r_emailfield.getText();
+
+                    if (pass1.equals(pass2) && LoginPanel.isValidEmailAddress(email)) {
+                        if(sc.addUser(username, pass1,email,first,last)){
+                            user=username;
+                        }
+                    }
+                    else if (!pass1.equals(pass2)){
+                        JOptionPane.showMessageDialog(null,"Passwords do not match");
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(null,"Email is invalid");
+                    }
+                }
+
+            }
+//            user = JOptionPane.showInputDialog("Please enter username: ");
+        }
+
         return user;
     }
 }

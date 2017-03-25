@@ -7,4 +7,4 @@ WORKDIR /usr/src/postit
 EXPOSE 4880
 EXPOSE 2048
 
-CMD java -cp 'lib/*' postit.communication.serverApp
+CMD java -cp 'lib/*' postit.server.serverApp

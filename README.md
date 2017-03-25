@@ -13,12 +13,12 @@ distributions   > cd postit
 
 Macs:
 ```
-postit          > java -cp 'lib/*:bin' postit.client.gui.KeychainViewer
+postit          > java -cp 'lib/*:bin' postit.client.GuiApp
 ```
 
 PC:
 ```
-postit          > java -cp 'lib/*;bin' postit.client.gui.KeychainViewer
+postit          > java -cp 'lib/*;bin' postit.client.GuiApp
 ```
 
 You will be prompted for a master password (if this is your first time running the system, you will be setting your master password)

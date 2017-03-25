@@ -12,7 +12,6 @@ import org.json.JSONObject;
 
 import postit.server.database.Database;
 import postit.server.model.*;
-import postit.shared.model.Account;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class DatabaseController {
@@ -25,7 +24,7 @@ public class DatabaseController {
     private Database database;
 
     private static final String getAccountSQL = "SELECT * FROM " + ACCOUNT + " WHERE `user_name`=?;";
-    private static final String addAccountSQL = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`) VALUES (?,?,?,?,?);";
+    private static final String addAccountSQL = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `salt`) VALUES (?,?,?,?,?,?);";
     private static final String updateAccountSQL = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=? WHERE `user_name`=?;";
     private static final String removeAccountSQL = "DELETE FROM " + ACCOUNT + " WHERE `user_name`=?;";
     private static final String getDirectorySQL = "SELECT * FROM " + DIRECTORY + " WHERE `user_name`=?;";
@@ -56,7 +55,7 @@ public class DatabaseController {
             rset = statement.executeQuery();
 
             if (rset.next()) {
-                account = new Account(username, rset.getString("pwd_key"), rset.getString("email"),
+                account = new Account(username, null, rset.getString("email"),
                         rset.getString("first_name"), rset.getString("last_name"));
             }
         } catch (SQLException e) {
@@ -68,6 +67,44 @@ public class DatabaseController {
         return account;
     }
 
+    public String getSalt(String username){
+        ResultSet rset = null;
+
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
+            statement.setString(1, username);
+            rset = statement.executeQuery();
+
+            if (rset.next()) {
+            	return rset.getString("salt");
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred in getAccount"); // should be contained in JSONObject returned to view
+        } catch (Exception e) {
+            System.out.println("An error occurred"); // should be contained in JSONObject returned to view
+        }
+        
+        return null;
+    }
+    
+    public String getPassword(String username){
+        ResultSet rset = null;
+
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
+            statement.setString(1, username);
+            rset = statement.executeQuery();
+
+            if (rset.next()) {
+            	return rset.getString("pwd_key");
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred in getAccount"); // should be contained in JSONObject returned to view
+        } catch (Exception e) {
+            System.out.println("An error occurred"); // should be contained in JSONObject returned to view
+        }
+        
+        return null;
+    }
+    
     public boolean addAccount(Account account) {
         int add = 0;
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(addAccountSQL)) {
@@ -77,9 +114,10 @@ public class DatabaseController {
             statement.setString(3, account.getEmail());
             statement.setString(4, account.getFirstname());
             statement.setString(5, account.getLastname());
-
+            statement.setString(6, account.getSalt());
             add = statement.executeUpdate();
         } catch (SQLException e) {
+        	e.printStackTrace();
             System.out.println("An error occurred in addAccount"); // add duplication check here
         }
 
@@ -92,7 +130,7 @@ public class DatabaseController {
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(updateAccountSQL)) {
 
             statement.setString(1, account.getUsername());
-            statement.setString(2, account.getPassword()); // encrypt before storing
+            statement.setString(2, account.getPassword()); 
             statement.setString(3, account.getEmail());
             statement.setString(4, account.getFirstname());
             statement.setString(5, account.getLastname());

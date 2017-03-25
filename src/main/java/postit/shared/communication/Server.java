@@ -1,4 +1,4 @@
-package postit.communication;
+package postit.shared.communication;
 
 import org.json.JSONObject;
 
@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Vector;
 import javax.json.*;
-import org.json.JSONObject;
 
 
 /**

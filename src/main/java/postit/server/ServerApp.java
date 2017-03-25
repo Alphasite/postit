@@ -1,7 +1,8 @@
-package postit.communication;
+package postit.server;
 
-import postit.communication.*;
 import postit.server.database.MySQL;
+import postit.shared.communication.ServerReceiver;
+import postit.shared.communication.ServerSender;
 
 import java.sql.SQLException;
 

@@ -1,9 +1,5 @@
-package postit.shared.model;
+package postit.server.model;
 import javax.json.*;
-
-import postit.server.model.Customer;
-import postit.server.model.Log;
-import postit.server.model.Metadata;
 /**
  * Created by Zhan on 2/28/2017.
  */
@@ -14,8 +10,8 @@ public class Account {
     String email;
     String firstName;
     String lastName;
+    String salt;
     
-    JsonObject keychains;
     Customer customer;
     Log log;
     Metadata metadata;
@@ -29,6 +25,15 @@ public class Account {
     	this.lastName = lastName;
     }
 
+    public Account(Account a){
+    	this.username = a.username;
+    	this.password = a.password;
+    	this.email = a.email;
+    	this.firstName = a.firstName;
+    	this.lastName = a.lastName;
+    	this.salt = a.salt;
+    }
+    
     // GETTERS
 
 //    public Long getId() {
@@ -57,11 +62,11 @@ public class Account {
     public String getLastname(){
     	return lastName;
     }
-    
-    public JsonObject getKeychains() {
-        return keychains;
-    }
 
+    public String getSalt(){
+    	return salt;
+    }
+    
     public Customer getCustomer() {
         return customer;
     }
@@ -86,10 +91,6 @@ public class Account {
     public void setEmail(String email){
     	this.email = email;
     }
-    
-    public void setKeychains(JsonObject keychains) {
-        this.keychains = keychains;
-    }
 
     public void setFirstname(String firstname){
     	this.firstName = firstname;
@@ -97,6 +98,10 @@ public class Account {
     
     public void setLastname(String lastname){
     	this.lastName = lastname;
+    }
+    
+    public void setSalt(String salt){
+    	this.salt = salt;
     }
     
     public void setLog(Log log) {

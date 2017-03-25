@@ -1,20 +1,17 @@
 package postit.client.controller;
 
-import postit.client.backend.KeyService;
+import postit.client.keychain.Account;
 import postit.client.keychain.DirectoryEntry;
-import postit.communication.ClientSender;
-import postit.communication.ClientReceiver;
-import postit.communication.ClientSender;
-import postit.communication.ClientReceiver;
 import postit.shared.Crypto;
+import postit.shared.communication.ClientReceiver;
+import postit.shared.communication.ClientSender;
 import postit.shared.model.DirectoryAndKey;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
-
 import java.io.StringReader;
+import java.text.MessageFormat;
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -39,7 +36,15 @@ public class ServerController {
 
     private Thread syncThread;
 
-    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient, DirectoryController directoryController, KeyService keyService) {
+    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient) {
+
+        this.clientToServer = clientToServer;
+        this.serverToClient = serverToClient;
+        this.directoryController = null;
+        this.syncThread = null;
+    }
+
+    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient, DirectoryController directoryController) {
 
         this.clientToServer = clientToServer;
         this.serverToClient = serverToClient;
@@ -50,17 +55,24 @@ public class ServerController {
     public boolean sync(Runnable callback) {
 
         Runnable sync = () -> {
-
-            this.login(Crypto.secretKeyFromBytes("temp".getBytes())); // TODO
+            LOGGER.info("Entering sync...");
+            Account account = directoryController.getAccount();
+            this.login(account); // TODO
 
             Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
-            List<Long> serverDeletedKeychains = getDeletedKeychains();
 
             List<DirectoryEntry> clientKeychains = directoryController.getKeychains();
 
             Set<Long> clientKeychainNames = clientKeychains.stream()
                     .map(keychain -> keychain.serverid)
                     .collect(Collectors.toSet());
+
+            // Figure out which keychains have been uploaded to the server and are no longer there.
+            Set<Long> serverDeletedKeychains = clientKeychains.stream()
+                            .map(keychain -> keychain.serverid)
+                            .filter(id -> id != -1)
+                            .collect(Collectors.toSet());
+            serverDeletedKeychains.removeAll(serverKeychains);
 
             // Figure out which keychains are here but deleted on the server
             Set<Long> localKeychainsToDelete = new HashSet<>(serverDeletedKeychains);
@@ -80,6 +92,20 @@ public class ServerController {
 
             Set<Long> keychainsToUpdate = new HashSet<>(clientKeychainNames);
             keychainsToUpdate.retainAll(serverKeychains);
+
+            System.out.println(MessageFormat.format(
+                    "Total [remote: {}, local: {}] Deleting [remote: {}, local: {}] Downloading {} Uploading {} update {}",
+                    serverKeychains.size(),
+                    clientKeychains.size(),
+                    serverKeychainsToDelete.size(),
+                    localKeychainsToDelete.size(),
+                    keychainsToDownload.size(),
+                    keychainsToUpload.size(),
+                    keychainsToUpdate.size()
+            ));
+
+            System.out.println("Server keychains: " + serverKeychains);
+            System.out.println("Client keychains: " + clientKeychainNames);
 
             for (Long serverid : serverKeychainsToDelete) {
                 if (!deleteKeychain(serverid)) {
@@ -139,7 +165,7 @@ public class ServerController {
             callback.run();
         };
 
-        if (syncThread != null) {
+        if (syncThread == null) {
             syncThread = new Thread(sync);
             syncThread.run();
             return true;
@@ -160,7 +186,8 @@ public class ServerController {
         String response = null;
         while (true) { // block until request is received
             try {
-                this.wait(2000);
+                Thread.sleep(2000);
+                //this.wait(2000);
                 response = serverToClient.getResponse(reqId);
                 if (response != null)
                     break;
@@ -179,14 +206,30 @@ public class ServerController {
         return object;
     }
 
-    private boolean addUser(String username, String password, String email, String firstname, String lastname){
-    	String req = RequestMessenger.createAddUserMessage(username, password, email, firstname, lastname);
-    	JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-    	return res.getString("status").equals("success");
+    public boolean addUser(String username, String password, String email, String firstname, String lastname) {
+        String req = RequestMessenger.createAddUserMessage(username, password, email, firstname, lastname);
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
     }
-    
-    private boolean login(SecretKey password) {
-        String req = RequestMessenger.createAuthenticateMessage(getUsername(), password.toString());
+
+    private boolean login(Account account) {
+        String req = RequestMessenger.createAuthenticateMessage(account.getUsername(),
+                new String(Crypto.secretKeyToBytes(account.getSecretKey())));
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
+    }
+
+    //use the authenticate(String username, SecretKey password) when we care about security
+    public boolean authenticate(String username, SecretKey password) {
+
+        String req = RequestMessenger.createAuthenticateMessage(username, password.toString());
+        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        return res.getString("status").equals("success");
+    }
+
+    public boolean authenticate(String username, String password) {
+
+        String req = RequestMessenger.createAuthenticateMessage(username, password);
         JsonObject res = stringToJsonObject(sendRequestAndWait(req));
         return res.getString("status").equals("success");
     }
@@ -245,6 +288,11 @@ public class ServerController {
         directoryController.setKeychainOnlineId(entry, newid.get());
 
         return setKeychain(entry);
+    }
+
+    public boolean setDirectoryController(DirectoryController d) {
+        this.directoryController = d;
+        return true;
     }
 
     private boolean setKeychain(DirectoryEntry entry) {

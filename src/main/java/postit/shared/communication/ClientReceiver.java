@@ -1,15 +1,12 @@
-package postit.communication;
+package postit.shared.communication;
 
 import org.json.JSONObject;
 
-import javax.json.JsonObject;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 /**
