@@ -180,7 +180,7 @@ public class ServerController {
         return sendAndCheckIfSuccess(req);
     }
 
-    private List<Long> getKeychains() {
+    public List<Long> getKeychains() {
         String req = RequestMessenger.createGetKeychainsMessage(directoryController.getAccount());
         Optional<JsonObject> response = clientToServer.send(req);
 
@@ -210,7 +210,7 @@ public class ServerController {
         }
     }
 
-    private boolean createKeychain(DirectoryEntry entry) {
+    public boolean createKeychain(DirectoryEntry entry) {
         Optional<JsonObjectBuilder> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
 
         if (!keychainEntryObject.isPresent()) {
@@ -238,7 +238,7 @@ public class ServerController {
         return true;
     }
 
-    private boolean setKeychain(DirectoryEntry entry) {
+    public boolean setKeychain(DirectoryEntry entry) {
         Optional<JsonObjectBuilder> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
 
         if (!keychainEntryObject.isPresent()) {
@@ -250,7 +250,7 @@ public class ServerController {
         return sendAndCheckIfSuccess(req);
     }
 
-    private boolean deleteKeychain(long id) {
+    public boolean deleteKeychain(long id) {
         String req = RequestMessenger.createRemoveKeychainMessage(directoryController.getAccount(), id);
         return sendAndCheckIfSuccess(req);
     }
