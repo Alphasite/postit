@@ -24,6 +24,13 @@ public class RequestMessenger {
 		return MessagePackager.createRequest(Action.ADD, null, Asset.ACCOUNT, account);
 	}
 	
+	public static String createRemoveUserMessage(Account clientAccount){
+		postit.server.model.Account account = new postit.server.model.Account();
+		account.setUsername(clientAccount.getUsername());
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		return MessagePackager.createRequest(Action.REMOVE, null, Asset.ACCOUNT, account);
+	}
+	
 	public static String createGetDirectoryMessage(Account account){
 	
 		return "";
