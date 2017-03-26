@@ -7,6 +7,7 @@ import postit.client.backend.MockBackingStore;
 import postit.client.backend.MockKeyService;
 import postit.client.keychain.Account;
 import postit.client.keychain.Directory;
+import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.shared.Crypto;
 import postit.shared.communication.Client;
@@ -40,7 +41,7 @@ public class ServerControllerTest {
             Crypto.init(false);
 
             keyService = new MockKeyService(Crypto.secretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
-            keyService.account = new Account("test", "password");
+            keyService.account = new Account("testServerController", "password");
 
             backingStore = new MockBackingStore(keyService);
             backingStore.init();
@@ -59,14 +60,6 @@ public class ServerControllerTest {
 
     }
 
-    @After
-    public void tearDown() throws Exception {
-        LOGGER.info("----Tear down");
-
-        Files.deleteIfExists(backingStore.getContainer());
-        Files.deleteIfExists(backingStore.getVolume());
-    }
-
     @Test
     public void testSync() throws Exception {
         LOGGER.info("----sync");
@@ -75,6 +68,8 @@ public class ServerControllerTest {
 
     @Test
     public void runTestSeries() throws Exception{
+        LOGGER.info("----testSeries");
+
         addUser("testServerController","password","test@servercontroller.com","test","server");
         assertTrue(authenticate("testServerController","password"));
         assertFalse(authenticate("NOTtestServerController","password"));
@@ -106,7 +101,9 @@ public class ServerControllerTest {
         LOGGER.info("----createKeychain");
 
         directoryController.createKeychain("testServerController1");
-        assertTrue(serverController.createKeychain(directoryController.getKeychains().get(0)));
+        DirectoryEntry mykeychain = directoryController.getKeychains().get(0);
+        Boolean condition =serverController.createKeychain(mykeychain);
+        assertTrue(condition);
     }
 
     public void setKeychain() throws Exception {
@@ -131,5 +128,11 @@ public class ServerControllerTest {
         assertTrue(serverController.deleteKeychain(directoryController.getKeychains().get(0).serverid));
     }
 
+    @After
+    public void tearDown() throws Exception {
+        LOGGER.info("----Tear down");
 
+        Files.deleteIfExists(backingStore.getContainer());
+        Files.deleteIfExists(backingStore.getVolume());
+    }
 }
