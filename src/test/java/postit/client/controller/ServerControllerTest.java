@@ -13,6 +13,9 @@ import postit.shared.communication.Client;
 import java.nio.file.Files;
 import java.util.logging.Logger;
 
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+
 /**
  * Created by nishadmathur on 8/3/17.
  */
@@ -74,6 +77,13 @@ public class ServerControllerTest {
     @Test
     public void addUser() throws Exception {
         LOGGER.info("----addUser");
+
+        assertThat(serverController.addUser(directoryController.getAccount(),
+                                            "test@addUser.com",
+                                            "TestAddUser",
+                                            "TestAddUser"),
+                is(true));
+
     }
 
     @Test
@@ -104,10 +114,5 @@ public class ServerControllerTest {
     @Test
     public void deleteKeychain() throws Exception {
         LOGGER.info("----deleteKeychain");
-    }
-
-    @Test
-    public void sendAndCheckIfSuccess() throws Exception {
-        LOGGER.info("----sendAndCheckIfSuccess");
     }
 }
