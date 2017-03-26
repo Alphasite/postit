@@ -89,10 +89,6 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		JSONObject obj = null;
 		if (json.has(assetName)) {
 			obj = json.getJSONObject(assetName);
-		} else {
-			// TODO
-			LOGGER.info("Malformed request missing payload");
-			return MessagePackager.createResponse(false, username, "Malformed message.", asset, null);
 		}
 
 		switch(act){

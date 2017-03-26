@@ -82,7 +82,7 @@ public class RequestHandlerTest {
 		testAuthentication(rh, "ning", "5430", false);
 		testAuthentication(rh, "mc", "5431", false);
 
-		Account account = new Account("ning, 5430");
+		Account account = new Account("ning", "5431");
 
 		testGetKeychains(rh, account, 2);
 		testAddKeychain(rh, account, "fb", "1234", true);
