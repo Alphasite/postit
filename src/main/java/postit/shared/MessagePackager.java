@@ -4,7 +4,10 @@ import java.util.*;
 
 import org.json.JSONObject;
 
+import postit.client.keychain.*;
 import postit.server.model.*;
+import postit.server.model.Account;
+import postit.server.model.Keychain;
 
 /**
  * Packages requests and responses in JsonObject to be sent between client and server
@@ -50,11 +53,16 @@ public class MessagePackager {
 	 * @param bean
 	 * @return
 	 */
-	public static String createRequest(Action req, String username, Asset asset, Object bean){
+	public static String createRequest(Action req, postit.client.keychain.Account account, Asset asset, Object bean){
 		JSONObject request = new JSONObject();
 		request.put("action", req);
 		request.put("asset", asset);
-		request.put("username", username);
+
+		if (account != null) {
+			request.put("username", account.getUsername());
+			request.put("password", Base64.getEncoder().encodeToString(account.getSecretKey().getEncoded()));
+		}
+
 		if (bean != null)
 			request.put(typeToString(asset), new JSONObject(bean));
 		return request.toString();

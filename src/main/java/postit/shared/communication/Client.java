@@ -1,143 +1,92 @@
 package postit.shared.communication;
 
 import org.json.JSONObject;
+import org.json.JSONWriter;
+import postit.client.keychain.Account;
 import postit.server.controller.RequestHandler;
 import postit.server.database.Database;
+import postit.shared.Crypto;
 
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.stream.JsonParsingException;
+import javax.net.SocketFactory;
+import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Created by Zhan on 3/7/2017.
  */
-public class Client implements Runnable {
+public class Client {
 
-    Vector<JSONObject> outQueue;
-    Socket clientSocket;
-    OutputStreamWriter out;
-    InputStreamReader in;
-    int port;
-    boolean postitServer;
-    RequestHandler requestHandler;
-    boolean running = false;
+    private int port;
+    private String url;
 
-    public Client(int port, boolean postitServer, Database database){
-        this.outQueue = new Vector<>();
+    public Client(int port, String url) {
         this.port = port;
-        this.postitServer = postitServer;
-        if (postitServer){
-            requestHandler = new RequestHandler(database);
-        }
+        this.url = url;
     }
 
-    @Override
-    public void run() {
-    	running = true;
-        try {
-            //1. creating a socket to connect to the server
-            System.out.println("before connecting");
-            boolean trying = true;
-            while(trying){
-                try{
-                    clientSocket = new Socket("localhost", port);
-                    trying = false;
-                } catch (ConnectException e) {
-                    System.out.println("Connect failed, waiting and trying again");
-                    try {
-                        Thread.sleep(2000);//2 seconds
-                    } catch (InterruptedException ie) {
-                        ie.printStackTrace();
-                    }
+    public Optional<JsonObject> send(String request) {
+        SSLSocketFactory factory = Crypto.getSSLContext().getSocketFactory();
+        System.out.println(Arrays.toString(factory.getSupportedCipherSuites()));
+
+        for (int attemptNumber = 0; attemptNumber < 3; attemptNumber++) {
+            System.out.println("Sending message; Attempt Number " + attemptNumber);
+            try (
+                    SSLSocket socket = (SSLSocket) factory.createSocket(url, port);
+                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
+                    InputStreamReader in = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
+                    Scanner scanner = new Scanner(in)
+            ) {
+                socket.setUseClientMode(true);
+                socket.setSoTimeout(3000);
+
+                System.out.println("Starting handshake...");
+                socket.startHandshake();
+                System.out.println("Handshake done...");
+
+                out.write(Base64.getEncoder().encodeToString(request.getBytes()));
+                out.newLine();
+                out.flush();
+
+                String response;
+
+                System.out.println("Blocking for next line...");
+                if (scanner.hasNextLine()) {
+                    System.out.println("Received next line...");
+                    response = scanner.nextLine();
+
+                    socket.close();
+
+                    JsonObject responseObject = Json.createReader(
+                            new ByteArrayInputStream(Base64.getDecoder().decode(response))
+                    ).readObject();
+
+                    return Optional.of(responseObject);
+                } else {
+                    // TODO
+                    System.out.println("No response");
                 }
-            }
-            System.out.println("Connected to localhost in port " + port);
-            //2. get Input and Output streams
-            out = new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8);
-            //out.flush();
-            in = new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8);
-            //3: Communicating with the server
-            do {
-                if (!outQueue.isEmpty()) {
-                    if (postitServer){ // this is the server side client
-                        JSONObject obj = outQueue.remove(0);
-                        System.out.println("server processing: " + obj.toString());
-                        String response = requestHandler.handleRequest(obj.get("obj").toString());
-                        int id = Integer.valueOf((Integer)obj.get("id"));
-                        JSONObject toBeSent = new JSONObject();
-                        toBeSent.put("id", id);
-                        toBeSent.put("obj", new JSONObject(response));
-                        sendMessage(toBeSent);
-                    }
-                    else{
-                        sendMessage(outQueue.remove(0));
-                    }
-                }
-                
-                if (running = false)
-                	break;
-            } while (true);
-        } catch (UnknownHostException unknownHost) {
-            System.err.println("You are trying to connect to an unknown host!");
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        } finally{
-            //4: Closing connection
-            try {
-                in.close();
-                out.close();
-                clientSocket.close();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
+            } catch (JsonException | IllegalStateException e) {
+                e.printStackTrace();
+                return Optional.empty();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
-    }
 
-    /**
-     * Adds the request to be sent to the server.
-     * Returns the identification number of the request for retrieval.
-     * @param req
-     * @return
-     */
-    private static Random rnd = new Random();
-
-    public static int getRandomNumber(int digCount) {
-        StringBuilder sb = new StringBuilder(digCount);
-        for(int i=0; i < digCount; i++)
-            sb.append((char)('0' + rnd.nextInt(10)));
-        return Integer.parseInt(sb.toString());
+        return Optional.empty();
     }
-    public int addRequest(String req){
-        System.out.println("adding request: " + req);
-    	JSONObject obj = new JSONObject(req);
-    	JSONObject toBeSent = new JSONObject();
-    	int id = getRandomNumber(8);
-    	toBeSent.put("id", id);
-    	toBeSent.put("obj", obj);
-    	outQueue.add(toBeSent);
-    	return id;
-    }
-
-    public void addRequest(JSONObject obj){
-    	System.out.println("server adding request to queue: " + obj.toString());
-        outQueue.add(obj);
-    }
-
-    void sendMessage(JSONObject obj) {
-        try {
-            out.write(obj.toString());
-            out.flush();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        }
-    }
-    
-    public void stop(){
-    	running = false;
-    }
-
 }

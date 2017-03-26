@@ -10,7 +10,6 @@ import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import sun.tools.java.ClassPath;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -18,18 +17,15 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.json.*;
 import javax.json.stream.JsonParsingException;
 import javax.net.ssl.*;
-import javax.security.cert.X509Certificate;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.*;
 import java.security.cert.Certificate;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -49,6 +45,7 @@ public class Crypto {
 
     private static SecureRandom random;
     private static KeyGenerator keyGenerator;
+    private static SSLContext sslContext;
 
     public static boolean init() {
         return init(true);
@@ -85,6 +82,26 @@ public class Crypto {
             keyGenerator.init(256, random);
         } catch (NoSuchAlgorithmException e) {
             LOGGER.log(Level.SEVERE, "Failed to initialise AES generator.");
+            return false;
+        }
+
+        try {
+            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+            InputStream keystoreStream = Crypto.class.getClassLoader().getResourceAsStream("keys/test-certificate.jks");
+            keystore.load(keystoreStream, "password".toCharArray());
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keystore);
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keystore, "password".toCharArray());
+            KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
+
+            sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(keyManagers, trustManagers, random);
+        } catch (KeyStoreException | KeyManagementException | CertificateException | NoSuchAlgorithmException | IOException | UnrecoverableKeyException e) {
+            LOGGER.severe("Failed to create SSL context: " + e.getMessage());
             return false;
         }
 
@@ -199,61 +216,12 @@ public class Crypto {
         }
     }
 
-    private void sslSocket() {
-        try {
-            SSLSocketFactory factory=(SSLSocketFactory) SSLSocketFactory.getDefault();
-
-            SSLSocket sslsocket=(SSLSocket) factory.createSocket("127.0.0.1",1234);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    public static SSLContext getSSLContext() {
+        return sslContext;
     }
 
-    private Optional<SSLSocketFactory> sslConnection() {
-        CertificateFactory cf = new CertificateFactory();
-        Certificate ca;
-
-        SSLContext context;
-
-        try (InputStream caInput = new BufferedInputStream(new FileInputStream(CERT_PATH))) {
-            ca = cf.engineGenerateCertificate(caInput);
-
-            // Create a KeyStore containing our trusted CAs
-            String keyStoreType = KeyStore.getDefaultType();
-            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-            keyStore.load(null, null);
-            keyStore.setCertificateEntry("ca", ca);
-
-            // Create a TrustManager that trusts the CAs in our KeyStore
-            String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
-            tmf.init(keyStore);
-
-            // Create an SSLContext that uses our TrustManager
-            context = SSLContext.getInstance("TLS");
-            context.init(null, tmf.getTrustManagers(), null);
-
-            return Optional.of(context.getSocketFactory());
-
-//            // Tell the URLConnection to use a SocketFactory from our SSLContext
-//            URL url = new URL("https://certs.cac.washington.edu/CAtest/");
-//            HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
-//            urlConnection.setSSLSocketFactory(context.getSocketFactory());
-//
-//            return Optional.of(urlConnection);
-
-        } catch (CertificateException e) {
-            LOGGER.severe("Error handling certificate!: " + e.getMessage());
-        } catch (FileNotFoundException e) {
-            LOGGER.severe("Certificate not found!!: " + e.getMessage());
-        } catch (IOException e) {
-            LOGGER.severe("Error handling IO: " + e.getMessage());
-        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-            LOGGER.severe("Error in crypto protocols: " + e.getMessage());
-        }
-
-        return Optional.empty();
+    public static SecureRandom getRandom() {
+        return random;
     }
 
     /**

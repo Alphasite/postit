@@ -2,14 +2,10 @@ package postit.client.controller;
 
 import postit.client.keychain.Account;
 import postit.client.keychain.DirectoryEntry;
-import postit.shared.Crypto;
-import postit.shared.communication.ClientReceiver;
-import postit.shared.communication.ClientSender;
+import postit.shared.communication.Client;
 import postit.shared.model.DirectoryAndKey;
 
-import javax.crypto.SecretKey;
 import javax.json.*;
-import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Logger;
@@ -29,26 +25,14 @@ import java.util.stream.Collectors;
 public class ServerController {
     private final static Logger LOGGER = Logger.getLogger(ServerController.class.getName());
 
-    private ClientSender clientToServer;
-    private ClientReceiver serverToClient;
+    private Client clientToServer;
     private DirectoryController directoryController;
-
 
     private Thread syncThread;
 
-    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient) {
-
-        this.clientToServer = clientToServer;
-        this.serverToClient = serverToClient;
+    public ServerController(Client client) {
+        this.clientToServer = client;
         this.directoryController = null;
-        this.syncThread = null;
-    }
-
-    public ServerController(ClientSender clientToServer, ClientReceiver serverToClient, DirectoryController directoryController) {
-
-        this.clientToServer = clientToServer;
-        this.serverToClient = serverToClient;
-        this.directoryController = directoryController;
         this.syncThread = null;
     }
 
@@ -57,7 +41,7 @@ public class ServerController {
         Runnable sync = () -> {
             LOGGER.info("Entering sync...");
             Account account = directoryController.getAccount();
-            this.login(account); // TODO
+            this.authenticate(account); // TODO
 
             Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
 
@@ -174,94 +158,40 @@ public class ServerController {
         }
     }
 
-    /**
-     * Sends request to server and wait until response is received.
-     *
-     * @param request
-     * @return
-     */
-
-    private String sendRequestAndWait(String request) {
-        int reqId = clientToServer.addRequest(request);
-        String response = null;
-        while (true) { // block until request is received
-            try {
-                Thread.sleep(2000);
-                //this.wait(2000);
-                response = serverToClient.getResponse(reqId);
-                if (response != null)
-                    break;
-            } catch (InterruptedException e) {
-                e.printStackTrace(); // should not happen in the current implementation
-            }
-        }
-
-        return response;
+    public boolean addUser(Account account, String email, String firstname, String lastname) {
+        String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname);
+        return sendAndCheckIfSuccess(req);
     }
 
-    private JsonObject stringToJsonObject(String msg) {
-        JsonReader jsonReader = Json.createReader(new StringReader(msg));
-        JsonObject object = jsonReader.readObject();
-        jsonReader.close();
-        return object;
-    }
-
-    public boolean addUser(String username, String password, String email, String firstname, String lastname) {
-        String req = RequestMessenger.createAddUserMessage(username, password, email, firstname, lastname);
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        return res.getString("status").equals("success");
-    }
-
-    private boolean login(Account account) {
-        String req = RequestMessenger.createAuthenticateMessage(account.getUsername(),
-                new String(Crypto.secretKeyToBytes(account.getSecretKey())));
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        return res.getString("status").equals("success");
-    }
-
-    //use the authenticate(String username, SecretKey password) when we care about security
-    public boolean authenticate(String username, SecretKey password) {
-
-        String req = RequestMessenger.createAuthenticateMessage(username, password.toString());
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        return res.getString("status").equals("success");
-    }
-
-    public boolean authenticate(String username, String password) {
-
-        String req = RequestMessenger.createAuthenticateMessage(username, password);
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        return res.getString("status").equals("success");
-    }
-
-    private String getUsername() {
-        return directoryController.getAccount().getUsername();
+    public boolean authenticate(Account account) {
+        String req = RequestMessenger.createAuthenticateMessage(account);
+        return sendAndCheckIfSuccess(req);
     }
 
     private List<Long> getKeychains() {
-        String req = RequestMessenger.createGetKeychainsMessage(getUsername());
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        JsonArray list = res.getJsonArray("keychains");
-        List<Long> keys = new ArrayList<Long>();
+        String req = RequestMessenger.createGetKeychainsMessage(directoryController.getAccount());
+        Optional<JsonObject> response = clientToServer.send(req);
 
-        for (int i = 0; i < list.size(); i++) {
-            JsonObject key = list.getJsonObject(i);
-            if (key.containsKey("directoryEntryId"))
-                keys.add((long) key.getInt("directoryEntryId"));
+        if (response.isPresent()) {
+            JsonArray list = response.get().getJsonArray("keychains");
+            List<Long> keys = new ArrayList<>();
+
+            for (int i = 0; i < list.size(); i++) {
+                JsonObject key = list.getJsonObject(i);
+                if (key.containsKey("directoryEntryId"))
+                    keys.add((long) key.getInt("directoryEntryId"));
+            }
+            return keys;
+        } else {
+            return null;
         }
-        return keys;
-    }
-
-    private List<Long> getDeletedKeychains() {
-        // Make request to server for list of deleted keychain's serverids
-        return null;
     }
 
     private JsonObject getDirectoryKeychainObject(long serverid) {
-        String req = RequestMessenger.createGetKeychainMessage(getUsername(), serverid);
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
+        String req = RequestMessenger.createGetKeychainMessage(directoryController.getAccount(), serverid);
+        Optional<JsonObject> response = clientToServer.send(req);
 
-        return res;
+        return response.orElse(null);
     }
 
     private boolean createKeychain(DirectoryEntry entry) {
@@ -272,22 +202,27 @@ public class ServerController {
         }
 
         // TODO fill this in?
-        String req = RequestMessenger.createAddKeychainsMessage(getUsername(), entry.name, entry.getEncryptionKey().toString(), "", "");
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(res.getJsonObject("keychain"));
-        long id = dak.getDirectoryEntryId();
+        String req = RequestMessenger.createAddKeychainsMessage(directoryController.getAccount(), entry.name, entry.getEncryptionKey().toString(), "", "");
+        Optional<JsonObject> response = clientToServer.send(req);
 
-        // ask server for new keychain id;
-        Optional<Long> newid = Optional.of(id);
+        if (response.isPresent()) {
+            DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(response.get().getJsonObject("keychain"));
+            long id = dak.getDirectoryEntryId();
 
-        if (!newid.isPresent()) {
-            LOGGER.warning("Failed to create keychain (" + entry.name + ")  on server...");
+            // ask server for new keychain id;
+            Optional<Long> newid = Optional.of(id);
+
+            if (!newid.isPresent()) {
+                LOGGER.warning("Failed to create keychain (" + entry.name + ")  on server...");
+                return false;
+            }
+
+            directoryController.setKeychainOnlineId(entry, newid.get());
+
+            return setKeychain(entry);
+        } else {
             return false;
         }
-
-        directoryController.setKeychainOnlineId(entry, newid.get());
-
-        return setKeychain(entry);
     }
 
     public boolean setDirectoryController(DirectoryController d) {
@@ -303,18 +238,23 @@ public class ServerController {
         }
 
         // TODO fill this in?
-        String req = RequestMessenger.createUpdateKeychainMessage(getUsername(), entry.name, entry.getEncryptionKey().toString(), "", "");
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        return res.getString("status").equals("success");
+        String req = RequestMessenger.createUpdateKeychainMessage(directoryController.getAccount(), entry.name, entry.getEncryptionKey().toString(), "", "");
+        return sendAndCheckIfSuccess(req);
     }
 
     private boolean deleteKeychain(long id) {
-        String req = RequestMessenger.createRemoveKeychainMessage(getUsername(), id);
-        JsonObject res = stringToJsonObject(sendRequestAndWait(req));
-        return res.getString("status").equals("success");
+        String req = RequestMessenger.createRemoveKeychainMessage(directoryController.getAccount(), id);
+        return sendAndCheckIfSuccess(req);
     }
 
-    private Optional<Long> getNewKeychainId() {
-        return Optional.empty();
+    private boolean sendAndCheckIfSuccess(String req) {
+        Optional<JsonObject> response = clientToServer.send(req);
+
+        if (response.isPresent()) {
+            JsonObject res = response.get();
+            return res.getString("status").equals("success");
+        } else {
+            return false;
+        }
     }
 }

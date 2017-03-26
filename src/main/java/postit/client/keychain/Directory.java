@@ -27,7 +27,7 @@ public class Directory {
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
-        this.account = new Account(keyService.getAccount(), this);
+        this.account = keyService.getAccount();
     }
 
     public Directory(JsonObject object, KeyService keyService, BackingStore backingStore) {
@@ -36,7 +36,7 @@ public class Directory {
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
 
-        this.account = new Account(object.getJsonObject("account"), this);
+        this.account = new Account(object.getJsonObject("account"));
 
         JsonArray keychainArray = object.getJsonArray("keychains");
         for (int i = 0; i < keychainArray.size(); i++) {
