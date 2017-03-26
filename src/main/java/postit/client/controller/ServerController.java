@@ -40,10 +40,15 @@ public class ServerController {
 
         Runnable sync = () -> {
             LOGGER.info("Entering sync...");
-            Account account = directoryController.getAccount();
-            this.authenticate(account); // TODO
 
-            Set<Long> serverKeychains = new HashSet<>(this.getKeychains());
+            List<Long> retrievedServerKeychainIds = this.getKeychains();
+
+            if (retrievedServerKeychainIds == null) {
+                LOGGER.warning("Failed to sync, server returned no keychains.");
+                return;
+            }
+
+            Set<Long> serverKeychains = new HashSet<>(retrievedServerKeychainIds);
 
             List<DirectoryEntry> clientKeychains = directoryController.getKeychains();
 
@@ -78,7 +83,7 @@ public class ServerController {
             keychainsToUpdate.retainAll(serverKeychains);
 
             System.out.println(MessageFormat.format(
-                    "Total [remote: {}, local: {}] Deleting [remote: {}, local: {}] Downloading {} Uploading {} update {}",
+                    "Total [remote: {0}, local: {1}] Deleting [remote: {2}, local: {3}] Downloading {4} Uploading {5} update {6}",
                     serverKeychains.size(),
                     clientKeychains.size(),
                     serverKeychainsToDelete.size(),
@@ -147,9 +152,10 @@ public class ServerController {
             }
 
             callback.run();
+            LOGGER.info("Sync complete.");
         };
 
-        if (syncThread == null) {
+        if (syncThread == null || !syncThread.isAlive()) {
             syncThread = new Thread(sync);
             syncThread.run();
             return true;

@@ -4,6 +4,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Logger;
 
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
@@ -35,9 +36,10 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
 		msg = new String(Base64.getDecoder().decode(msg));
 		String response = Base64.getEncoder().encodeToString(handleRequest(msg).getBytes());
-		ctx.writeAndFlush(response);
-		ctx.writeAndFlush("\n");
-		ctx.close();
+		ChannelFuture send = ctx.writeAndFlush(response + "\r\n");
+		send.sync();
+		ctx.close().sync();
+		LOGGER.info("Request successfully handled.");
 	}
 
 	@Override
