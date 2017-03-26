@@ -8,10 +8,8 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import javax.security.auth.DestroyFailedException;
 import javax.swing.*;
-import javax.swing.text.html.Option;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 
 /**
  * Created by nishadmathur on 27/2/17.
@@ -30,7 +28,11 @@ public class GUIKeyService implements KeyService {
 
     @Override
     public byte[] getKey(String displayMessage) {
-        return JOptionPane.showInputDialog(displayMessage).getBytes();
+        String key = null;
+        while (key == null) {
+            key = JOptionPane.showInputDialog(displayMessage);
+        }
+        return key.getBytes();
     }
 
     @Override
