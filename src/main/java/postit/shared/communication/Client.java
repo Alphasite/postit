@@ -45,10 +45,9 @@ public class Client {
         for (int attemptNumber = 0; attemptNumber < 3; attemptNumber++) {
             System.out.println("Sending message; Attempt Number " + attemptNumber);
             try (
-                    SSLSocket socket = (SSLSocket) factory.createSocket(url, port);
-                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
-                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                    Scanner scanner = new Scanner(in)
+                    final SSLSocket socket = (SSLSocket) factory.createSocket(url, port);
+                    final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
+                    final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
             ) {
                 socket.setUseClientMode(true);
                 socket.setSoTimeout(10000);
@@ -76,9 +75,6 @@ public class Client {
                     responseStream.write(character);
                 }
 
-
-                socket.close();
-
                 if (response != null) {
 
                     JsonObject responseObject = Json.createReader(
@@ -89,23 +85,6 @@ public class Client {
                 } else {
                     System.out.println("No response");
                 }
-
-//                if (scanner.hasNextLine()) {
-//                    System.out.println("Received next line...");
-//                    response = scanner.nextLine();
-//
-//                    socket.close();
-//
-//                    JsonObject responseObject = Json.createReader(
-//                            new ByteArrayInputStream(Base64.getDecoder().decode(response))
-//                    ).readObject();
-//
-//                    return Optional.of(responseObject);
-//                } else {
-//                    // TODO
-//                    System.out.println("No response");
-//                }
-
             } catch (JsonException | IllegalStateException e) {
                 e.printStackTrace();
                 return Optional.empty();
