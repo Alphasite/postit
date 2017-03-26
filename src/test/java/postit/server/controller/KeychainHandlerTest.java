@@ -38,7 +38,7 @@ public class KeychainHandlerTest {
 	public static int testAddKeychain(KeychainHandler kh, String username, String name, String pwd, boolean expected){
 		JSONObject js = kh.createKeychain(username, name, ".", "123456");
 		boolean res = js.getString("status").equals("success");
-		System.out.printf("Adding keychain to %s: (%s, %s) %s\n", username, name, pwd, res ? "successful" : "failed");
+		System.out.printf("Adding keychain to %s: (%s, %s) %s%n", username, name, pwd, res ? "successful" : "failed");
 		assertTrue(js.getString("status").equals("success") == expected);
 		
 		return js.getString("status").equals("failure") ? -1 : js.getInt("directoryEntryId");
@@ -47,13 +47,13 @@ public class KeychainHandlerTest {
 	public static void testUpdateKeychain(KeychainHandler kh, int directoryEntryId, String name, 
 			String encryptKey, String password, String metadata, boolean expected){
 		boolean res = kh.updateKeychain(directoryEntryId, name, encryptKey, password, metadata);
-		System.out.printf("Updating keychain %d (%s,%s,%s,%s) %s\n", directoryEntryId, name, encryptKey, password, metadata, res ? "successful" : "failed");
+		System.out.printf("Updating keychain %d (%s,%s,%s,%s) %s%n", directoryEntryId, name, encryptKey, password, metadata, res ? "successful" : "failed");
 		assertTrue(res == expected);
 	}
 	
 	public static void testRemoveKeychain(KeychainHandler kh, int directoryEntryId, boolean expected){
 		boolean res = kh.removeKeychain(directoryEntryId);
-		System.out.printf("Removing keychain %d %s\n", directoryEntryId, res ? "successful" : "failed");
+		System.out.printf("Removing keychain %d %s%n", directoryEntryId, res ? "successful" : "failed");
 		assertTrue(res == expected);
 	}	
 	

@@ -104,10 +104,10 @@ public class DirectoryEntry {
     }
 
     public byte[] getNonce() {
-        return nonce;
+        return nonce.clone();
     }
 
     public void setNonce(byte[] nonce) {
-        this.nonce = nonce;
+        this.nonce = nonce.clone();
     }
 }

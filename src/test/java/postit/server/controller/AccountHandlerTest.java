@@ -32,27 +32,27 @@ public class AccountHandlerTest {
 
 	public static void testAuthentication(AccountHandler ah, String username, String pwd, boolean expected){
 		boolean res = ah.authenticate(username, pwd);
-		System.out.printf("Authenticate %s with %s %s\n", username, pwd, res ? "successful" : "failed");
+		System.out.printf("Authenticate %s with %s %s%n", username, pwd, res ? "successful" : "failed");
 		assertThat(res, is(expected));
 	}
 	
 	public static void testAddAccount(AccountHandler ah, String username, String pwd, String email, 
 			String fName, String lName, boolean expected){
 		boolean res = ah.addAccount(username, pwd, email, fName, lName);
-		System.out.printf("Adding account %s with %s %s\n", username, pwd, res ? "successful" : "failed");
+		System.out.printf("Adding account %s with %s %s%n", username, pwd, res ? "successful" : "failed");
 		assertThat(res, is(expected));
 	}
 	
 	public static void testUpdateAccount(AccountHandler ah, String username, String pwd, String email, 
 			String fName, String lName, boolean expected){
 		boolean res = ah.updateAccount(username, pwd, email, fName, lName);
-		System.out.printf("Updating account %s with %s %s\n", username, pwd, res ? "successful" : "failed");
+		System.out.printf("Updating account %s with %s %s%n", username, pwd, res ? "successful" : "failed");
 		assertThat(res, is(expected));
 	}
 	
 	public static void testRemoveAccount(AccountHandler ah, String username, String pwd, boolean expected){
 		boolean res = ah.removeAccount(username, pwd);
-		System.out.printf("Removing account %s with %s %s\n", username, pwd, res ? "successful" : "failed");
+		System.out.printf("Removing account %s with %s %s%n", username, pwd, res ? "successful" : "failed");
 		assertThat(res, is(expected));
 	}
 	

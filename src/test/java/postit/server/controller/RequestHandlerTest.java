@@ -17,7 +17,7 @@ public class RequestHandlerTest {
 	private TestH2 database;
 
 	private static void testAuthentication(RequestHandler rh, String username, String pwd, boolean expected){
-		System.out.printf("Authenticate %s with %s\n", username, pwd);
+		System.out.printf("Authenticate %s with %s%n", username, pwd);
 		String req = RequestMessenger.createAuthenticateMessage(new Account(username, pwd));
 		String res = rh.handleRequest(req);
 		System.out.println(res);
@@ -26,7 +26,7 @@ public class RequestHandlerTest {
 	}
 
 	private static void testAddKeychain(RequestHandler rh, Account account, String name, String pwd, boolean expected){
-		System.out.printf("Adding keychain to %s: (%s, %s)\n", account, name, pwd);
+		System.out.printf("Adding keychain to %s: (%s, %s)%n", account, name, pwd);
 		String req = RequestMessenger.createAddKeychainsMessage(account, name, "haha", pwd, "nothing");
 		String res = rh.handleRequest(req);
 		System.out.println(res);
@@ -36,7 +36,7 @@ public class RequestHandlerTest {
 
 	private static void testUpdateKeychain(RequestHandler rh, Account account, String name,
 										   String encryptKey, String password, String metadata, boolean expected){
-		System.out.printf("Updating keychain to %s (%s,%s,%s,%s)\n", account, name, encryptKey, password, metadata);
+		System.out.printf("Updating keychain to %s (%s,%s,%s,%s)%n", account, name, encryptKey, password, metadata);
 		String req = RequestMessenger.createUpdateKeychainMessage(account, name, encryptKey, password, metadata);
 		String res = rh.handleRequest(req);
 		System.out.println(res);
@@ -56,7 +56,7 @@ public class RequestHandlerTest {
 	}
 
 	private static void testRemoveKeychain(RequestHandler rh, Account account, String name, boolean expected){
-		System.out.printf("Removing keychain %s from %s\n", name, account);
+		System.out.printf("Removing keychain %s from %s%n", name, account);
 		String req = RequestMessenger.createRemoveKeychainMessage(account, name);
 		String res = rh.handleRequest(req);
 		System.out.println(res);
