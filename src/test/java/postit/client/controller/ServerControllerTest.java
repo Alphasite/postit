@@ -14,6 +14,7 @@ import postit.client.backend.MockBackingStore;
 import postit.client.backend.MockKeyService;
 import postit.client.keychain.Account;
 import postit.client.keychain.Directory;
+import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.server.database.Database;
 import postit.server.database.MySQL;
@@ -156,7 +157,9 @@ public class ServerControllerTest {
         LOGGER.info("----createKeychain");
 
         directoryController.createKeychain("testServerController1");
-        assertTrue(serverController.createKeychain(directoryController.getKeychains().get(0)));
+        DirectoryEntry mykeychain = directoryController.getKeychains().get(0);
+        Boolean condition =serverController.createKeychain(mykeychain);
+        assertTrue(condition);
     }
 
     public void setKeychain() throws Exception {
@@ -180,6 +183,4 @@ public class ServerControllerTest {
         LOGGER.info("----deleteKeychain");
         assertTrue(serverController.deleteKeychain(directoryController.getKeychains().get(0).serverid));
     }
-
-
 }
