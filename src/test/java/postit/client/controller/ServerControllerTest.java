@@ -37,18 +37,18 @@ import static org.junit.Assert.*;
 public class ServerControllerTest {
     private final static Logger LOGGER = Logger.getLogger(ServerControllerTest.class.getName());
 
-    ServerController serverController;
+    private ServerController serverController;
 
-    Client clientToServer;
-    MockKeyService keyService;
-    MockBackingStore backingStore;
-    Directory directory;
+    private Client clientToServer;
+    private MockKeyService keyService;
+    private MockBackingStore backingStore;
+    private Directory directory;
 
-    EventLoopGroup bossGroup;
-    EventLoopGroup workerGroup;
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
 
-    Thread thread;
-    DirectoryController directoryController;
+    private Thread thread;
+    private DirectoryController directoryController;
 
     @Before
     public void setUp() throws Exception {
@@ -87,7 +87,6 @@ public class ServerControllerTest {
                 bossGroup.shutdownGracefully();
                 workerGroup.shutdownGracefully();
             }
-
         };
 
         thread = new Thread(server);
@@ -149,16 +148,14 @@ public class ServerControllerTest {
         LOGGER.info("----authenticate");
 
         return serverController.authenticate(new Account(username, password));
-
     }
-
 
     public void createKeychain() throws Exception {
         LOGGER.info("----createKeychain");
 
         directoryController.createKeychain("testServerController1");
         DirectoryEntry mykeychain = directoryController.getKeychains().get(0);
-        Boolean condition =serverController.createKeychain(mykeychain);
+        Boolean condition = serverController.createKeychain(mykeychain);
         assertTrue(condition);
     }
 
