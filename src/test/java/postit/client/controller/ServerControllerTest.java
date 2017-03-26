@@ -1,5 +1,12 @@
 package postit.client.controller;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,10 +15,17 @@ import postit.client.backend.MockKeyService;
 import postit.client.keychain.Account;
 import postit.client.keychain.Directory;
 import postit.client.keychain.Keychain;
+import postit.server.database.Database;
+import postit.server.database.MySQL;
+import postit.server.database.TestH2;
+import postit.server.netty.RequestInitializer;
 import postit.shared.Crypto;
 import postit.shared.communication.Client;
 
+import javax.net.ssl.SSLContext;
 import java.nio.file.Files;
+import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
@@ -29,6 +43,10 @@ public class ServerControllerTest {
     MockBackingStore backingStore;
     Directory directory;
 
+    EventLoopGroup bossGroup;
+    EventLoopGroup workerGroup;
+
+    Thread thread;
     DirectoryController directoryController;
 
     @Before
@@ -36,32 +54,64 @@ public class ServerControllerTest {
         LOGGER.info("----Setup");
         System.err.println("Begin");
 
-        try {
-            Crypto.init(false);
+        Crypto.init(false);
 
-            keyService = new MockKeyService(Crypto.secretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
-            keyService.account = new Account("test", "password");
+        Database database;
 
-            backingStore = new MockBackingStore(keyService);
-            backingStore.init();
+        database = new TestH2();
+        database.initDatabase();
 
-            directory = backingStore.readDirectory().get();
-            directoryController = new DirectoryController(directory, backingStore, keyService);
-        } catch (Exception e) {
-            Files.deleteIfExists(backingStore.getContainer());
-            throw e;
-        }
+        SSLContext ctx = Crypto.getSSLContext();
 
+        bossGroup = new NioEventLoopGroup(1);
+        workerGroup = new NioEventLoopGroup();
+
+        ServerBootstrap b = new ServerBootstrap();
+        b.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .handler(new LoggingHandler(LogLevel.INFO))
+                .childHandler(new RequestInitializer(ctx, database));
+
+        System.out.println("Server almost ready...");
+
+        ChannelFuture channel = b.bind(2048).sync();
+
+        Runnable server = () -> {
+            try {
+                System.out.println("Waiting for close server...");
+                channel.channel().closeFuture().sync();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                bossGroup.shutdownGracefully();
+                workerGroup.shutdownGracefully();
+            }
+
+        };
+
+        thread = new Thread(server);
+        thread.start();
+
+        keyService = new MockKeyService(Crypto.secretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
+        keyService.account = new Account("ning", "5431");
+
+        backingStore = new MockBackingStore(keyService);
+        backingStore.init();
+
+        directory = backingStore.readDirectory().get();
+        directoryController = new DirectoryController(directory, backingStore, keyService);
 
         clientToServer = new Client(2048, "localhost");
         serverController = new ServerController(clientToServer);
         assertTrue(serverController.setDirectoryController(directoryController));
-
     }
 
     @After
     public void tearDown() throws Exception {
         LOGGER.info("----Tear down");
+
+        bossGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).sync();
+        workerGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).sync();
 
         Files.deleteIfExists(backingStore.getContainer());
         Files.deleteIfExists(backingStore.getVolume());
@@ -74,11 +124,11 @@ public class ServerControllerTest {
     }
 
     @Test
-    public void runTestSeries() throws Exception{
-        addUser("testServerController","password","test@servercontroller.com","test","server");
-        assertTrue(authenticate("testServerController","password"));
-        assertFalse(authenticate("NOTtestServerController","password"));
-        assertFalse(authenticate("testServerController","NOTpassword"));
+    public void runTestSeries() throws Exception {
+        addUser("testServerController", "password", "test@servercontroller.com", "test", "server");
+        assertTrue(authenticate("testServerController", "password"));
+        assertFalse(authenticate("NOTtestServerController", "password"));
+        assertFalse(authenticate("testServerController", "NOTpassword"));
 
         createKeychain();
         setKeychain();
@@ -89,9 +139,9 @@ public class ServerControllerTest {
     public void addUser(String username, String password, String email, String firstname, String lastname) throws Exception {
         LOGGER.info("----addUser");
 
-        Account testAccount = new Account(username,password);
-        assertTrue(serverController.addUser(testAccount, email, firstname,lastname));
-        assertFalse(serverController.addUser(testAccount, email, firstname,lastname));
+        Account testAccount = new Account(username, password);
+        assertTrue(serverController.addUser(testAccount, email, firstname, lastname));
+        assertFalse(serverController.addUser(testAccount, email, firstname, lastname));
     }
 
     public boolean authenticate(String username, String password) throws Exception {
@@ -118,10 +168,10 @@ public class ServerControllerTest {
 
     public void getKeychains() throws Exception {
         LOGGER.info("----getKeychains");
-        for(int i=0; i<directoryController.getKeychains().size();i++){
+        for (int i = 0; i < directoryController.getKeychains().size(); i++) {
             Long server_serverID = serverController.getKeychains().get(i);
             Long directory_serverID = directoryController.getKeychains().get(i).serverid;
-            assertEquals(server_serverID,directory_serverID);
+            assertEquals(server_serverID, directory_serverID);
         }
 
     }
