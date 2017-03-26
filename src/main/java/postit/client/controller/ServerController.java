@@ -163,7 +163,7 @@ public class ServerController {
 
         if (syncThread == null || !syncThread.isAlive()) {
             syncThread = new Thread(sync);
-            syncThread.run();
+            syncThread.start();
             return true;
         } else {
             return false;

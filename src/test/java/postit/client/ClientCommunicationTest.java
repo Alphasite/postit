@@ -63,8 +63,7 @@ public class ClientCommunicationTest implements Runnable {
     public static void main(String[] args) {
         Client client = new Client(2048, "localhost");
         ClientCommunicationTest test = new ClientCommunicationTest(client);
-        Thread t3 = new Thread(test);
         final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-        executor.schedule(t3, 5, TimeUnit.SECONDS);
+        executor.schedule(test, 5, TimeUnit.SECONDS);
     }
 }

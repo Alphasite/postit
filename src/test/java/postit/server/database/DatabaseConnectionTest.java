@@ -38,7 +38,7 @@ public class DatabaseConnectionTest {
 
 				String key = rs1.getString("pwd_key");
 
-				System.out.printf("username: %s\tkey: %s\n", name, key);
+				System.out.printf("username: %s\tkey: %s%n", name, key);
 
 				ResultSet rs2 = st.executeQuery("select * from directory where user_name='" + name + "'");
 
@@ -63,7 +63,7 @@ public class DatabaseConnectionTest {
 						}
 
 						rs4.close();
-						System.out.printf("\t\tid: %s, name: %s, key: %s -- pwd: %s, metadata: %s\n", deid, dename, dekey, pwd, data);
+						System.out.printf("\t\tid: %s, name: %s, key: %s -- pwd: %s, metadata: %s%n", deid, dename, dekey, pwd, data);
 					}
 
 					rs3.close();
