@@ -71,14 +71,17 @@ public class ServerController {
             Set<Long> serverKeychainsToDelete = new HashSet<>(directoryController.getDeletedKeychains());
             serverKeychainsToDelete.removeAll(serverDeletedKeychains);
 
+            // Figure out which keychains to download from the server
             Set<Long> keychainsToDownload = new HashSet<>(serverKeychains);
             keychainsToDownload.removeAll(clientKeychainNames);
             keychainsToDownload.removeAll(serverKeychainsToDelete);
 
+            // Figure out which keychains to upload to the server
             Set<Long> keychainsToUpload = new HashSet<>(clientKeychainNames);
             keychainsToUpload.removeAll(serverKeychains);
             keychainsToUpload.removeAll(localKeychainsToDelete);
 
+            // Figure out which keychains may need an update, and update them.
             Set<Long> keychainsToUpdate = new HashSet<>(clientKeychainNames);
             keychainsToUpdate.retainAll(serverKeychains);
 
@@ -111,12 +114,12 @@ public class ServerController {
             }
 
             for (Long serverid : keychainsToDownload) {
-                JsonObject directoryKeychainObject = getDirectoryKeychainObject(serverid);
+                Optional<JsonObject> directoryKeychainObject = getDirectoryKeychainObject(serverid);
 
-                if (directoryKeychainObject != null) {
+                if (directoryKeychainObject.isPresent()) {
                     if (!directoryController.createKeychain(
-                            directoryKeychainObject.getJsonObject("entry"),
-                            directoryKeychainObject.getJsonObject("keychain") // TODO encrypt decrypt??
+                            directoryKeychainObject.get().getJsonObject("entry"),
+                            directoryKeychainObject.get().getJsonObject("keychain") // TODO encrypt decrypt??
                     )) {
                         LOGGER.warning("Failed to merge keychain (" + serverid + ") merge keychain.");
                         return;
@@ -134,17 +137,20 @@ public class ServerController {
                 }
 
                 if (keychainsToUpdate.contains(entry.serverid)) {
-                    JsonObject directoryKeychainObject = getDirectoryKeychainObject(entry.serverid);
+                    Optional<JsonObject> directoryKeychainObject = getDirectoryKeychainObject(entry.serverid);
+
+                    if (!directoryKeychainObject.isPresent()) {
+                        LOGGER.warning("Failed to fetch keychain for update (" + entry.name + ").");
+                        return;
+                    }
 
                     directoryController.updateLocalIfIsOlder(
                             entry,
-                            directoryKeychainObject.getJsonObject("entry"),
-                            directoryKeychainObject.getJsonObject("keychain") // TODO encrypt decrypt??
+                            directoryKeychainObject.get().getJsonObject("entry"),
+                            directoryKeychainObject.get().getJsonObject("keychain") // TODO encrypt decrypt??
                     );
 
-                    if (setKeychain(entry)) {
-                        continue;
-                    } else {
+                    if (!setKeychain(entry)) {
                         LOGGER.warning("Failed to update keychain (" + entry.name + ")  on server...");
                         return;
                     }
@@ -193,11 +199,15 @@ public class ServerController {
         }
     }
 
-    private JsonObject getDirectoryKeychainObject(long serverid) {
+    private Optional<JsonObject> getDirectoryKeychainObject(long serverid) {
         String req = RequestMessenger.createGetKeychainMessage(directoryController.getAccount(), serverid);
         Optional<JsonObject> response = clientToServer.send(req);
 
-        return response.orElse(null);
+        if (response.isPresent() && response.get().getString("status").equals("success")) {
+            return Optional.ofNullable(response.get().getJsonObject("keychain"));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private boolean createKeychain(DirectoryEntry entry) {
@@ -215,15 +225,7 @@ public class ServerController {
             DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(response.get().getJsonObject("keychain"));
             long id = dak.getDirectoryEntryId();
 
-            // ask server for new keychain id;
-            Optional<Long> newid = Optional.of(id);
-
-            if (!newid.isPresent()) {
-                LOGGER.warning("Failed to create keychain (" + entry.name + ")  on server...");
-                return false;
-            }
-
-            directoryController.setKeychainOnlineId(entry, newid.get());
+            directoryController.setKeychainOnlineId(entry, id);
 
             return setKeychain(entry);
         } else {
@@ -244,7 +246,7 @@ public class ServerController {
         }
 
         // TODO fill this in?
-        String req = RequestMessenger.createUpdateKeychainMessage(directoryController.getAccount(), entry.name, entry.getEncryptionKey().toString(), "", "");
+        String req = RequestMessenger.createUpdateKeychainMessage(directoryController.getAccount(), entry.name, keychainEntryObject.get().build().toString(), "", "");
         return sendAndCheckIfSuccess(req);
     }
 
