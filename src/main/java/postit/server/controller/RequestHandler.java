@@ -1,13 +1,15 @@
 package postit.server.controller;
 
-import java.security.SecureRandom;
-import java.sql.SQLException;
+import java.util.Base64;
 import java.util.List;
+import java.util.logging.Logger;
 
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
 
-import postit.server.database.Database;
-import postit.server.database.MySQL;
+import postit.client.controller.ServerController;
 import postit.server.model.Account;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
@@ -18,41 +20,78 @@ import postit.shared.model.DirectoryAndKey;
  * @author Ning
  *
  */
-public class RequestHandler {
-	
+public class RequestHandler extends SimpleChannelInboundHandler<String> {
+	private final static Logger LOGGER = Logger.getLogger(RequestHandler.class.getName());
+
 	private AccountHandler ah;
 	private KeychainHandler kh;
-	private SecureRandom rand;
-	
-	public RequestHandler(Database database) throws ExceptionInInitializerError {
-		DatabaseController db = new DatabaseController(database);
-		rand = new SecureRandom();
-		ah = new AccountHandler(db, rand);
-		kh = new KeychainHandler(db);
-		rand = new SecureRandom();
+
+	public RequestHandler(AccountHandler accountHandler, KeychainHandler keychainHandler) throws ExceptionInInitializerError {
+		System.out.println("Initialised new Request Handler");
+		ah = accountHandler;
+		kh = keychainHandler;
 	}
+
+	@Override
+	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
+		msg = new String(Base64.getDecoder().decode(msg));
+		String response = Base64.getEncoder().encodeToString(handleRequest(msg).getBytes());
+		ChannelFuture send = ctx.writeAndFlush(response + "\r\n");
+		send.sync();
+		ctx.close().sync();
+		LOGGER.info("Request successfully handled.");
+	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		super.exceptionCaught(ctx, cause);
+	}
+
+
 
 	/**
 	 * Takes in request, process the request, and outputs the proper response
 	 * @param request
 	 * @return
 	 */
-	public String handleRequest(String request){
+	public String handleRequest(String request) {
 		//TODO refactor this gigantic thing using multiple engine classes that handle requests
 		// associated to specific assets
 		
 		JSONObject json = new JSONObject(request);
-		
+
 		Action act = Action.valueOf(json.getString("action"));
 		Asset asset = Asset.valueOf(json.getString("asset"));
-		String username = json.getString("username"); // only empty for ADD ACCOUNT
-		if (username.equals("") && act != Action.ADD && asset != Asset.ACCOUNT)
-			return MessagePackager.createResponse(false, "", "Missing username as input", asset, null);
-		
+
+		String username; // only empty for ADD ACCOUNT
+		String password;
+
+		if (!json.has("username") || !json.has("password")) {
+			if (act != Action.ADD && asset != Asset.ACCOUNT) {
+				LOGGER.info("Malformed request missing login details");
+				return MessagePackager.createResponse(false, "", "Missing username or password as input", asset, null);
+			}
+
+			username = "";
+			password = "";
+		} else {
+			username = json.getString("username");
+			password = json.getString("password");
+			password = new String(Base64.getDecoder().decode(password));
+
+			// TODO check this.
+			if (!ah.authenticate(username, password)) {
+				LOGGER.info("Incorrect sign in attempt");
+				return MessagePackager.createResponse(false, username, "Incorrect login information.", asset, null);
+			}
+		}
+
 		String assetName = MessagePackager.typeToString(asset).toLowerCase();
+		LOGGER.info("Handling request of type: " + act.toString() + " " + assetName);
 		JSONObject obj = null;
-		if (json.has(assetName)) 
+		if (json.has(assetName)) {
 			obj = json.getJSONObject(assetName);
+		}
 
 		switch(act){
 		case ADD:
@@ -61,6 +100,7 @@ public class RequestHandler {
 				Account account = new Account(obj.getString("username"), obj.getString("password"), obj.getString("email"),
 						obj.getString("firstname"), obj.getString("lastname")); 
 				if (ah.addAccount(account)) {
+					LOGGER.info("Success: Created account for " + account.getUsername());
 					return MessagePackager.createResponse(true, account.getUsername(), "", asset, account); 
 				}
 				else
@@ -70,6 +110,7 @@ public class RequestHandler {
 						obj.getString("encryptionKey"), obj.getInt("directoryId"), obj.getString("password"), obj.getString("metadata"));
 				JSONObject js = kh.createKeychain(username, dak);
 				if (js.getString("status").equals("success")){
+					LOGGER.info("Success: Created directory " + dak.getName() + " for " + username);
 					dak.setDirectoryEntryId(js.getInt("directoryEntryId")); 
 					dak.setDirectoryId(js.getInt("directoryId"));
 					return MessagePackager.createResponse(true, username, "", asset, dak);
@@ -82,8 +123,7 @@ public class RequestHandler {
 		case AUTHENTICATE:
 			switch(asset){
 			case ACCOUNT:
-				boolean success = ah.authenticate(obj.getString("username"), obj.getString("password"));
-				return MessagePackager.createResponse(success, username, success ? "" : "Incorrect login information.", asset, null);
+				return MessagePackager.createResponse(true, username, "", asset, null);
 			default:
 				break;
 			}

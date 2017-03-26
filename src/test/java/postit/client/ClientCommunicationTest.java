@@ -1,94 +1,70 @@
 package postit.client;
 
-import java.io.StringReader;
+import postit.client.controller.RequestMessenger;
+import postit.client.keychain.Account;
+import postit.shared.communication.Client;
+
+import javax.json.JsonObject;
+import java.util.Optional;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-
-import postit.client.controller.RequestMessenger;
-import postit.shared.communication.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 
 public class ClientCommunicationTest implements Runnable {
-    ClientSender s;
-    ClientReceiver r;
+    Client client;
 
-    public static JsonObject stringToJsonObject(String msg) {
-        JsonReader jsonReader = Json.createReader(new StringReader(msg));
-        JsonObject object = jsonReader.readObject();
-        jsonReader.close();
-        return object;
-    }
-
-    public static void testRequest(String request, ClientSender sender, ClientReceiver listener) {
-        int reqId = sender.addRequest(request);
+    public static void testRequest(String request, Client client) {
         System.out.println("Sending to server: " + request);
-        String response = null;
-        while (true) { // block until request is received
-            try {
-                Thread.sleep(2000);
-                //System.out.println("sleeping.....");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            response = listener.getResponse(reqId);
-            if (response != null)
-                break;
-        }
-
-        JsonObject res = stringToJsonObject(response);
+        Optional<JsonObject> response = client.send(request);
+        assertThat(response.isPresent(), is(true));
         System.out.println("Response: " + response);
     }
 
-    public ClientCommunicationTest(ClientSender s, ClientReceiver r) {
-        this.s = s;
-        this.r = r;
+
+    public ClientCommunicationTest(Client client) {
+        this.client = client;
     }
 
     @Override
     public void run() {
-        String req = RequestMessenger.createAuthenticateMessage("ning", "5431");
-        testRequest(req, s, r);
-        req = RequestMessenger.createAuthenticateMessage("ning", "5430");
-        testRequest(req, s, r);
-        req = RequestMessenger.createAuthenticateMessage("mc", "5431");
-        testRequest(req, s, r);
-        req = RequestMessenger.createAddKeychainsMessage("ning", "fb", "hihi", "1234", "");
-        testRequest(req, s, r);
-        req = RequestMessenger.createUpdateKeychainMessage("ning", "fb", "lala", "4321", "nothing");
-        testRequest(req, s, r);
-        req = RequestMessenger.createUpdateKeychainMessage("ning", "net", "lala", "4321", "nothing");
-        testRequest(req, s, r);
-        req = RequestMessenger.createGetKeychainsMessage("ning");
-        testRequest(req, s, r);
-        req = RequestMessenger.createRemoveKeychainMessage("ning", "net");
-        testRequest(req, s, r);
-        req = RequestMessenger.createRemoveKeychainMessage("ning", "fb");
-        testRequest(req, s, r);
-        req = RequestMessenger.createGetKeychainsMessage("ning");
-        testRequest(req, s, r);
+        Account account = new Account("ning", "5431");
+        String req = RequestMessenger.createAuthenticateMessage(account);
+        testRequest(req, client);
+
+        account = new Account("ning", "5430");
+        req = RequestMessenger.createAuthenticateMessage(account);
+        testRequest(req, client);
+
+        account = new Account("mc", "5431");
+        req = RequestMessenger.createAuthenticateMessage(account);
+        testRequest(req, client);
+
+        account = new Account("ning", "5430");
+        req = RequestMessenger.createAddKeychainsMessage(account, "fb", "hihi", "1234", "");
+        testRequest(req, client);
+        req = RequestMessenger.createUpdateKeychainMessage(account, "fb", "lala", "4321", "nothing");
+        testRequest(req, client);
+        req = RequestMessenger.createUpdateKeychainMessage(account, "net", "lala", "4321", "nothing");
+        testRequest(req, client);
+        req = RequestMessenger.createGetKeychainsMessage(account);
+        testRequest(req, client);
+        req = RequestMessenger.createRemoveKeychainMessage(account, "net");
+        testRequest(req, client);
+        req = RequestMessenger.createRemoveKeychainMessage(account, "fb");
+        testRequest(req, client);
+        req = RequestMessenger.createGetKeychainsMessage(account);
+        testRequest(req, client);
     }
 
 
     public static void main(String[] args) {
-
-        // FOR CONNECTING TO THE POSTIT SERVER
-        ClientSender sender = new ClientSender(2048);
-        ClientReceiver listener = new ClientReceiver(4880);
-
-        Thread t1 = new Thread(listener);
-        Thread t2 = new Thread(sender);
-
-        t2.start();
-        t1.start();
-
-        ClientCommunicationTest client = new ClientCommunicationTest(sender, listener);
-        Thread t3 = new Thread(client);
+        Client client = new Client(2048, "localhost");
+        ClientCommunicationTest test = new ClientCommunicationTest(client);
+        Thread t3 = new Thread(test);
         final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
         executor.schedule(t3, 5, TimeUnit.SECONDS);
-
     }
 }

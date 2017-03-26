@@ -28,6 +28,7 @@ CREATE TABLE `account` (
   `email` varchar(45) NOT NULL,
   `first_name` varchar(45) NOT NULL,
   `last_name` varchar(45) NOT NULL,
+  `salt` VARCHAR(64) NOT NULL,
   PRIMARY KEY (`user_name`),
   UNIQUE KEY `user_name_UNIQUE` (`user_name`),
   UNIQUE KEY `pwd_key_UNIQUE` (`pwd_key`),
@@ -41,7 +42,7 @@ CREATE TABLE `account` (
 
 LOCK TABLES `account` WRITE;
 /*!40000 ALTER TABLE `account` DISABLE KEYS */;
-INSERT INTO `account` VALUES ('ning','5431','nw265@cornell.edu','Ning','Wang');
+INSERT INTO `account` VALUES ('ning','opYQbweT2JlGwFuSQh0ldvxNy651BT/jUbr8CLhvwfw=','nw265@cornell.edu','Ning','Wang', 'gJcGAaWmxpKxCktTxrK3C6R+CnPBMQDMEFgF3dBVmEM=');
 /*!40000 ALTER TABLE `account` ENABLE KEYS */;
 UNLOCK TABLES;
 

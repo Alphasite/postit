@@ -1,11 +1,11 @@
 package postit.client;
 
 import postit.client.backend.BackingStore;
+import postit.client.controller.ServerController;
 import postit.client.gui.GUIKeyService;
 import postit.client.gui.KeychainViewer;
 import postit.shared.Crypto;
-import postit.shared.communication.ClientReceiver;
-import postit.shared.communication.ClientSender;
+import postit.shared.communication.Client;
 
 import static javax.swing.SwingUtilities.invokeLater;
 
@@ -14,28 +14,22 @@ import static javax.swing.SwingUtilities.invokeLater;
  */
 public class GuiApp {
     public static void main(String[] args) {
-        // FOR CONNECTING TO THE POSTIT SERVER
-        ClientSender sender = new ClientSender(2048);
-        ClientReceiver listener = new ClientReceiver(4880);
+        Client client = new Client(2048, "localhost");
+        ServerController serverController = new ServerController(client);
 
-        Thread t1 = new Thread(listener);
-        Thread t2 = new Thread(sender);
+        GUIKeyService keyService = new GUIKeyService(serverController);
+        BackingStore backingStore = new BackingStore(keyService);
 
-        t2.start();
-        t1.start();
+        if (!Crypto.init()) {
+            // TODO
+        }
+
+        if (!backingStore.init()) {
+            // TODO
+        }
 
         invokeLater(() -> {
-            GUIKeyService keyService = new GUIKeyService();
-            BackingStore backingStore = new BackingStore(keyService);
-
-            if (!Crypto.init()) {
-                // TODO
-            }
-            if (!backingStore.init()) {
-                // TODO
-            }
-
-            KeychainViewer kv = new KeychainViewer(backingStore, keyService);
+            KeychainViewer kv = new KeychainViewer(serverController, backingStore, keyService);
         });
     }
 }

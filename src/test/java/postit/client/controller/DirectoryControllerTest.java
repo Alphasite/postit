@@ -50,7 +50,7 @@ public class DirectoryControllerTest {
             Crypto.init(false);
 
             keyService = new MockKeyService(Crypto.secretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
-            keyService.account = "test";
+            keyService.account = new Account("test", "password");
 
             backingStore = new MockBackingStore(keyService);
             backingStore.init();

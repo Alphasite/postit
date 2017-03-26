@@ -1,5 +1,7 @@
 package postit.server.database;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -15,11 +17,14 @@ import java.sql.Statement;
  * @author Ning
  *
  */
+@SuppressWarnings("ALL")
 public class MySQL implements Database {
 	String databaseName;
-	String user;
+	private String user;
 	String password;
 	String url;
+
+	ComboPooledDataSource cpds;
 
 	public MySQL(String url, String database, String user, String pwd) throws SQLException {
 		this.password = pwd;
@@ -28,7 +33,11 @@ public class MySQL implements Database {
 		this.url = url;
 
 		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+			this.cpds = new ComboPooledDataSource();
+			this.cpds.setDriverClass("com.mysql.cj.jdbc.Driver");
+			this.cpds.setJdbcUrl("jdbc:mysql://" + url + "/" + databaseName + "?useSSL=false");
+			this.cpds.setUser(user);
+			this.cpds.setPassword(password);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -48,7 +57,7 @@ public class MySQL implements Database {
 
 	@Override
 	public Connection connect() throws SQLException {
-		return DriverManager.getConnection("jdbc:mysql://" + url + "/" + databaseName + "?useSSL=false", user, password);
+		return this.cpds.getConnection();
 	}
 
 	@Override

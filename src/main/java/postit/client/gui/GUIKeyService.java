@@ -2,13 +2,16 @@ package postit.client.gui;
 
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
+import postit.client.keychain.Account;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.security.auth.DestroyFailedException;
 import javax.swing.*;
+import javax.swing.text.html.Option;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Created by nishadmathur on 27/2/17.
@@ -21,12 +24,8 @@ public class GUIKeyService implements KeyService {
 
     private ServerController sc;
 
-    public GUIKeyService(){
-    }
-
-    GUIKeyService(ServerController sc){
-        super();
-        this.sc=sc;
+    public GUIKeyService(ServerController sc) {
+        this.sc = sc;
     }
 
     @Override
@@ -89,26 +88,28 @@ public class GUIKeyService implements KeyService {
     }
 
     @Override
-    public String getAccount() {
-        String user = null;
+    public Account getAccount() {
+
         LoginPanel lp = new LoginPanel();
-        while (user == null) {
+        while (true) {
             int result = JOptionPane.showConfirmDialog(null, lp,
                     "Login/Registration", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {
-                if(lp.tabbedPane.getSelectedIndex()==0) {
+                if (lp.tabbedPane.getSelectedIndex() == 0) {
                     // LOGIN
                     String username = lp.l_accountfield.getText();
                     String password = String.valueOf(lp.l_passfield.getPassword());
                     //if (sc.authenticate(username, Crypto.secretKeyFromBytes(password.getBytes()))) {
-                    if (sc.authenticate(username, password)) {
-                        user = lp.l_accountfield.getText();
+
+                    Account newAccount = new Account(username, password);
+                    if (sc.authenticate(newAccount)) {
+                        return newAccount;
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Login credentials invalid");
                     }
-                    else{
-                        JOptionPane.showMessageDialog(null,"Login credentials invalid");
-                    }
-                }
-                else if (lp.tabbedPane.getSelectedIndex()==1){
+
+                } else if (lp.tabbedPane.getSelectedIndex() == 1) {
+
                     // REGISTRATION
                     String first = lp.r_firstfield.getText();
                     String last = lp.r_lastfield.getText();
@@ -118,22 +119,18 @@ public class GUIKeyService implements KeyService {
                     String email = lp.r_emailfield.getText();
 
                     if (pass1.equals(pass2) && LoginPanel.isValidEmailAddress(email)) {
-                        if(sc.addUser(username, pass1,email,first,last)){
-                            user=username;
+                        Account newAccount = new Account(username, pass1);
+                        if (sc.addUser(newAccount, email, first, last)) {
+                            return newAccount;
                         }
-                    }
-                    else if (!pass1.equals(pass2)){
-                        JOptionPane.showMessageDialog(null,"Passwords do not match");
-                    }
-                    else{
-                        JOptionPane.showMessageDialog(null,"Email is invalid");
+                    } else if (!pass1.equals(pass2)) {
+                        JOptionPane.showMessageDialog(null, "Passwords do not match");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Email is invalid");
                     }
                 }
 
             }
-//            user = JOptionPane.showInputDialog("Please enter username: ");
         }
-
-        return user;
     }
 }

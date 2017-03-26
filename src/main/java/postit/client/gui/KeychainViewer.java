@@ -11,8 +11,6 @@ import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
 
-import postit.shared.communication.ClientSender;
-import postit.shared.communication.ClientReceiver;
 import postit.shared.Crypto;
 
 import javax.swing.*;
@@ -36,7 +34,7 @@ public class KeychainViewer {
     KeychainViewer kv = this;
     Directory dir;
     DirectoryController directoryController;
-    static ServerController serverController;
+    ServerController serverController;
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -50,8 +48,9 @@ public class KeychainViewer {
     private JMenuItem delPass;
     private JMenuItem delKey;
 
-    public KeychainViewer(BackingStore backingStore, KeyService keyService) {
+    public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService) {
 
+        this.serverController = serverController;
         this.backingStore = backingStore;
         this.keyService = keyService;
 
@@ -66,46 +65,10 @@ public class KeychainViewer {
             directoryController = new DirectoryController(directory.get(), backingStore, keyService);
             this.keychains = directoryController.getKeychains();
 
-            int rePort = 2048;
-            int outPort = 4880;
-
-            ClientSender processor = new ClientSender(outPort);
-            ClientReceiver receiver = new ClientReceiver(rePort);
             serverController.setDirectoryController(directoryController);
             createUIComponents();
         }
 
-    }
-
-    public static void main(String[] args) {
-        // FOR CONNECTING TO THE POSTIT SERVER
-        
-        ClientSender sender = new ClientSender(2048);
-        ClientReceiver listener = new ClientReceiver(4880);
-
-        Thread t1 = new Thread(listener);
-        Thread t2 = new Thread(sender);
-
-        t2.start();
-        t1.start();
-
-
-        serverController = new ServerController(sender, listener);
-
-        invokeLater(() -> {
-
-            GUIKeyService keyService = new GUIKeyService(serverController);
-            BackingStore backingStore = new BackingStore(keyService);
-
-            if (!Crypto.init()) {
-                // TODO
-            }
-            if (!backingStore.init()) {
-                // TODO
-            }
-
-            KeychainViewer kv = new KeychainViewer(backingStore, keyService);
-        });
     }
 
     /**

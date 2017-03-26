@@ -8,6 +8,7 @@ import org.bouncycastle.crypto.modes.AEADBlockCipher;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.KeyGenerator;
@@ -15,13 +16,16 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.json.*;
 import javax.json.stream.JsonParsingException;
+import javax.net.ssl.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
-import java.util.Arrays;
+import java.security.cert.*;
+import java.security.cert.Certificate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -37,9 +41,11 @@ public class Crypto {
     private static final int MEMORY_SCALING_FACTOR = 10;
     private static final int PARALLELISM_SCALING_FACTOR = 10;
     private static final int KEY_LENGTH = 32;
+    public static final String CERT_PATH = "load-der.crt";
 
     private static SecureRandom random;
     private static KeyGenerator keyGenerator;
+    private static SSLContext sslContext;
 
     public static boolean init() {
         return init(true);
@@ -48,6 +54,17 @@ public class Crypto {
     public static boolean init(boolean useSecureRandom) {
         Crypto.removeCryptographyRestrictions();
         Security.addProvider(new BouncyCastleProvider());
+
+        URL keyPath = Crypto.class.getClassLoader().getResource("keys/test-certificate.jks");// TODO unfix this.
+        if (keyPath == null) {
+            LOGGER.severe("FAILED TO LOAD CERTIFICATE.");
+            return false;
+        }
+
+        System.setProperty("javax.net.ssl.keyStore", keyPath.getPath());
+        System.setProperty("javax.net.ssl.trustStore", keyPath.getPath());
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
         try {
             if (useSecureRandom) {
@@ -65,6 +82,26 @@ public class Crypto {
             keyGenerator.init(256, random);
         } catch (NoSuchAlgorithmException e) {
             LOGGER.log(Level.SEVERE, "Failed to initialise AES generator.");
+            return false;
+        }
+
+        try {
+            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+            InputStream keystoreStream = Crypto.class.getClassLoader().getResourceAsStream("keys/test-certificate.jks");
+            keystore.load(keystoreStream, "password".toCharArray());
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keystore);
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keystore, "password".toCharArray());
+            KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
+
+            sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(keyManagers, trustManagers, random);
+        } catch (KeyStoreException | KeyManagementException | CertificateException | NoSuchAlgorithmException | IOException | UnrecoverableKeyException e) {
+            LOGGER.severe("Failed to create SSL context: " + e.getMessage());
             return false;
         }
 
@@ -177,6 +214,14 @@ public class Crypto {
             LOGGER.severe("Error reading json object from file [" + path + "]: " + e.getMessage());
             return Optional.empty();
         }
+    }
+
+    public static SSLContext getSSLContext() {
+        return sslContext;
+    }
+
+    public static SecureRandom getRandom() {
+        return random;
     }
 
     /**

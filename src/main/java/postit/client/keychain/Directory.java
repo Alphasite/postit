@@ -15,28 +15,25 @@ public class Directory {
     private final static Logger LOGGER = Logger.getLogger(Directory.class.getName());
 
     private BackingStore backingStore;
-    private KeyService keyService;
 
     public List<DirectoryEntry> keychains;
     public List<Long> deletedKeychains;
 
     public Account account;
 
-    public Directory(KeyService keyService, BackingStore backingStore) {
-        this.keyService = keyService;
+    public Directory(BackingStore backingStore, KeyService keyService) {
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
-        this.account = new Account(keyService.getAccount(), this);
+        this.account = keyService.getAccount();
     }
 
-    public Directory(JsonObject object, KeyService keyService, BackingStore backingStore) {
-        this.keyService = keyService;
+    public Directory(JsonObject object, BackingStore backingStore) {
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
 
-        this.account = new Account(object.getJsonObject("account"), this);
+        this.account = new Account(object.getJsonObject("account"));
 
         JsonArray keychainArray = object.getJsonArray("keychains");
         for (int i = 0; i < keychainArray.size(); i++) {

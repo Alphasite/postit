@@ -17,5 +17,5 @@ public interface KeyService {
 
     SecretKey getClientKey();
 
-    String getAccount();
+    Account getAccount();
 }

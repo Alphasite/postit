@@ -1,5 +1,7 @@
 package postit.client.backend;
 
+import postit.client.keychain.Account;
+
 import javax.crypto.SecretKey;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,13 +16,13 @@ public class MockKeyService implements KeyService {
     public SecretKey masterKey;
     public SecretKey newMasterKey;
 
-    public String account;
+    public Account account;
 
     public MockKeyService(SecretKey masterKey, SecretKey newMasterKey) {
         this.getKeys = new ArrayList<>();
         this.clientKeys = new ArrayList<>();
         this.masterKey = masterKey;
-        this.newMasterKey = masterKey;
+        this.newMasterKey = newMasterKey;
     }
 
     @Override
@@ -44,7 +46,7 @@ public class MockKeyService implements KeyService {
     }
 
     @Override
-    public String getAccount() {
+    public Account getAccount() {
         return account;
     }
 }

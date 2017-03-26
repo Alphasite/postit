@@ -59,7 +59,7 @@ public class BackingStore {
             container = new Container();
             container.salt = Base64.getEncoder().encodeToString(Crypto.getNonce());
 
-            this.directory = new Directory(keyService, this);
+            this.directory = new Directory(this, keyService);
 
             if (writeDirectory()) {
                 LOGGER.info("Created container.");
@@ -138,7 +138,7 @@ public class BackingStore {
             return Optional.empty();
         }
 
-        this.directory = new Directory(object.get(), keyService, this);
+        this.directory = new Directory(object.get(), this);
         return Optional.of(directory);
     }
 

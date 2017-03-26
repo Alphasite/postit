@@ -118,7 +118,7 @@ public class DatabaseController {
             add = statement.executeUpdate();
         } catch (SQLException e) {
         	e.printStackTrace();
-            System.out.println("An error occurred in addAccount"); // add duplication check here
+            System.out.println("An error occurred in addAccount: " + e.getMessage()); // add duplication check here
         }
 
         return add == 1;

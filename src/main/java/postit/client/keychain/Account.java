@@ -16,13 +16,17 @@ public class Account {
     String username;
     SecretKey secretKey;
 
-
-    public Account(String username, Directory directory) {
+    public Account(String username) {
         this.username = username;
-        this.secretKey = Crypto.secretKeyFromBytes("TODO".getBytes()); // TODO
+        this.secretKey = Crypto.secretKeyFromBytes("DEAD BEEF".getBytes());
     }
 
-    public Account(JsonObject object, Directory directory) {
+    public Account(String username, String password) {
+        this.username = username;
+        this.secretKey = Crypto.secretKeyFromBytes(password.getBytes());
+    }
+
+    public Account(JsonObject object) {
         this.username = object.getString("username");
         this.secretKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("password")));
     }
