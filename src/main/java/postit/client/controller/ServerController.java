@@ -70,8 +70,8 @@ public class ServerController {
             localKeychainsToDelete.retainAll(clientKeychainNames);
 
             // Figure out which keychains have been deleted here
-            Set<Long> serverKeychainsToDelete = new HashSet<>(directoryController.getDeletedKeychains());
-            serverKeychainsToDelete.removeAll(serverDeletedKeychains);
+            Set<Long> serverKeychainsToDelete = new HashSet<>(serverKeychains);
+            serverKeychainsToDelete.retainAll(directoryController.getDeletedKeychains());
 
             // Figure out which keychains to download from the server
             Set<Long> keychainsToDownload = new HashSet<>(serverKeychains);
@@ -79,9 +79,9 @@ public class ServerController {
             keychainsToDownload.removeAll(serverKeychainsToDelete);
 
             // Figure out which keychains to upload to the server
-            Set<Long> keychainsToUpload = new HashSet<>(clientKeychainNames);
-            keychainsToUpload.removeAll(serverKeychains);
-            keychainsToUpload.removeAll(localKeychainsToDelete);
+            List<DirectoryEntry> keychainsToUpload = clientKeychains.stream()
+                    .filter(keychain -> keychain.serverid == -1)
+                    .collect(Collectors.toList());
 
             // Figure out which keychains may need an update, and update them.
             Set<Long> keychainsToUpdate = new HashSet<>(clientKeychainNames);
@@ -108,7 +108,7 @@ public class ServerController {
                 }
             }
 
-            for (DirectoryEntry entry : clientKeychains) {
+            for (DirectoryEntry entry : keychainsToUpload) {
                 if (!createKeychain(entry)) {
                     LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
                     return;
@@ -148,7 +148,7 @@ public class ServerController {
 
                     directoryController.updateLocalIfIsOlder(
                             entry,
-                            directoryKeychainObject.get().getJsonObject("entry"),
+                            directoryKeychainObject.get().getJsonObject("directory"),
                             directoryKeychainObject.get().getJsonObject("keychain") // TODO encrypt decrypt??
                     );
 
@@ -194,6 +194,11 @@ public class ServerController {
         if (response.isPresent()) {
             JsonArray list = response.get().getJsonArray("keychains");
             List<Long> keys = new ArrayList<>();
+
+            if (list == null) {
+                LOGGER.warning("Failed to fetch keychain: " + response.get().getString("message"));
+                return null;
+            }
 
             for (int i = 0; i < list.size(); i++) {
                 JsonObject key = list.getJsonObject(i);

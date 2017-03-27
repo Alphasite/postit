@@ -51,9 +51,9 @@ public class DatabaseController {
                         resultSet.getString("first_name"), resultSet.getString("last_name"));
             }
         } catch (SQLException e) {
-            System.out.println("An error occurred in getAccount"); // should be contained in JSONObject returned to view
+            System.out.println("An error occurred in getAccount " + e.getMessage()); // should be contained in JSONObject returned to view
         } catch (Exception e) {
-            System.out.println("An error occurred"); // should be contained in JSONObject returned to view
+            System.out.println("An error occurred: " + e.getMessage()); // should be contained in JSONObject returned to view
         }
 
         return serverAccount;
@@ -70,7 +70,7 @@ public class DatabaseController {
             	return resultSet.getString("salt");
             }
         } catch (SQLException e) {
-            System.out.println("An error occurred in getAccount"); // should be contained in JSONObject returned to view
+            System.out.println("An error occurred in getSalt"); // should be contained in JSONObject returned to view
         } catch (Exception e) {
             System.out.println("An error occurred"); // should be contained in JSONObject returned to view
         }
@@ -89,7 +89,7 @@ public class DatabaseController {
             	return resultSet.getString("pwd_key");
             }
         } catch (SQLException e) {
-            System.out.println("An error occurred in getAccount"); // should be contained in JSONObject returned to view
+            System.out.println("An error occurred in getPassword"); // should be contained in JSONObject returned to view
         } catch (Exception e) {
             System.out.println("An error occurred"); // should be contained in JSONObject returned to view
         }

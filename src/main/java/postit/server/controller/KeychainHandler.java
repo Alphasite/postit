@@ -73,7 +73,7 @@ public class KeychainHandler {
     public ServerKeychain getKeychain(String username, int directoryEntryId) {
         ServerKeychain entry = db.getDirectoryEntry(directoryEntryId);
 
-        if (entry.getOwnerUsername().equals(username)) {
+        if (entry != null && entry.getOwnerUsername().equals(username)) {
             return entry;
         } else {
             return null;

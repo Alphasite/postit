@@ -28,7 +28,10 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.*;
+import static org.springframework.util.Assert.notNull;
 
 /**
  * Created by nishadmathur on 8/3/17.
@@ -38,6 +41,8 @@ public class ServerControllerTest {
 
     private ServerController serverController;
 
+    Account account;
+
     private Client clientToServer;
     private MockKeyService keyService;
     private MockBackingStore backingStore;
@@ -46,7 +51,6 @@ public class ServerControllerTest {
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
 
-    private Thread thread;
     private DirectoryController directoryController;
 
     @Before
@@ -75,24 +79,12 @@ public class ServerControllerTest {
         System.out.println("Server almost ready...");
 
         ChannelFuture channel = b.bind(2048).sync();
+        assertThat(channel.cause(), nullValue());
 
-        Runnable server = () -> {
-            try {
-                System.out.println("Waiting for close server...");
-                channel.channel().closeFuture().sync();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                bossGroup.shutdownGracefully();
-                workerGroup.shutdownGracefully();
-            }
-        };
-
-        thread = new Thread(server);
-        thread.start();
+        account = new Account("test", "password");
 
         keyService = new MockKeyService(Crypto.secretKeyFromBytes("DirectoryControllerTest".getBytes()), null);
-        keyService.account = new Account("ning", "5431");
+        keyService.account = account;
 
         backingStore = new MockBackingStore(keyService);
         backingStore.init();
@@ -103,6 +95,8 @@ public class ServerControllerTest {
         clientToServer = new Client(2048, "localhost");
         serverController = new ServerController(clientToServer);
         assertTrue(serverController.setDirectoryController(directoryController));
+
+        serverController.addUser(account, "test@test.com", "te", "st");
     }
 
     @After
