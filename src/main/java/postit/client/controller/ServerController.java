@@ -177,6 +177,11 @@ public class ServerController {
         return sendAndCheckIfSuccess(req);
     }
 
+    public boolean removeUser(Account account){
+    	String req = RequestMessenger.createRemoveUserMessage(account);
+    	return sendAndCheckIfSuccess(req);
+    }
+    
     public boolean authenticate(Account account) {
         String req = RequestMessenger.createAuthenticateMessage(account);
         return sendAndCheckIfSuccess(req);
