@@ -17,7 +17,6 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.server.database.Database;
-import postit.server.database.MySQL;
 import postit.server.database.TestH2;
 import postit.server.netty.RequestInitializer;
 import postit.shared.Crypto;
@@ -25,7 +24,7 @@ import postit.shared.communication.Client;
 
 import javax.net.ssl.SSLContext;
 import java.nio.file.Files;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -118,12 +117,6 @@ public class ServerControllerTest {
     }
 
     @Test
-    public void testSync() throws Exception {
-        LOGGER.info("----sync");
-
-    }
-
-    @Test
     public void runTestSeries() throws Exception {
         addUser("testServerController", "password", "test@servercontroller.com", "test", "server");
         assertTrue(authenticate("testServerController", "password"));
@@ -132,6 +125,11 @@ public class ServerControllerTest {
 
         createKeychain();
         setKeychain();
+        serverController.sync(new Runnable() {
+            @Override
+            public void run() {
+            }
+        });
         getKeychains();
         deleteKeychain();
     }
@@ -168,11 +166,12 @@ public class ServerControllerTest {
 
     public void getKeychains() throws Exception {
         LOGGER.info("----getKeychains");
+        ArrayList<Long> serverKeychains = (ArrayList) serverController.getKeychains();
+        ArrayList<Long> directoryKeychains = new ArrayList<Long>();
         for (int i = 0; i < directoryController.getKeychains().size(); i++) {
-            Long server_serverID = serverController.getKeychains().get(i);
-            Long directory_serverID = directoryController.getKeychains().get(i).serverid;
-            assertEquals(server_serverID, directory_serverID);
+            directoryKeychains.add(directoryController.getKeychains().get(i).serverid);
         }
+        assertEquals(directoryKeychains,serverKeychains);
 
     }
 
