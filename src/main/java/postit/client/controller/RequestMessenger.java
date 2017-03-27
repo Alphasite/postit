@@ -26,7 +26,7 @@ public class RequestMessenger {
 	}
 	
 	public static String createRemoveUserMessage(Account clientAccount){
-		postit.server.model.Account account = new postit.server.model.Account();
+		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
 		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
 		return MessagePackager.createRequest(Action.REMOVE, null, Asset.ACCOUNT, account);

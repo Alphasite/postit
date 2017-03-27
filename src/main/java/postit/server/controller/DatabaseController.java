@@ -261,7 +261,7 @@ public class DatabaseController {
         ArrayList<ServerKeychain> list = new ArrayList<>();
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getDirectoryEntriesSQL)) {
-            statement.setNString(1, ownerUsername);
+            statement.setString(1, ownerUsername);
             resultSet = statement.executeQuery();
 
             while (resultSet.next()) {

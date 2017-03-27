@@ -33,11 +33,12 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
+		System.out.println("Starting request handle...");
 		msg = new String(Base64.getDecoder().decode(msg));
 		String response = Base64.getEncoder().encodeToString(handleRequest(msg).getBytes());
 		ChannelFuture send = ctx.writeAndFlush(response + "\r\n");
 		send.sync();
-		ctx.close().sync();
+		ctx.close();
 		LOGGER.info("Request successfully handled.");
 	}
 
