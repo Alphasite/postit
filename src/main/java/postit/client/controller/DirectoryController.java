@@ -146,6 +146,7 @@ public class DirectoryController {
                 Json.createObjectBuilder()
                         .add("directory", entry.dump())
                         .add("keychain", keychain.get().dump())
+                        .add("lastModified", entry.lastModified.toString())
         );
     }
 
