@@ -120,7 +120,7 @@ public class ServerController {
 
                 if (directoryKeychainObject.isPresent()) {
                     if (!directoryController.createKeychain(
-                            directoryKeychainObject.get().getJsonObject("entry"),
+                            directoryKeychainObject.get().getJsonObject("directory"),
                             directoryKeychainObject.get().getJsonObject("keychain") // TODO encrypt decrypt??
                     )) {
                         LOGGER.warning("Failed to merge keychain (" + serverid + ") merge keychain.");
@@ -211,7 +211,7 @@ public class ServerController {
         Optional<JsonObject> response = clientToServer.send(req);
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
-            String keychainString = new String(Base64.getDecoder().decode(response.get().getString("keychain")));
+            String keychainString = new String(Base64.getDecoder().decode(response.get().getJsonObject("keychain").getString("data")));
 
             try {
                 return Optional.ofNullable(Json.createReader(new StringReader(keychainString)).readObject());
