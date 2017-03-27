@@ -3,7 +3,7 @@ import javax.json.*;
 /**
  * Created by Zhan on 2/28/2017.
  */
-public class Account {
+public class ServerAccount {
     //Long id; 
     String username;
     String password;
@@ -11,13 +11,9 @@ public class Account {
     String firstName;
     String lastName;
     String salt;
-    
-    Customer customer;
-    Log log;
-    Metadata metadata;
 
     // CONSTRUCTOR
-    public Account(String username, String password, String email, String firstName, String lastName) {
+    public ServerAccount(String username, String password, String email, String firstName, String lastName) {
     	this.username = username;
     	this.password = password;
     	this.email = email;
@@ -25,7 +21,7 @@ public class Account {
     	this.lastName = lastName;
     }
 
-    public Account(Account a){
+    public ServerAccount(ServerAccount a){
     	this.username = a.username;
     	this.password = a.password;
     	this.email = a.email;
@@ -40,7 +36,7 @@ public class Account {
 //        return id;
 //    }
 
-    public Account() {
+    public ServerAccount() {
 	}
 
 	public String getUsername(){
@@ -65,18 +61,6 @@ public class Account {
 
     public String getSalt(){
     	return salt;
-    }
-    
-    public Customer getCustomer() {
-        return customer;
-    }
-
-    public Log getLog() {
-        return log;
-    }
-
-    public Metadata getMetadata() {
-        return metadata;
     }
 
     // SETTERS
@@ -103,13 +87,9 @@ public class Account {
     public void setSalt(String salt){
     	this.salt = salt;
     }
-    
-    public void setLog(Log log) {
-        this.log = log;
-    }
-    
-    public static Account fromJSONObject(JsonObject act){
-    	return new Account(act.getString("username"), act.getString("password"), 
+
+    public static ServerAccount fromJSONObject(JsonObject act){
+    	return new ServerAccount(act.getString("username"), act.getString("password"),
     			act.getString("email"), act.getString("firstname"), act.getString("lastname"));
     }
 }

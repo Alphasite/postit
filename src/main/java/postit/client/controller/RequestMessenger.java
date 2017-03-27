@@ -1,27 +1,28 @@
 package postit.client.controller;
 
 import postit.client.keychain.Account;
-import postit.shared.model.*;
+import postit.server.model.ServerAccount;
+import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
 
 public class RequestMessenger {
 
 	public static String createAuthenticateMessage(Account clientAccount){
-		postit.server.model.Account account = new postit.server.model.Account();
-		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
-		return MessagePackager.createRequest(Action.AUTHENTICATE, clientAccount, Asset.ACCOUNT, account);
+		ServerAccount serverAccount = new ServerAccount();
+		serverAccount.setUsername(clientAccount.getUsername());
+		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		return MessagePackager.createRequest(Action.AUTHENTICATE, clientAccount, Asset.ACCOUNT, serverAccount);
 	}
 	
 	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname){
-		postit.server.model.Account account = new postit.server.model.Account();
-		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
-		account.setEmail(email);
-		account.setFirstname(firstname);
-		account.setLastname(lastname);
-		return MessagePackager.createRequest(Action.ADD, null, Asset.ACCOUNT, account);
+		ServerAccount serverAccount = new ServerAccount();
+		serverAccount.setUsername(clientAccount.getUsername());
+		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		serverAccount.setEmail(email);
+		serverAccount.setFirstname(firstname);
+		serverAccount.setLastname(lastname);
+		return MessagePackager.createRequest(Action.ADD, null, Asset.ACCOUNT, serverAccount);
 	}
 	
 	public static String createRemoveUserMessage(Account clientAccount){
@@ -41,50 +42,37 @@ public class RequestMessenger {
 		return "";
 	}
 	
-	public static String createAddKeychainsMessage(Account account, String name, String encryptionKey, String password, String meta){
-		DirectoryAndKey dak = new DirectoryAndKey();
-		dak.setName(name);
-		dak.setEncryptionKey(encryptionKey);
-		dak.setPassword(password);
-		dak.setMetadata(meta);
-		return MessagePackager.createRequest(Action.ADD, account, Asset.KEYCHAIN, dak);
+	public static String createAddKeychainsMessage(Account account, String name, String data){
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setName(name);
+		keychain.setOwnerUsername(account.getUsername());
+		keychain.setData(data);
+		return MessagePackager.createRequest(Action.ADD, account, Asset.KEYCHAIN, keychain);
 	}
 	
 	public static String createGetKeychainsMessage(Account account){
 		return MessagePackager.createRequest(Action.GET, account, Asset.KEYCHAINS, null);
 	}
 	
-	public static String createGetKeychainMessage(Account account, String name){
-		DirectoryAndKey dak = new DirectoryAndKey();
-		dak.setName(name);
-		return MessagePackager.createRequest(Action.GET, account, Asset.KEYCHAIN, dak);
-	}
-	
 	public static String createGetKeychainMessage(Account account, long keychainId){
-		DirectoryAndKey dak = new DirectoryAndKey();
-		dak.setDirectoryEntryId((int) keychainId);
-		return MessagePackager.createRequest(Action.GET, account, Asset.KEYCHAIN, dak);
-	}
-	
-	public static String createRemoveKeychainMessage(Account account, String name){
-		DirectoryAndKey dak = new DirectoryAndKey();
-		dak.setName(name);
-		return MessagePackager.createRequest(Action.REMOVE, account, Asset.KEYCHAIN, dak);
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setDirectoryEntryId((int) keychainId);
+		return MessagePackager.createRequest(Action.GET, account, Asset.KEYCHAIN, keychain);
 	}
 	
 	public static String createRemoveKeychainMessage(Account account, long keychainId){
-		DirectoryAndKey dak = new DirectoryAndKey();
-		dak.setDirectoryEntryId((int) keychainId);
-		return MessagePackager.createRequest(Action.REMOVE, account, Asset.KEYCHAIN, dak);
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setDirectoryEntryId((int) keychainId);
+		return MessagePackager.createRequest(Action.REMOVE, account, Asset.KEYCHAIN, keychain);
 	}
 	
-	public static String createUpdateKeychainMessage(Account account, String name, String encryptionKey, String password, String meta) {
+	public static String createUpdateKeychainMessage(Account account, long serverId, String name, String data) {
 		// put any unchanged field as null
-		DirectoryAndKey dak = new DirectoryAndKey();
-		dak.setName(name);
-		dak.setEncryptionKey(encryptionKey);
-		dak.setPassword(password);
-		dak.setMetadata(meta);
-		return MessagePackager.createRequest(Action.UPDATE, account, Asset.KEYCHAIN, dak);
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setName(name);
+		keychain.setOwnerUsername(account.getUsername());
+		keychain.setDirectoryEntryId(serverId);
+		keychain.setData(data);
+		return MessagePackager.createRequest(Action.UPDATE, account, Asset.KEYCHAIN, keychain);
 	}
 }

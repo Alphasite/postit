@@ -5,9 +5,7 @@ import java.util.*;
 import org.json.JSONObject;
 
 import postit.client.keychain.*;
-import postit.server.model.*;
-import postit.server.model.Account;
-import postit.server.model.Keychain;
+import postit.server.model.ServerAccount;
 
 /**
  * Packages requests and responses in JsonObject to be sent between client and server
@@ -49,7 +47,6 @@ public class MessagePackager {
 	/**
 	 * Takes inputs and package them into the string representation of a single JSONObject
 	 * @param req
-	 * @param obj
 	 * @param bean
 	 * @return
 	 */
@@ -105,14 +102,14 @@ public class MessagePackager {
 	public static void checkInputTypes(Asset asset, Object bean) throws InputMismatchException{
 		switch(asset){
 		case ACCOUNT:
-			if (bean instanceof Account) return;
+			if (bean instanceof ServerAccount) return;
 		case KEYCHAIN:
 			if (bean instanceof Keychain) return;
 		case ACCOUNTS:
 			if (bean instanceof List){
 				List<?> list = (List<?>) bean;
 				if (list.isEmpty()) throw new InputMismatchException("Input list cannot be empty.");
-				if (list.iterator().next().getClass().isInstance(new Account("","","","",""))) return;				
+				if (list.iterator().next().getClass().isInstance(new ServerAccount("","","","",""))) return;
 			}
 			break;
 		case KEYCHAINS:
@@ -140,8 +137,8 @@ public class MessagePackager {
 	
 	/*
 	public static void main(String[] args){
-		List<Account> acts = new ArrayList<Account>();
-		Account act = new Account("ning", "1234", null, "ning", "wang");
+		List<ServerAccount> acts = new ArrayList<ServerAccount>();
+		ServerAccount act = new ServerAccount("ning", "1234", null, "ning", "wang");
 		acts.add(act);
 		String res = createResponse(true, "ning", "", Asset.ACCOUNT, act);
 		System.out.println(res);

@@ -11,8 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import postit.server.database.Database;
 import postit.server.database.TestH2;
-import postit.server.model.Directory;
-import postit.shared.model.DirectoryAndKey;
+import postit.server.model.ServerKeychain;
 
 /**
  * 
@@ -35,19 +34,18 @@ public class KeychainHandlerTest {
 		assertThat(database.initDatabase(), is(true));
 	}
 
-	public static int testAddKeychain(KeychainHandler kh, String username, String name, String pwd, boolean expected){
-		JSONObject js = kh.createKeychain(username, name, ".", "123456");
+	public static int testAddKeychain(KeychainHandler kh, String username, String name, boolean expected){
+		JSONObject js = kh.createKeychain(username, name);
 		boolean res = js.getString("status").equals("success");
-		System.out.printf("Adding keychain to %s: (%s, %s) %s%n", username, name, pwd, res ? "successful" : "failed");
+		System.out.printf("Adding keychain for %s: (%s) %s%n", username, name, res ? "successful" : "failed");
 		assertTrue(js.getString("status").equals("success") == expected);
 		
 		return js.getString("status").equals("failure") ? -1 : js.getInt("directoryEntryId");
 	}
 	
-	public static void testUpdateKeychain(KeychainHandler kh, int directoryEntryId, String name, 
-			String encryptKey, String password, String metadata, boolean expected){
-		boolean res = kh.updateKeychain(directoryEntryId, name, encryptKey, password, metadata);
-		System.out.printf("Updating keychain %d (%s,%s,%s,%s) %s%n", directoryEntryId, name, encryptKey, password, metadata, res ? "successful" : "failed");
+	public static void testUpdateKeychain(KeychainHandler kh, String username, int directoryEntryId, String name, String data, boolean expected){
+		boolean res = kh.updateKeychain(username, directoryEntryId, name, data);
+		System.out.printf("Updating keychain %d (%s,%s,%s) %s%n", directoryEntryId, username, name, data, res ? "successful" : "failed");
 		assertTrue(res == expected);
 	}
 	
@@ -63,18 +61,13 @@ public class KeychainHandlerTest {
 		
 		String username = "mc";
 		boolean res = ah.addAccount(username, "cs5431", "mc@cornell.edu", "m", "c");
-		Directory dir = db.getDirectory(username);
-		if (dir != null){
-			int dirId = dir.getDirectoryId();
-			System.out.println("directoryId: " + dirId);
-		}
 
-		int id1 = testAddKeychain(kh, username, "netflix", "password", true);
-		testUpdateKeychain(kh, id1, null, null, "netflixpwd", null, true);
-		int id2 = testAddKeychain(kh, username, "fb", "123456", true); 
+		int id1 = testAddKeychain(kh, username, "netflix", true);
+		testUpdateKeychain(kh, username, id1, null, "test1", true);
+		int id2 = testAddKeychain(kh, username, "fb", true);
 		testRemoveKeychain(kh, id2, true);
-		
-		List<DirectoryAndKey> list = kh.getKeychains(username);
+
+		List<ServerKeychain> list = kh.getKeychains(username);
 		assertEquals(1, list.size());
 		System.out.println(list);
 		

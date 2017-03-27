@@ -4,6 +4,8 @@ import org.junit.Before;
 import postit.client.controller.RequestMessenger;
 
 import org.junit.Test;
+
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 import org.json.JSONArray;
@@ -25,23 +27,23 @@ public class RequestHandlerTest {
 		assertTrue(js.getString("status").equals("success") == expected);
 	}
 
-	private static void testAddKeychain(RequestHandler rh, Account account, String name, String pwd, boolean expected){
+	private static long testAddKeychain(RequestHandler rh, Account account, String name, String pwd, boolean expected){
 		System.out.printf("Adding keychain to %s: (%s, %s)%n", account, name, pwd);
-		String req = RequestMessenger.createAddKeychainsMessage(account, name, "haha", pwd, "nothing");
+		String req = RequestMessenger.createAddKeychainsMessage(account, name, pwd);
 		String res = rh.handleRequest(req);
 		System.out.println(res);
 		JSONObject js = new JSONObject(res);
 		assertTrue(js.getString("status").equals("success") == expected);
+		return js.getJSONObject("keychain").getLong("directoryEntryId");
 	}
 
-	private static void testUpdateKeychain(RequestHandler rh, Account account, String name,
-										   String encryptKey, String password, String metadata, boolean expected){
-		System.out.printf("Updating keychain to %s (%s,%s,%s,%s)%n", account, name, encryptKey, password, metadata);
-		String req = RequestMessenger.createUpdateKeychainMessage(account, name, encryptKey, password, metadata);
+	private static void testUpdateKeychain(RequestHandler rh, Account account, long id, String name, String encryptKey, boolean expected){
+		System.out.printf("Updating keychain to %s (%d,%s,%s)%n", account, id, name, encryptKey);
+		String req = RequestMessenger.createUpdateKeychainMessage(account, id, name, encryptKey);
 		String res = rh.handleRequest(req);
 		System.out.println(res);
 		JSONObject js = new JSONObject(res);
-		assertTrue(js.getString("status").equals("success") == expected);
+		assertThat(js.getString("status").equals("success"), is(expected));
 	}
 
 	private static void testGetKeychains(RequestHandler rh, Account account, int expectedNumKeychains){
@@ -55,13 +57,13 @@ public class RequestHandlerTest {
 		assertEquals(expectedNumKeychains, ja.length());
 	}
 
-	private static void testRemoveKeychain(RequestHandler rh, Account account, String name, boolean expected){
-		System.out.printf("Removing keychain %s from %s%n", name, account);
-		String req = RequestMessenger.createRemoveKeychainMessage(account, name);
+	private static void testRemoveKeychain(RequestHandler rh, Account account, long id, boolean expected){
+		System.out.printf("Removing keychain %d from %s%n", id, account);
+		String req = RequestMessenger.createRemoveKeychainMessage(account, id);
 		String res = rh.handleRequest(req);
 		System.out.println(res);
 		JSONObject js = new JSONObject(res);
-		assertTrue(js.getString("status").equals("success") == expected);
+		assertThat(js.getString("status").equals("success"), is(expected));
 	}
 
 	@Before
@@ -85,13 +87,13 @@ public class RequestHandlerTest {
 		Account account = new Account("ning", "5431");
 
 		testGetKeychains(rh, account, 2);
-		testAddKeychain(rh, account, "fb", "1234", true);
-		testUpdateKeychain(rh, account, "fb", "lala", "4321", "nothing", true);
-		testUpdateKeychain(rh, account, "net", "lala", "4321", "nothing", false);
+		long fbId = testAddKeychain(rh, account, "fb", "1234", true);
+		testUpdateKeychain(rh, account, fbId, "lala", "4321", true);
+		testUpdateKeychain(rh, account, -1, "lala", "4321", false);
  		testGetKeychains(rh, account, 3);
 		
-		testRemoveKeychain(rh, account, "net", false);
-		testRemoveKeychain(rh, account, "fb", true);
+		testRemoveKeychain(rh, account, -1, false);
+		testRemoveKeychain(rh, account, fbId, true);
 		testGetKeychains(rh, account, 2);
 	}
 

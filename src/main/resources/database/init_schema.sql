@@ -16,7 +16,7 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `account`
+-- Table structure for table `serverAccount`
 --
 
 DROP TABLE IF EXISTS `account`;
@@ -47,33 +47,6 @@ INSERT INTO `account` VALUES ('ning','opYQbweT2JlGwFuSQh0ldvxNy651BT/jUbr8CLhvwf
 UNLOCK TABLES;
 
 --
--- Table structure for table `directory`
---
-
-DROP TABLE IF EXISTS `directory`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `directory` (
-  `user_name` varchar(25) NOT NULL,
-  `own_path` varchar(45) NOT NULL,
-  `directory_id` int(11) NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`directory_id`),
-  UNIQUE KEY `user_name_UNIQUE` (`user_name`),
-  UNIQUE KEY `directory_id_UNIQUE` (`directory_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `directory`
---
-
-LOCK TABLES `directory` WRITE;
-/*!40000 ALTER TABLE `directory` DISABLE KEYS */;
-INSERT INTO `directory` VALUES ('ning','.',1);
-/*!40000 ALTER TABLE `directory` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `directory_entry`
 --
 
@@ -82,14 +55,10 @@ DROP TABLE IF EXISTS `directory_entry`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `directory_entry` (
   `directory_entry_id` int(11) NOT NULL AUTO_INCREMENT,
+  `owner_user_name` VARCHAR(25) NOT NULL,
   `name` varchar(45) NOT NULL,
-  `encryption_key` varchar(45) NOT NULL,
-  `mac` varchar(45) DEFAULT NULL,
-  `permission` varchar(45) DEFAULT NULL,
-  `nonce` varchar(45) DEFAULT NULL,
-  `directory_id` int(11) NOT NULL,
-  PRIMARY KEY (`directory_entry_id`),
-  UNIQUE KEY `directory_entry_id_UNIQUE` (`directory_entry_id`)
+  `data` MEDIUMTEXT,
+  PRIMARY KEY (`directory_entry_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -99,35 +68,10 @@ CREATE TABLE `directory_entry` (
 
 LOCK TABLES `directory_entry` WRITE;
 /*!40000 ALTER TABLE `directory_entry` DISABLE KEYS */;
-INSERT INTO `directory_entry` VALUES (2,'pwd','lalalalala','la','0','lala',1),(3,'pwd2','hahahaha','ha','0','haha',1);
+INSERT INTO `directory_entry` VALUES (1, 'ning', 'test1', 'bar'), (2, 'ning', 'test2', 'foo');
 /*!40000 ALTER TABLE `directory_entry` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
--- Table structure for table `keychain`
---
-
-DROP TABLE IF EXISTS `keychain`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `keychain` (
-  `directory_entry_id` int(11) NOT NULL DEFAULT '-1',
-  `password` varchar(45) NOT NULL,
-  `metadata` varchar(45) NOT NULL,
-  PRIMARY KEY (`directory_entry_id`),
-  UNIQUE KEY `directory_entry_id_UNIQUE` (`directory_entry_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `keychain`
---
-
-LOCK TABLES `keychain` WRITE;
-/*!40000 ALTER TABLE `keychain` DISABLE KEYS */;
-INSERT INTO `keychain` VALUES (2,'5431','nothing'),(3,'5430','something');
-/*!40000 ALTER TABLE `keychain` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

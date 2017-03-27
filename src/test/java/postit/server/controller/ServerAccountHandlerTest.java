@@ -17,7 +17,7 @@ import postit.server.database.TestH2;
  * @author Ning
  *
  */
-public class AccountHandlerTest {
+public class ServerAccountHandlerTest {
     Database database;
     DatabaseController db;
     AccountHandler ah;
