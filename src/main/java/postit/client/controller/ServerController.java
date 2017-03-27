@@ -2,10 +2,12 @@ package postit.client.controller;
 
 import postit.client.keychain.Account;
 import postit.client.keychain.DirectoryEntry;
+import postit.server.model.ServerKeychain;
 import postit.shared.communication.Client;
-import postit.shared.model.DirectoryAndKey;
 
 import javax.json.*;
+import javax.json.stream.JsonParsingException;
+import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Logger;
@@ -204,7 +206,14 @@ public class ServerController {
         Optional<JsonObject> response = clientToServer.send(req);
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
-            return Optional.ofNullable(response.get().getJsonObject("keychain"));
+            String keychainString = new String(Base64.getDecoder().decode(response.get().getString("keychain")));
+
+            try {
+                return Optional.ofNullable(Json.createReader(new StringReader(keychainString)).readObject());
+            } catch (JsonException | IllegalStateException e) {
+                LOGGER.warning("Failed to parse server keychain response.");
+                return Optional.empty();
+            }
         } else {
             return Optional.empty();
         }
@@ -217,13 +226,19 @@ public class ServerController {
             return false;
         }
 
-        // TODO fill this in?
-        String req = RequestMessenger.createAddKeychainsMessage(directoryController.getAccount(), entry.name, entry.getEncryptionKey().toString(), "", "");
+        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().build().toString().getBytes());
+
+        String req = RequestMessenger.createAddKeychainsMessage(
+                directoryController.getAccount(),
+                entry.name,
+                encodedKeychainEntryObject
+        );
+
         Optional<JsonObject> response = clientToServer.send(req);
 
-        if (response.isPresent()) {
-            DirectoryAndKey dak = DirectoryAndKey.fromJsonObject(response.get().getJsonObject("keychain"));
-            long id = dak.getDirectoryEntryId();
+        if (response.isPresent() && response.get().getString("status").equals("success")) {
+            ServerKeychain serverKeychain = new ServerKeychain(response.get().getJsonObject("keychain"));
+            long id = serverKeychain.getDirectoryEntryId();
 
             directoryController.setKeychainOnlineId(entry, id);
 
@@ -245,8 +260,16 @@ public class ServerController {
             return false;
         }
 
+        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().build().toString().getBytes());
+
         // TODO fill this in?
-        String req = RequestMessenger.createUpdateKeychainMessage(directoryController.getAccount(), entry.name, keychainEntryObject.get().build().toString(), "", "");
+        String req = RequestMessenger.createUpdateKeychainMessage(
+                directoryController.getAccount(),
+                entry.serverid,
+                entry.name,
+                encodedKeychainEntryObject
+        );
+
         return sendAndCheckIfSuccess(req);
     }
 

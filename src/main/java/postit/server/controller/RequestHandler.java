@@ -9,11 +9,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
 
-import postit.client.controller.ServerController;
-import postit.server.model.Account;
+import postit.server.model.ServerAccount;
+import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.*;
-import postit.shared.model.DirectoryAndKey;
 
 /**
  * 
@@ -97,23 +96,26 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		case ADD:
 			switch(asset){
 			case ACCOUNT:
-				Account account = new Account(obj.getString("username"), obj.getString("password"), obj.getString("email"),
+				ServerAccount serverAccount = new ServerAccount(obj.getString("username"), obj.getString("password"), obj.getString("email"),
 						obj.getString("firstname"), obj.getString("lastname")); 
-				if (ah.addAccount(account)) {
-					LOGGER.info("Success: Created account for " + account.getUsername());
-					return MessagePackager.createResponse(true, account.getUsername(), "", asset, account); 
+				if (ah.addAccount(serverAccount)) {
+					LOGGER.info("Success: Created serverAccount for " + serverAccount.getUsername());
+					return MessagePackager.createResponse(true, serverAccount.getUsername(), "", asset, serverAccount);
 				}
 				else
-					return MessagePackager.createResponse(false, "", "Failed to create new account", asset, null);
+					return MessagePackager.createResponse(false, "", "Failed to create new serverAccount", asset, null);
 			case KEYCHAIN:
-				DirectoryAndKey dak = new DirectoryAndKey(obj.getInt("directoryEntryId"), obj.getString("name"), 
-						obj.getString("encryptionKey"), obj.getInt("directoryId"), obj.getString("password"), obj.getString("metadata"));
-				JSONObject js = kh.createKeychain(username, dak);
+				JSONObject js = kh.createKeychain(username, obj.getString("name"));
 				if (js.getString("status").equals("success")){
-					LOGGER.info("Success: Created directory " + dak.getName() + " for " + username);
-					dak.setDirectoryEntryId(js.getInt("directoryEntryId")); 
-					dak.setDirectoryId(js.getInt("directoryId"));
-					return MessagePackager.createResponse(true, username, "", asset, dak);
+					ServerKeychain keychain = new ServerKeychain(
+							js.getInt("directoryEntryId"),
+							username,
+							obj.getString("name"),
+							""
+					);
+
+					LOGGER.info("Success: Created directory " + keychain.getName() + " for " + username);
+					return MessagePackager.createResponse(true, username, "", asset, keychain);
 				}
 				else 
 					return js.toString();
@@ -130,24 +132,24 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		case GET:
 			switch(asset){
 			case ACCOUNT:
-				if (! username.equals(obj.getString("username")))
-					return MessagePackager.createResponse(false, username, "Account information has wrong username", asset, null);
-				Account account = ah.getAccount(username);
-				if (account != null)
-					return MessagePackager.createResponse(true, username, "", asset, account);
+				if (!username.equals(obj.getString("username")))
+					return MessagePackager.createResponse(false, username, "ServerAccount information has wrong username", asset, null);
+				ServerAccount serverAccount = ah.getAccount(username);
+				if (serverAccount != null)
+					return MessagePackager.createResponse(true, username, "", asset, serverAccount);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to get account information of " + username, asset, null);
+					return MessagePackager.createResponse(false, username, "Unable to get serverAccount information of " + username, asset, null);
 			case KEYCHAIN:
-				int deId = obj.getInt("directoryEntryId");
-				DirectoryAndKey dak;
-				if (deId != -1) dak = kh.getKeychain(deId);
-				else dak = kh.getKeychain(username, obj.getString("name"));
-				if (dak != null)
-					return MessagePackager.createResponse(true, username, "", asset, dak);
+				int keychainId = obj.getInt("directoryEntryId");
+				ServerKeychain keychain;
+				if (keychainId != -1) keychain = kh.getKeychain(username, keychainId);
+				else keychain = kh.getKeychain(username, obj.getString("name"));
+				if (keychain != null)
+					return MessagePackager.createResponse(true, username, "", asset, keychain);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to get keychain information of " + deId, asset, null);
+					return MessagePackager.createResponse(false, username, "Unable to get keychain information of " + keychainId, asset, null);
 			case KEYCHAINS:
-				List<DirectoryAndKey> list = kh.getKeychains(username);
+				List<ServerKeychain> list = kh.getKeychains(username);
 				if (list != null)
 					return MessagePackager.createResponse(true, username, "", asset, list);
 				else
@@ -160,21 +162,20 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			switch(asset){
 			case ACCOUNT:
 				if (! username.equals(obj.getString("username")))
-					return MessagePackager.createResponse(false, username, "Account information has wrong username", asset, null);
+					return MessagePackager.createResponse(false, username, "ServerAccount information has wrong username", asset, null);
 				if (ah.removeAccount(username, obj.getString("password"))) 
 					return MessagePackager.createResponse(true, username, "", asset, null);
 				else
 					return MessagePackager.createResponse(false, username, "Unable to remove account " + username, asset, null);
 			case KEYCHAIN:
-				int deId;
-				if (! obj.has("directoryEntryId") || obj.getInt("directoryEntryId") == -1){
-					DirectoryAndKey dak = kh.getKeychain(username, obj.getString("name"));
-					if (dak == null)
-						return MessagePackager.createResponse(false, username, "No keychain has name " + obj.getString("name"), asset, null);
-					deId = dak.getDirectoryEntryId();
-				}
-				else
+				long deId;
+
+				if (!obj.has("directoryEntryId") || obj.getInt("directoryEntryId") == -1){
+					return MessagePackager.createResponse(false, username, "Must provide id to remove keychain", asset, null);
+				} else {
 					deId = obj.getInt("directoryEntryId");
+				}
+
 				if (kh.removeKeychain(deId))
 					return MessagePackager.createResponse(true, username, "", asset, null);
 				else
@@ -185,38 +186,27 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		case UPDATE:
 			switch(asset){
 			case ACCOUNT:
-				Account account = new Account(obj.getString("username"), obj.getString("password"), obj.getString("email"),
+				ServerAccount serverAccount = new ServerAccount(obj.getString("username"), obj.getString("password"), obj.getString("email"),
 						obj.getString("firstname"), obj.getString("lastname"));
-				if (ah.updateAccount(account)) 
-					return MessagePackager.createResponse(true, username, "", asset, account);
+				if (ah.updateAccount(serverAccount))
+					return MessagePackager.createResponse(true, username, "", asset, serverAccount);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to update account information of " + account.getUsername(), 
+					return MessagePackager.createResponse(false, username, "Unable to update serverAccount information of " + serverAccount.getUsername(),
 							asset, null);
 			case KEYCHAIN:
-				DirectoryAndKey dak = new DirectoryAndKey();
-				if (obj.has("directoryId")) dak.setDirectoryId(obj.getInt("directoryId"));
-				if (obj.has("directoryEntryId")) dak.setDirectoryEntryId(obj.getInt("directoryEntryId"));
-				if (obj.has("name")) dak.setName(obj.getString("name"));
-				if (obj.has("encryptionKey")) dak.setEncryptionKey(obj.getString("encryptionKey"));
-				if (obj.has("password")) dak.setPassword(obj.getString("password"));
-				if (obj.has("metadata")) dak.setMetadata(obj.getString("metadata"));
-				
-				if (dak.getDirectoryId() == -1){
-					if (dak.getDirectoryEntryId() == -1){
-						DirectoryAndKey dak2 = kh.getKeychain(username, obj.getString("name"));
-						if (dak2 == null)
-							return MessagePackager.createResponse(false, username, "No keychain has name " + obj.getString("name"), asset, dak);
-						dak.setDirectoryEntryId(dak2.getDirectoryEntryId());
-					}
-					if (! kh.updateKeychain(dak))
-						return MessagePackager.createResponse(false, username, "Unable to update keychain information of " + dak.getName(), asset, dak);
-					return MessagePackager.createResponse(true, username, "", asset, dak);
+				ServerKeychain keychain = new ServerKeychain();
+				if (obj.has("ownerUsername")) keychain.setOwnerUsername(obj.getString("ownerUsername"));
+				if (obj.has("directoryEntryId")) keychain.setDirectoryEntryId(obj.getInt("directoryEntryId"));
+				if (obj.has("name")) keychain.setName(obj.getString("name"));
+				if (obj.has("data")) keychain.setData(obj.getString("data"));
+
+				if (keychain.getDirectoryEntryId() == -1){
+					return MessagePackager.createResponse(false, username, "Keychain lacks server id", asset, keychain);
 				}
-				else if (kh.updateKeychain(dak)) 
-					return MessagePackager.createResponse(true, username, "", asset, dak);
+				else if (kh.updateKeychain(username, keychain))
+					return MessagePackager.createResponse(true, username, "", asset, keychain);
 				else 
-					return MessagePackager.createResponse(false, username, "Unable to update keychain information of " + dak.getName(), 
-							asset, null);
+					return MessagePackager.createResponse(false, username, "Unable to update keychain information of " + keychain.getName(), asset, null);
 			default:
 				break;
 			}
