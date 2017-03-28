@@ -68,6 +68,8 @@ public class RequestHandlerTest {
 
 	@Before
 	public void setUp() throws Exception {
+		assertThat(Crypto.init(false), is(true));
+
 		database = new TestH2();
 		database.initDatabase();
 
