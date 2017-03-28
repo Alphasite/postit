@@ -2,14 +2,12 @@ package postit.client.keychain;
 
 import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
-import postit.client.backend.KeyService;
 
 import javax.crypto.SecretKey;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -110,4 +108,6 @@ public class DirectoryEntry {
     public void setNonce(byte[] nonce) {
         this.nonce = nonce.clone();
     }
+
+    public void setName(String name){ this.name = name;}
 }

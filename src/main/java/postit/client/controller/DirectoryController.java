@@ -1,13 +1,13 @@
 package postit.client.controller;
 
 import postit.client.backend.BackingStore;
+import postit.client.backend.KeyService;
 import postit.client.keychain.*;
 import postit.shared.Crypto;
-import postit.client.backend.KeyService;
 
 import javax.crypto.SecretKey;
-import javax.json.*;
-import java.security.PublicKey;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
@@ -82,6 +82,17 @@ public class DirectoryController {
     public boolean updateMetadataEntry(Password password, String name, String entry) {
         password.metadata.put(name, entry);
         return store.save();
+    }
+
+    public boolean renameKeychain(Keychain keychain, String name) {
+        Optional<DirectoryEntry> directoryEntry = this.directory.getKeychains().stream()
+                .filter(entry -> entry.name.equals(keychain.getName()))
+                .findAny();
+        if (directoryEntry.isPresent()) {
+            directoryEntry.get().setName(name);
+            return store.save();
+        }
+        return false;
     }
 
     public boolean removeMetadataEntryIfExists(Password password, String name) {

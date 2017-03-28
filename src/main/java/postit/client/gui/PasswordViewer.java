@@ -56,6 +56,7 @@ public class PasswordViewer {
             frame.dispose();
             kv.refreshTabbedPanes();
         });
+
     }
 
 

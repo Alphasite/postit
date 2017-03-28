@@ -166,6 +166,18 @@ public class KeychainViewer {
         });
         keychainMenu.add(menuItem);
 
+        keychainMenu.addSeparator();
+
+        menuItem = new JMenuItem("Rename Keychain");
+        menuItem.addActionListener(e -> {
+            String newName = JOptionPane.showInputDialog(frame,"New keychain name:","Update name",JOptionPane.PLAIN_MESSAGE);
+            if (newName!=null){
+                directoryController.renameKeychain(getActiveKeychain(),newName);
+                refreshTabbedPanes();
+            }
+        });
+        keychainMenu.add(menuItem);
+
         delKey = new JMenuItem("Delete Keychain");
         delKey.addActionListener(e -> {
             int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
@@ -177,7 +189,6 @@ public class KeychainViewer {
         });
         keychainMenu.add(delKey);
 
-        keychainMenu.addSeparator();
 
         menuItem = new JMenuItem("Keychain Permissions");
         menuItem.setEnabled(false);
@@ -203,6 +214,11 @@ public class KeychainViewer {
     }
 
     void refreshTabbedPanes() {
+        int activeKeychainidx = tabbedPane.getSelectedIndex();
+        if (activeKeychainidx==-1 && tabbedPane.getTabCount()>0){
+            activeKeychainidx=0;
+        }
+
         tabbedPane.removeAll();
         for (DirectoryEntry entry : this.keychains) {
             Optional<Keychain> keychain = entry.readKeychain();
@@ -222,7 +238,9 @@ public class KeychainViewer {
             addPass.setEnabled(true);
             delKey.setEnabled(true);
         }
-
+        if(activeKeychainidx>-1 && activeKeychainidx<tabbedPane.getTabCount()){
+            tabbedPane.setSelectedIndex(activeKeychainidx);
+        }
     }
 
     private void addPanes(Keychain k) {
