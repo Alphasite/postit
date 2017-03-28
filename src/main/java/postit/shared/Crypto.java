@@ -1,16 +1,21 @@
 package postit.shared;
 
+import org.bouncycastle.crypto.AsymmetricBlockCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.generators.SCrypt;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.CipherOutputStream;
 import org.bouncycastle.crypto.modes.AEADBlockCipher;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -26,6 +31,7 @@ import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.*;
 import java.security.cert.Certificate;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -142,7 +148,7 @@ public class Crypto {
         return key.getEncoded();
     }
 
-    public static Optional<byte[]> encryptJsonObject(SecretKey key, byte[] nonce, JsonObject object) {
+    public static Optional<byte[]> encryptJsonObject(Key key, byte[] nonce, JsonObject object) {
         AEADBlockCipher cipher = new GCMBlockCipher(new AESEngine());
         KeyParameter keyParameter = new KeyParameter(key.getEncoded());
         AEADParameters parameters = new AEADParameters(keyParameter, 128, nonce);
@@ -166,7 +172,7 @@ public class Crypto {
         return Optional.of(baos.toByteArray());
     }
 
-    public static Optional<JsonObject> decryptJsonObject(SecretKey key, byte[] nonce, byte[] bytes) {
+    public static Optional<JsonObject> decryptJsonObject(Key key, byte[] nonce, byte[] bytes) {
         AEADBlockCipher cipher = new GCMBlockCipher(new AESEngine());
         KeyParameter keyParameter = new KeyParameter(key.getEncoded());
         AEADParameters parameters = new AEADParameters(keyParameter, 128, nonce);
@@ -220,12 +226,66 @@ public class Crypto {
         KeyPairGenerator generator = null;
         try {
             generator = KeyPairGenerator.getInstance("RSA", "BC");
-            generator.initialize(256, random);
+            generator.initialize(4096, random);
             KeyPair pair = generator.generateKeyPair();
             return Optional.of(pair);
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
             LOGGER.severe("FAILED TO LOAD RSA: " + e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    public static Optional<byte[]> wrapKey(Key key, PublicKey publicKey) {
+        try {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", "BC");
+            // encrypt the plaintext using the public key
+            cipher.init(Cipher.WRAP_MODE, publicKey);
+            return Optional.of(cipher.wrap(key));
+        } catch (Exception e) {
+            LOGGER.severe("Failed to encrypt data using public key: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Key> unwrapKey(byte[] key, PrivateKey privateKey) {
+        try {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", "BC");
+            // encrypt the plaintext using the public key
+            cipher.init(Cipher.UNWRAP_MODE, privateKey);
+            return Optional.of(cipher.unwrap(key, "AES", Cipher.SECRET_KEY));
+        } catch (Exception e) {
+            LOGGER.severe("Failed to encrypt data using public key: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public static String serialiseKeypair(KeyPair keyPair) {
+        String keypair;
+        try (
+                ByteArrayOutputStream b = new ByteArrayOutputStream();
+                ObjectOutputStream o =  new ObjectOutputStream(b)
+        ) {
+            o.writeObject(keyPair);
+            byte[] res = b.toByteArray();
+            keypair = Base64.getEncoder().encodeToString(res);
+        } catch (IOException e) {
+            LOGGER.severe("HIT ERROR STATE FAILED TO SERIALIZE key pair: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return keypair;
+    }
+
+    public static KeyPair deserialiseKeypair(String keypair) {
+        try {
+            try (
+                    ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(keypair));
+                    ObjectInputStream oi = new ObjectInputStream(bais)
+            ) {
+                return (KeyPair) oi.readObject();
+            }
+        } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            LOGGER.severe("HIT ERROR STATE FAILED TO DESERIALIZE key pair: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 

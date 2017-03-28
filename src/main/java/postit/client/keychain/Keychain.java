@@ -21,11 +21,15 @@ public class Keychain {
         this.initFrom(object);
     }
 
+    public void initFrom(List<Password> passwords) {
+        this.passwords = new ArrayList<>(passwords);
+    }
+
     public void initFrom(JsonObject object) {
         this.passwords = new ArrayList<>();
         JsonArray passwordArray = object.getJsonArray("passwords");
         for (int i = 0; i < passwordArray.size(); i++) {
-            passwords.add(new Password(passwordArray.getJsonObject(i), this));
+            this.passwords.add(new Password(passwordArray.getJsonObject(i), this));
         }
     }
 

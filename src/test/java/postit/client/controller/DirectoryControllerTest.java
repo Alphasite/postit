@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -578,10 +579,17 @@ public class DirectoryControllerTest {
     public void updateLocalIfIsOlder() throws Exception {
         controller.createKeychain("old");
 
+        SecretKey expectedPasswordForTest = Crypto.secretKeyFromBytes("old".getBytes());
         controller.createPassword(
                 controller.getKeychain("old").get(),
                 "test",
-                Crypto.secretKeyFromBytes("old".getBytes())
+                expectedPasswordForTest
+        );
+
+        controller.createPassword(
+                controller.getKeychain("old").get(),
+                "json",
+                Crypto.secretKeyFromBytes("DEADBEEF".getBytes())
         );
 
         DirectoryEntry entry1 = new DirectoryEntry(
@@ -595,8 +603,9 @@ public class DirectoryControllerTest {
 
         entry1.serverid = 5L;
 
+        SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
         Keychain keychain1 = new Keychain(entry1);
-        keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
+        keychain1.passwords.add(new Password("json", expectedPasswordForJson, keychain1));
 
         DirectoryEntry entry = controller.getKeychains().get(0);
 
@@ -613,19 +622,37 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
         assertThat(oldEntry.serverid, is(5L));
-        assertThat(oldKeychain.passwords.size(), is(1));
-        assertThat(oldKeychain.passwords.get(0).identifier, is("json"));
-        assertThat(oldKeychain.passwords.get(0).getPasswordAsString(), is("json"));
+        assertThat(oldKeychain.passwords.size(), is(2));
+        for (Password password : oldKeychain.passwords) {
+            assertThat(password.identifier, anyOf(is("json"), is("test")));
+            switch (password.identifier) {
+                case "json":
+                    assertThat(password.getPasswordAsString(), equalTo(new String(Crypto.secretKeyToBytes(expectedPasswordForJson))));
+                    break;
+                case "test":
+                    assertThat(password.getPasswordAsString(), equalTo(new String(Crypto.secretKeyToBytes(expectedPasswordForTest))));
+                    break;
+            }
+
+        }
+
     }
 
     @Test
     public void updateLocalIfIsOlderPersistent() throws Exception {
         controller.createKeychain("old");
 
+        SecretKey expectedPasswordForTest = Crypto.secretKeyFromBytes("old".getBytes());
         controller.createPassword(
                 controller.getKeychain("old").get(),
                 "test",
-                Crypto.secretKeyFromBytes("old".getBytes())
+                expectedPasswordForTest
+        );
+
+        controller.createPassword(
+                controller.getKeychain("old").get(),
+                "json",
+                Crypto.secretKeyFromBytes("DEADBEEF".getBytes())
         );
 
         DirectoryEntry entry1 = new DirectoryEntry(
@@ -639,8 +666,9 @@ public class DirectoryControllerTest {
 
         entry1.serverid = 5L;
 
+        SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
         Keychain keychain1 = new Keychain(entry1);
-        keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
+        keychain1.passwords.add(new Password("json", expectedPasswordForJson, keychain1));
 
         DirectoryEntry entry = controller.getKeychains().get(0);
 
@@ -659,9 +687,19 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
         assertThat(oldEntry.serverid, is(5L));
-        assertThat(oldKeychain.passwords.size(), is(1));
-        assertThat(oldKeychain.passwords.get(0).identifier, is("json"));
-        assertThat(oldKeychain.passwords.get(0).getPasswordAsString(), is("json"));
+        assertThat(oldKeychain.passwords.size(), is(2));
+        for (Password password : oldKeychain.passwords) {
+            assertThat(password.identifier, anyOf(is("json"), is("test")));
+            switch (password.identifier) {
+                case "json":
+                    assertThat(password.getPasswordAsString(), equalTo(new String(Crypto.secretKeyToBytes(expectedPasswordForJson))));
+                    break;
+                case "test":
+                    assertThat(password.getPasswordAsString(), equalTo(new String(Crypto.secretKeyToBytes(expectedPasswordForTest))));
+                    break;
+            }
+
+        }
     }
 
     @Test

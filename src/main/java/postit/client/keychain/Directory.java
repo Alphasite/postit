@@ -2,11 +2,17 @@ package postit.client.keychain;
 
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
+import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
+import java.io.*;
+import java.security.KeyPair;
 import java.util.*;
 import java.util.logging.Logger;
+
+import static postit.shared.Crypto.deserialiseKeypair;
+import static postit.shared.Crypto.serialiseKeypair;
 
 /**
  * Created by nishadmathur on 23/2/17.
@@ -32,7 +38,6 @@ public class Directory {
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
-
         this.account = new Account(object.getJsonObject("account"));
 
         JsonArray keychainArray = object.getJsonArray("keychains");

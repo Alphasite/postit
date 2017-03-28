@@ -8,10 +8,12 @@ import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.json.JsonObject;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyPair;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -40,6 +42,10 @@ public class BackingStore {
 
     public Path getContainer() {
         return getVolume().resolve("container.json");
+    }
+
+    private Path getKeyPairPath() {
+        return getVolume().resolve("keypair");
     }
 
     public boolean init() {
@@ -95,6 +101,25 @@ public class BackingStore {
             return Crypto.writeJsonObjectToFile(getContainer(), container.dump().build());
         } else {
             return true;
+        }
+    }
+
+    public boolean writeKeypair(KeyPair keyPair) {
+        try  {
+            Files.write(getKeyPairPath(), Crypto.serialiseKeypair(keyPair).getBytes());
+            return true;
+        } catch (IOException e) {
+            LOGGER.severe("Failed to save keypair... " + e.getMessage());
+            return false;
+        }
+    }
+
+    public Optional<KeyPair> readKeypair() {
+        try {
+            return Optional.of(Crypto.deserialiseKeypair(new String(Files.readAllBytes(getKeyPairPath()))));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Optional.empty();
         }
     }
 

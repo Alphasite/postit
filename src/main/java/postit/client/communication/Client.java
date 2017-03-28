@@ -1,27 +1,13 @@
-package postit.shared.communication;
+package postit.client.communication;
 
-import org.json.JSONObject;
-import org.json.JSONWriter;
-import postit.client.keychain.Account;
-import postit.server.controller.RequestHandler;
-import postit.server.database.Database;
 import postit.shared.Crypto;
 
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.stream.JsonParsingException;
-import javax.net.SocketFactory;
-import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
-import java.net.ConnectException;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
-import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 

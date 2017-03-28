@@ -1,5 +1,6 @@
 package postit.client.gui;
 
+import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
@@ -8,8 +9,10 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import javax.security.auth.DestroyFailedException;
 import javax.swing.*;
+import java.security.KeyPair;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Created by nishadmathur on 27/2/17.
@@ -21,9 +24,14 @@ public class GUIKeyService implements KeyService {
     private Instant retrieved;
 
     private ServerController sc;
+    private BackingStore backingStore;
 
     public GUIKeyService(ServerController sc) {
         this.sc = sc;
+    }
+
+    public void setBackingStore(BackingStore backingStore) {
+        this.backingStore = backingStore;
     }
 
     @Override
@@ -91,8 +99,8 @@ public class GUIKeyService implements KeyService {
 
     @Override
     public Account getAccount() {
-
         LoginPanel lp = new LoginPanel();
+
         while (true) {
             int result = JOptionPane.showConfirmDialog(null, lp,
                     "Login/Registration", JOptionPane.OK_CANCEL_OPTION);
@@ -101,11 +109,22 @@ public class GUIKeyService implements KeyService {
                     // LOGIN
                     String username = lp.l_accountfield.getText();
                     String password = String.valueOf(lp.l_passfield.getPassword());
-                    //if (sc.authenticate(username, Crypto.secretKeyFromBytes(password.getBytes()))) {
 
                     Account newAccount = new Account(username, password);
+
                     if (sc.authenticate(newAccount)) {
-                        return newAccount;
+                        JOptionPane.showConfirmDialog(
+                                null,
+                                "Please ensure your keypair is in the data directory. Select any option to proceed"
+                        );
+
+                        Optional<KeyPair> keyPair = backingStore.readKeypair();
+                        if (keyPair.isPresent()) {
+                            newAccount.setKeyPair(keyPair.get());
+                            return newAccount;
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Failed to load keypair.");
+                        }
                     } else {
                         JOptionPane.showMessageDialog(null, "Login credentials invalid");
                     }
@@ -123,8 +142,18 @@ public class GUIKeyService implements KeyService {
                     if (pass1.equals(pass2) && LoginPanel.isValidEmailAddress(email)) {
                         Account newAccount = new Account(username, pass1);
                         if (sc.addUser(newAccount, email, first, last)) {
-                            return newAccount;
-                        }
+                            if (backingStore.writeKeypair(newAccount.getKeyPair())) {
+                                JOptionPane.showMessageDialog(
+                                    null,
+                                    "Generated a new keypair and saved it to the disk. Please transfer this " +
+                                            "to a memory stick and store it in a safe, or other secure location as you " +
+                                            "will need it to login at new locations."
+                                );
+
+                                return newAccount;
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
+                            }                        }
                     } else if (!pass1.equals(pass2)) {
                         JOptionPane.showMessageDialog(null, "Passwords do not match");
                     } else {

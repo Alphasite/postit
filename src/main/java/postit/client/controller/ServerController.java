@@ -2,11 +2,11 @@ package postit.client.controller;
 
 import postit.client.keychain.Account;
 import postit.client.keychain.DirectoryEntry;
+import postit.client.keychain.DirectoryKeychain;
 import postit.server.model.ServerKeychain;
-import postit.shared.communication.Client;
+import postit.client.communication.Client;
 
 import javax.json.*;
-import javax.json.stream.JsonParsingException;
 import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.*;
@@ -116,12 +116,12 @@ public class ServerController {
             }
 
             for (Long serverid : keychainsToDownload) {
-                Optional<JsonObject> directoryKeychainObject = getDirectoryKeychainObject(serverid);
+                Optional<DirectoryKeychain> directoryKeychain = getDirectoryKeychainObject(directoryController.getAccount(), serverid);
 
-                if (directoryKeychainObject.isPresent()) {
+                if (directoryKeychain.isPresent()) {
                     if (!directoryController.createKeychain(
-                            directoryKeychainObject.get().getJsonObject("directory"),
-                            directoryKeychainObject.get().getJsonObject("keychain") // TODO encrypt decrypt??
+                            directoryKeychain.get().entry,
+                            directoryKeychain.get().keychain
                     )) {
                         LOGGER.warning("Failed to merge keychain (" + serverid + ") merge keychain.");
                         return;
@@ -139,17 +139,17 @@ public class ServerController {
                 }
 
                 if (keychainsToUpdate.contains(entry.serverid)) {
-                    Optional<JsonObject> directoryKeychainObject = getDirectoryKeychainObject(entry.serverid);
+                    Optional<DirectoryKeychain> directoryKeychain = getDirectoryKeychainObject(directoryController.getAccount(), entry.serverid);
 
-                    if (!directoryKeychainObject.isPresent()) {
+                    if (!directoryKeychain.isPresent()) {
                         LOGGER.warning("Failed to fetch keychain for update (" + entry.name + ").");
                         return;
                     }
 
                     directoryController.updateLocalIfIsOlder(
                             entry,
-                            directoryKeychainObject.get().getJsonObject("directory"),
-                            directoryKeychainObject.get().getJsonObject("keychain") // TODO encrypt decrypt??
+                            directoryKeychain.get().entry,
+                            directoryKeychain.get().keychain
                     );
 
                     if (!setKeychain(entry)) {
@@ -211,15 +211,14 @@ public class ServerController {
         }
     }
 
-    private Optional<JsonObject> getDirectoryKeychainObject(long serverid) {
-        String req = RequestMessenger.createGetKeychainMessage(directoryController.getAccount(), serverid);
+    private Optional<DirectoryKeychain> getDirectoryKeychainObject(Account account, long serverid) {
+        String req = RequestMessenger.createGetKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
-            String keychainString = new String(Base64.getDecoder().decode(response.get().getJsonObject("keychain").getString("data")));
-
             try {
-                return Optional.ofNullable(Json.createReader(new StringReader(keychainString)).readObject());
+                JsonObject object = Json.createReader(new StringReader(response.get().getJsonObject("keychain").getString("data"))).readObject();
+                return DirectoryKeychain.init(object, account.getKeyPair().getPrivate());
             } catch (JsonException | IllegalStateException e) {
                 LOGGER.warning("Failed to parse server keychain response.");
                 return Optional.empty();
@@ -230,13 +229,13 @@ public class ServerController {
     }
 
     public boolean createKeychain(DirectoryEntry entry) {
-        Optional<JsonObjectBuilder> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
+        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
 
         if (!keychainEntryObject.isPresent()) {
             return false;
         }
 
-        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().build().toString().getBytes());
+        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().toString().getBytes());
 
         String req = RequestMessenger.createAddKeychainsMessage(
                 directoryController.getAccount(),
@@ -264,13 +263,13 @@ public class ServerController {
     }
 
     public boolean setKeychain(DirectoryEntry entry) {
-        Optional<JsonObjectBuilder> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
+        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
 
         if (!keychainEntryObject.isPresent()) {
             return false;
         }
 
-        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().build().toString().getBytes());
+        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().toString().getBytes());
 
         // TODO fill this in?
         String req = RequestMessenger.createUpdateKeychainMessage(

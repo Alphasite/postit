@@ -43,7 +43,7 @@ public class PasswordViewer {
         });
         saveButton.addActionListener(e -> {
             String newTitle = String.valueOf(titleField.getText());
-            c.updatePasswordTitle(p,newTitle);
+            c.updatePasswordTitle(p, newTitle);
 
             String newUser = String.valueOf(userField.getText());
             c.updateMetadataEntry(p,"username",newUser);
@@ -52,8 +52,7 @@ public class PasswordViewer {
             c.updateMetadataEntry(p,"comments",newComments);
 
             String newKey = String.valueOf(passField.getPassword());
-            c.updatePassword(p,Crypto.secretKeyFromBytes(newKey.getBytes()));
-
+            c.updatePassword(p, Crypto.secretKeyFromBytes(newKey.getBytes()));
 
             frame.dispose();
             kv.refreshTabbedPanes();

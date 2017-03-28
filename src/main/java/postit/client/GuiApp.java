@@ -5,7 +5,7 @@ import postit.client.controller.ServerController;
 import postit.client.gui.GUIKeyService;
 import postit.client.gui.KeychainViewer;
 import postit.shared.Crypto;
-import postit.shared.communication.Client;
+import postit.client.communication.Client;
 
 import static javax.swing.SwingUtilities.invokeLater;
 
@@ -19,6 +19,8 @@ public class GuiApp {
 
         GUIKeyService keyService = new GUIKeyService(serverController);
         BackingStore backingStore = new BackingStore(keyService);
+
+        keyService.setBackingStore(backingStore);
 
         if (!Crypto.init()) {
             // TODO

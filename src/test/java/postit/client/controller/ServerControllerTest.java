@@ -20,7 +20,7 @@ import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.netty.RequestInitializer;
 import postit.shared.Crypto;
-import postit.shared.communication.Client;
+import postit.client.communication.Client;
 
 import javax.net.ssl.SSLContext;
 import java.nio.file.Files;

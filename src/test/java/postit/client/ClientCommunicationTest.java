@@ -12,24 +12,18 @@ import org.junit.Before;
 import org.junit.Test;
 import postit.client.backend.MockBackingStore;
 import postit.client.backend.MockKeyService;
-import postit.client.controller.DirectoryController;
 import postit.client.controller.RequestMessenger;
-import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
 import postit.client.keychain.Directory;
 import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.netty.RequestInitializer;
 import postit.shared.Crypto;
-import postit.shared.communication.Client;
+import postit.client.communication.Client;
 
-import javax.json.Json;
 import javax.json.JsonObject;
 import javax.net.ssl.SSLContext;
-import java.io.StringReader;
-import java.nio.file.Files;
 import java.util.Optional;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;

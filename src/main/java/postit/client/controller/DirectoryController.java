@@ -6,13 +6,12 @@ import postit.shared.Crypto;
 import postit.client.backend.KeyService;
 
 import javax.crypto.SecretKey;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
+import java.security.PublicKey;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class DirectoryController {
     private final static Logger LOGGER = Logger.getLogger(DirectoryController.class.getName());
@@ -57,8 +56,12 @@ public class DirectoryController {
     }
 
     public boolean createPassword(Keychain keychain, String identifier, SecretKey key) {
-        Password password = new Password(identifier, key, keychain);
-        return keychain.passwords.add(password) && store.save();
+        if (keychain.passwords.stream().noneMatch(p -> p.identifier.equals(identifier))) {
+            Password password = new Password(identifier, key, keychain);
+            return keychain.passwords.add(password) && store.save();
+        } else {
+            return false;
+        }
     }
 
     public boolean updatePassword(Password pass, SecretKey key) {
@@ -68,8 +71,12 @@ public class DirectoryController {
     }
 
     public boolean updatePasswordTitle(Password pass, String title) {
-        pass.identifier = title;
-        return store.save();
+        if (pass.keychain.passwords.stream().noneMatch(p -> p.identifier.equals(title))) {
+            pass.identifier = title;
+            return store.save();
+        } else {
+            return false;
+        }
     }
 
     public boolean updateMetadataEntry(Password password, String name, String entry) {
@@ -108,17 +115,38 @@ public class DirectoryController {
         // TODO make better (e.g. handle simultaneous edits)
         // merge
 
-        if (entry.lastModified.isBefore(lastModified)) {
+        boolean localIsOlder = entry.lastModified.isBefore(lastModified);
+        if (localIsOlder) {
             entry.updateFrom(entryObject);
+        }
 
-            Optional<Keychain> keychain = entry.readKeychain();
-            if (keychain.isPresent()) {
-                // TODO replace this later
-                keychain.get().initFrom(keychainObject);
-            } else {
-                LOGGER.warning("Failed to update entry " + entry.name + "from object (couldn't load keychain).");
-                return false;
+        Optional<Keychain> keychain = entry.readKeychain();
+        if (keychain.isPresent()) {
+            // TODO replace this later
+            JsonArray passwordArray = keychainObject.getJsonArray("passwords");
+            Map<String, Password> passwords = new HashMap<>();
+            Set<String> passwordIdentifiers = keychain.get().passwords.stream()
+                    .map(password -> password.identifier)
+                    .collect(Collectors.toSet());
+
+            for (int i = 0; i < passwordArray.size(); i++) {
+                JsonObject jsonPassword = passwordArray.getJsonObject(i);
+                Password password = new Password(jsonPassword, keychain.get());
+                if (!passwordIdentifiers.contains(password.identifier) || localIsOlder) {
+                        passwords.put(password.identifier, password);
+                }
             }
+
+            for (Password password : keychain.get().passwords) {
+                if (!passwords.containsKey(password.identifier)) {
+                    passwords.put(password.identifier, password);
+                }
+            }
+
+            keychain.get().initFrom(new ArrayList<>(passwords.values()));
+        } else {
+            LOGGER.warning("Failed to update entry " + entry.name + "from object (couldn't load keychain).");
+            return false;
         }
 
         return store.save();
@@ -133,8 +161,7 @@ public class DirectoryController {
         return this.directory.account;
     }
 
-    public Optional<JsonObjectBuilder> buildKeychainEntryObject(DirectoryEntry entry) {
-        // TODO encryption.
+    public Optional<JsonObject> buildKeychainEntryObject(DirectoryEntry entry) {
         Optional<Keychain> keychain = entry.readKeychain();
 
         if (!keychain.isPresent()) {
@@ -142,12 +169,8 @@ public class DirectoryController {
             return Optional.empty();
         }
 
-        return Optional.of(
-                Json.createObjectBuilder()
-                        .add("directory", entry.dump())
-                        .add("keychain", keychain.get().dump())
-                        .add("lastModified", entry.lastModified.toString())
-        );
+        return new DirectoryKeychain(keychain.get().dump().build(), entry.dump().build())
+                .dump(getAccount().getKeyPair().getPublic());
     }
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {

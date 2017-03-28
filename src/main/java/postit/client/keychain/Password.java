@@ -17,7 +17,7 @@ public class Password {
     public SecretKey password;
     public Map<String, String> metadata;
 
-    private Keychain keychain;
+    public Keychain keychain;
 
     public Password(String identifier, SecretKey password, Keychain keychain) {
         this.identifier = identifier;
