@@ -36,14 +36,15 @@ public class DirectoryKeychain {
         try {
             JsonObject parameters = object.getJsonObject("parameters");
             byte[] nonce = decoder.decode(parameters.getString("nonce"));
+            byte[] data = decoder.decode(object.getString("data"));
             Optional<Key> key = Crypto.unwrapKey(decoder.decode(parameters.getString("key")), privateKey);
-
+            
             if (!key.isPresent()) {
                 LOGGER.severe("Could not decrypt parameters due to error unwrapping key.");
                 return Optional.empty();
             }
 
-            Optional<JsonObject> directorKeychainObject = Crypto.decryptJsonObject(key.get(), nonce, object.getString("data").getBytes());
+            Optional<JsonObject> directorKeychainObject = Crypto.decryptJsonObject(key.get(), nonce, data);
 
             if (!directorKeychainObject.isPresent()) {
                 LOGGER.warning("Failed to decrypt dk object.");
