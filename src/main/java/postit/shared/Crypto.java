@@ -223,13 +223,12 @@ public class Crypto {
     }
 
     public static Optional<KeyPair> generateRSAKeyPair() {
-        KeyPairGenerator generator = null;
         try {
-            generator = KeyPairGenerator.getInstance("RSA", "BC");
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(4096, random);
             KeyPair pair = generator.generateKeyPair();
             return Optional.of(pair);
-        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+        } catch (NoSuchAlgorithmException e) {
             LOGGER.severe("FAILED TO LOAD RSA: " + e.getMessage());
             return Optional.empty();
         }
