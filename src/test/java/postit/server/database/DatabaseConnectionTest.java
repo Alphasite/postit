@@ -1,12 +1,17 @@
 package postit.server.database;
 
-import java.sql.*;
-
 import org.junit.Before;
 import org.junit.Test;
 import postit.server.controller.DatabaseController;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 /**
  * 
@@ -38,7 +43,12 @@ public class DatabaseConnectionTest {
 
 				String key = rs1.getString("pwd_key");
 
-				ResultSet rs3 = st.executeQuery("select * from directory_entry where owner_user_name='" + name + "'");
+                String SQL = "select * from directory_entry where owner_user_name=?";
+                PreparedStatement ps = conn.prepareStatement(SQL);
+                ps.setString(1,name);
+
+
+                ResultSet rs3 = ps.executeQuery();
 				while (rs3.next()) {
 					String deid = rs3.getString("directory_entry_id");
 					String dename = rs3.getString("name");
