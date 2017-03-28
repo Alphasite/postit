@@ -38,7 +38,7 @@ public class DirectoryKeychain {
             byte[] nonce = decoder.decode(parameters.getString("nonce"));
             byte[] data = decoder.decode(object.getString("data"));
             Optional<Key> key = Crypto.unwrapKey(decoder.decode(parameters.getString("key")), privateKey);
-            
+
             if (!key.isPresent()) {
                 LOGGER.severe("Could not decrypt parameters due to error unwrapping key.");
                 return Optional.empty();
@@ -53,8 +53,8 @@ public class DirectoryKeychain {
 
 
             return Optional.of(new DirectoryKeychain(
-                    Json.createReader(new StringReader(directorKeychainObject.get().getString("keychain"))).readObject(),
-                    Json.createReader(new StringReader(directorKeychainObject.get().getString("directory"))).readObject()
+                    directorKeychainObject.get().getJsonObject("keychain"),
+                    directorKeychainObject.get().getJsonObject("directory")
             ));
         } catch (JsonException | IllegalStateException e) {
             LOGGER.warning("Failed to parse json object: " + e.getMessage());
