@@ -38,7 +38,7 @@ public class GUIKeyService implements KeyService {
     public byte[] getKey(String displayMessage) {
         String key = null;
         while (key == null) {
-            key = JOptionPane.showInputDialog(displayMessage);
+            key = JOptionPane.showInputDialog(null,displayMessage,"",JOptionPane.PLAIN_MESSAGE);
         }
         return key.getBytes();
     }
@@ -103,7 +103,7 @@ public class GUIKeyService implements KeyService {
 
         while (true) {
             int result = JOptionPane.showConfirmDialog(null, lp,
-                    "Login/Registration", JOptionPane.OK_CANCEL_OPTION);
+                    "Login/Registration", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (result == JOptionPane.OK_OPTION) {
                 if (lp.tabbedPane.getSelectedIndex() == 0) {
                     // LOGIN

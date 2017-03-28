@@ -2,6 +2,7 @@
 package postit.client.gui;
 
 
+import postit.client.PasswordTools.PasswordGenerator;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
@@ -10,7 +11,6 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
-
 import postit.shared.Crypto;
 
 import javax.swing.*;
@@ -48,6 +48,9 @@ public class KeychainViewer {
     private JMenuItem delPass;
     private JMenuItem delKey;
 
+
+    private PasswordGenerator passwordGenerator;
+
     public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService) {
 
         this.serverController = serverController;
@@ -68,6 +71,8 @@ public class KeychainViewer {
             serverController.setDirectoryController(directoryController);
             createUIComponents();
         }
+
+        passwordGenerator = new PasswordGenerator();
 
     }
 
@@ -91,13 +96,16 @@ public class KeychainViewer {
         addPass = new JMenuItem("New Password");
         addPass.addActionListener(e -> {
             JTextField newtitle = new JTextField();
-            JTextField newpassword = new JPasswordField();
+            JTextField newpassword = new JTextField();
+            JButton generatePass = new JButton("Generate Password");
+            generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
             Object[] message = {
                     "Title:", newtitle,
-                    "Password:", newpassword
+                    "Password:", newpassword,
+                    generatePass
             };
 
-            int option = JOptionPane.showConfirmDialog(frame, message, "New Password", JOptionPane.OK_CANCEL_OPTION);
+            int option = JOptionPane.showConfirmDialog(frame, message, "New Password", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (option == JOptionPane.OK_OPTION) {
                 if (newtitle.getText().length() > 0 && newpassword.getText().length() > 0) {
                     directoryController.createPassword(getActiveKeychain(),
@@ -113,7 +121,7 @@ public class KeychainViewer {
         delPass = new JMenuItem("Delete Password");
         delPass.addActionListener(e -> {
             int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
-                    "Delete Password", JOptionPane.YES_NO_OPTION);
+                    "Delete Password", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (deletePassword == JOptionPane.YES_OPTION) {
                 directoryController.deletePassword(selectedPassword);
                 refreshTabbedPanes();
@@ -125,10 +133,6 @@ public class KeychainViewer {
         fileMenu.addSeparator();
         menuItem = new JMenuItem("Change Master Password");
         menuItem.setEnabled(false);
-        fileMenu.add(menuItem);
-
-        menuItem = new JMenuItem(("Refresh"));
-        menuItem.addActionListener(e -> refreshTabbedPanes());
         fileMenu.add(menuItem);
 
 
@@ -165,12 +169,11 @@ public class KeychainViewer {
         delKey = new JMenuItem("Delete Keychain");
         delKey.addActionListener(e -> {
             int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
-                    "Delete keychain", JOptionPane.YES_NO_OPTION);
+                    "Delete keychain", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (deleteKeychain == JOptionPane.YES_OPTION) {
                 directoryController.deleteKeychain(getActiveKeychain());
                 refreshTabbedPanes();
             }
-
         });
         keychainMenu.add(delKey);
 
@@ -179,6 +182,14 @@ public class KeychainViewer {
         menuItem = new JMenuItem("Keychain Permissions");
         menuItem.setEnabled(false);
         keychainMenu.add(menuItem);
+
+        //SETTINGS Menu Item
+        JMenu settingsMenu = new JMenu("Settings");
+        menuBar.add(settingsMenu);
+
+        menuItem = new JMenuItem("Password Gen");
+        menuItem.addActionListener( e -> {passwordGenerator.editSettings(frame);});
+        settingsMenu.add(menuItem);
 
         frame.setJMenuBar(menuBar);
 

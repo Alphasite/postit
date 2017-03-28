@@ -22,7 +22,6 @@ public class PasswordViewer {
     private JTextArea comments;
     private JButton toggleView;
     private JButton saveButton;
-    private JButton deleteButton;
 
     public PasswordViewer(KeychainViewer kv, DirectoryController c, Keychain k, Password p) {
         // TODO: place custom component creation code here
