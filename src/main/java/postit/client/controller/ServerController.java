@@ -217,7 +217,8 @@ public class ServerController {
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             try {
-                JsonObject object = Json.createReader(new StringReader(response.get().getJsonObject("keychain").getString("data"))).readObject();
+                String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(response.get().getJsonObject("keychain").getString("data")));
+                JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
                 return DirectoryKeychain.init(object, account.getKeyPair().getPrivate());
             } catch (JsonException | IllegalStateException e) {
                 LOGGER.warning("Failed to parse server keychain response: " + e.getMessage());
