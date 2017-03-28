@@ -8,7 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -20,17 +20,17 @@ import java.sql.Statement;
 @SuppressWarnings("ALL")
 public class MySQL implements Database {
 	String databaseName;
-	private String user;
+	//private String user;
 	String password;
-	String url;
+	//String url;
 
 	ComboPooledDataSource cpds;
 
 	public MySQL(String url, String database, String user, String pwd) throws SQLException {
 		this.password = pwd;
-		this.user = user;
+		//this.user = user;
 		this.databaseName = database;
-		this.url = url;
+		//this.url = url;
 
 		try {
 			this.cpds = new ComboPooledDataSource();
@@ -65,8 +65,15 @@ public class MySQL implements Database {
 		try (Connection connection = connect(); Statement statement = connection.createStatement()){
 			URL resource = ClassLoader.getSystemClassLoader().getResource("./database/init_schema.sql");
 			byte[] bytes = Files.readAllBytes(Paths.get(resource.toURI()));
-			String sql = new String(bytes);
-			return statement.execute(sql);
+
+
+			final String sql = new String(bytes);
+            PreparedStatement ps = connection.prepareStatement("?");
+            ps.setString(1,sql);
+			Boolean res = ps.execute();
+            ps.close();
+            return res;
+
 		} catch (SQLException | IOException | URISyntaxException e) {
 			e.printStackTrace();
 			return false;

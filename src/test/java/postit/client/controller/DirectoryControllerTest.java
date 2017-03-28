@@ -45,7 +45,6 @@ public class DirectoryControllerTest {
     @Before
     public void setUp() throws Exception {
         LOGGER.info("----Setup");
-        System.err.println("asdasdasd");
 
         try {
             Crypto.init(false);

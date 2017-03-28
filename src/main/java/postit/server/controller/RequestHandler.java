@@ -1,18 +1,18 @@
 package postit.server.controller;
 
-import java.util.Base64;
-import java.util.List;
-import java.util.logging.Logger;
-
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
-
 import postit.server.model.ServerAccount;
 import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager;
-import postit.shared.MessagePackager.*;
+import postit.shared.MessagePackager.Action;
+import postit.shared.MessagePackager.Asset;
+
+import java.util.Base64;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -151,10 +151,12 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					return MessagePackager.createResponse(false, username, "Unable to get keychain information of " + keychainId, asset, null);
 			case KEYCHAINS:
 				List<ServerKeychain> list = kh.getKeychains(username);
-				if (list != null)
-					return MessagePackager.createResponse(true, username, "", asset, list);
-				else
-					return MessagePackager.createResponse(false, username, "Unable to get keychains of " + username, asset, null);
+
+				return MessagePackager.createResponse(true, username, "", asset, list); //list is non-null always according to FindBugs
+//				if (list != null)
+//					return MessagePackager.createResponse(true, username, "", asset, list);
+//				else
+//					return MessagePackager.createResponse(false, username, "Unable to get keychains of " + username, asset, null);
 			default:
 				break;
 			}

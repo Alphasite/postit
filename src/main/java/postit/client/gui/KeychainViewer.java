@@ -2,7 +2,7 @@
 package postit.client.gui;
 
 
-import postit.client.PasswordTools.PasswordGenerator;
+import postit.client.passwordtools.PasswordGenerator;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
@@ -28,11 +28,7 @@ import static javax.swing.SwingUtilities.invokeLater;
  * Created by jackielaw on 2/27/17.
  */
 public class KeychainViewer {
-    BackingStore backingStore;
-    KeyService keyService;
-
     KeychainViewer kv = this;
-    Directory dir;
     DirectoryController directoryController;
     ServerController serverController;
     private JMenuBar menuBar;
@@ -54,8 +50,6 @@ public class KeychainViewer {
     public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService) {
 
         this.serverController = serverController;
-        this.backingStore = backingStore;
-        this.keyService = keyService;
 
         Optional<Directory> directory = backingStore.readDirectory();
 
@@ -64,7 +58,6 @@ public class KeychainViewer {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
         } else {
-            dir = directory.get();
             directoryController = new DirectoryController(directory.get(), backingStore, keyService);
             this.keychains = directoryController.getKeychains();
 

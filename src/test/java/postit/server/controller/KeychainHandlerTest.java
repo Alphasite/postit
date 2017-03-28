@@ -1,17 +1,16 @@
 package postit.server.controller;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
-
-import java.security.SecureRandom;
-import java.util.List;
-
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.model.ServerKeychain;
+
+import java.util.List;
+
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.*;
 
 /**
  * 
@@ -21,14 +20,14 @@ import postit.server.model.ServerKeychain;
 public class KeychainHandlerTest {
 	Database database;
 	DatabaseController db;
-	AccountHandler ah;
+	//AccountHandler ah;
 	KeychainHandler kh;
 
 	@Before
 	public void setUp() throws Exception {
 		database = new TestH2();
 		db = new DatabaseController(database);
-		ah = new AccountHandler(db, new SecureRandom());
+		//ah = new AccountHandler(db, new SecureRandom());
 		kh = new KeychainHandler(db);
 
 		assertThat(database.initDatabase(), is(true));
@@ -60,7 +59,7 @@ public class KeychainHandlerTest {
 
 		
 		String username = "mc";
-		boolean res = ah.addAccount(username, "cs5431", "mc@cornell.edu", "m", "c");
+		//boolean res = ah.addAccount(username, "cs5431", "mc@cornell.edu", "m", "c");
 
 		int id1 = testAddKeychain(kh, username, "netflix", true);
 		testUpdateKeychain(kh, username, id1, null, "test1", true);

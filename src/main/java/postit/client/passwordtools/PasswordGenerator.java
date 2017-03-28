@@ -1,4 +1,4 @@
-package postit.client.PasswordTools;
+package postit.client.passwordtools;
 
 import javax.swing.*;
 import java.security.SecureRandom;
@@ -19,9 +19,9 @@ public class PasswordGenerator{
 
     private static final SecureRandom random = new SecureRandom();
 
-    private final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private final String LOWER = "abcdefghijklmnopqrstuvwxyz";
-    private final String NUMBERS = "0123456789";
+    private final static String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private final static String LOWER = "abcdefghijklmnopqrstuvwxyz";
+    private final static String NUMBERS = "0123456789";
     private String SYMBOLS = "!@#$%^&*_=+-/.?<>)";
 
 
@@ -138,11 +138,11 @@ public class PasswordGenerator{
 
         Collections.shuffle(passwordList,random);
 
-        String passwordReturn="";
+        StringBuilder passwordReturn = new StringBuilder();
         for (char c:passwordList){
-            passwordReturn+=String.valueOf(c);
+            passwordReturn.append(String.valueOf(c));
         }
-        return passwordReturn;
+        return passwordReturn.toString();
     }
 
     private String removeDuplicates(String stringWithDups){
@@ -150,10 +150,10 @@ public class PasswordGenerator{
         for (char c:stringWithDups.toCharArray()){
             symbolSet.add(c);
         }
-        String symbolString="";
+        StringBuilder symbolString = new StringBuilder();
         for(char c:symbolSet){
-            symbolString+=String.valueOf(c);
+            symbolString.append(String.valueOf(c));
         }
-        return symbolString;
+        return symbolString.toString();
     }
 }

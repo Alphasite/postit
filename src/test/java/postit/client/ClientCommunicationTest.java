@@ -10,16 +10,13 @@ import io.netty.handler.logging.LoggingHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import postit.client.backend.MockBackingStore;
-import postit.client.backend.MockKeyService;
+import postit.client.communication.Client;
 import postit.client.controller.RequestMessenger;
 import postit.client.keychain.Account;
-import postit.client.keychain.Directory;
 import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.netty.RequestInitializer;
 import postit.shared.Crypto;
-import postit.client.communication.Client;
 
 import javax.json.JsonObject;
 import javax.net.ssl.SSLContext;
@@ -28,15 +25,14 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
 
 
 public class ClientCommunicationTest {
     Client client;
 
-    private MockKeyService keyService;
-    private MockBackingStore backingStore;
-    private Directory directory;
+    //private MockKeyService keyService;
+    //private MockBackingStore backingStore;
+    //private Directory directory;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;

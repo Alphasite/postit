@@ -2,7 +2,6 @@ package postit.server.database;
 
 import org.junit.Before;
 import org.junit.Test;
-import postit.server.controller.DatabaseController;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,13 +18,13 @@ import static org.junit.Assert.assertThat;
  *
  */
 public class DatabaseConnectionTest {
-	Database database;
-	DatabaseController db;
+	private Database database;
+	//private DatabaseController db;
 
 	@Before
 	public void setUp() throws Exception {
 		database = new TestH2();
-		db = new DatabaseController(database);
+		//db = new DatabaseController(database);
 
 		assertThat(database.initDatabase(), is(true));
 	}
@@ -41,7 +40,7 @@ public class DatabaseConnectionTest {
 
 				String name = rs1.getString("user_name");
 
-				String key = rs1.getString("pwd_key");
+				//String key = rs1.getString("pwd_key");
 
                 String SQL = "select * from directory_entry where owner_user_name=?";
                 PreparedStatement ps = conn.prepareStatement(SQL);
@@ -49,6 +48,7 @@ public class DatabaseConnectionTest {
 
 
                 ResultSet rs3 = ps.executeQuery();
+
 				while (rs3.next()) {
 					String deid = rs3.getString("directory_entry_id");
 					String dename = rs3.getString("name");
@@ -57,6 +57,7 @@ public class DatabaseConnectionTest {
 				}
 
 				rs3.close();
+				ps.close();
 			}
 
 			rs1.close();
