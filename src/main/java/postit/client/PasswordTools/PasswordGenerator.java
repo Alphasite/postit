@@ -3,11 +3,13 @@ package postit.client.PasswordTools;
 import javax.swing.*;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * Created by jackielaw on 3/27/17.
  */
-public class PasswordGenerator {
+public class PasswordGenerator{
 
     private int passwordlength;
     private boolean useUpper;
@@ -41,19 +43,19 @@ public class PasswordGenerator {
             newLength.setValue(passwordlength);
 
             JCheckBox upper = new JCheckBox();
-            upper.setText("Upper case?");
+            upper.setText("Upper case (A-Z)?");
             upper.setHorizontalTextPosition(SwingConstants.LEFT);
             if(this.useUpper)
                 upper.setSelected(true);
 
             JCheckBox lower = new JCheckBox();
-            lower.setText("Lower case?");
+            lower.setText("Lower case (a-z)?");
             lower.setHorizontalTextPosition(SwingConstants.LEFT);
             if(this.useLower)
                 lower.setSelected(true);
 
             JCheckBox numbers = new JCheckBox();
-            numbers.setText("Number?");
+            numbers.setText("Number (0-9)?");
             numbers.setHorizontalTextPosition(SwingConstants.LEFT);
             if(this.useNumbers)
                 numbers.setSelected(true);
@@ -69,6 +71,9 @@ public class PasswordGenerator {
                     permittedSymbols.setEnabled(true);
                 else
                     permittedSymbols.setEnabled(false);
+            });
+            permittedSymbols.addActionListener(e->{
+                permittedSymbols.setText(removeDuplicates(permittedSymbols.getText()));
             });
 
 
@@ -89,6 +94,7 @@ public class PasswordGenerator {
                     this.useLower = lower.isSelected();
                     this.useNumbers = numbers.isSelected();
                     this.useSymbols = symbols.isSelected();
+                    permittedSymbols.setText(removeDuplicates(permittedSymbols.getText()));
                     this.SYMBOLS=permittedSymbols.getText();
                 }
                 message.add("Some chars must be selected");
@@ -97,20 +103,57 @@ public class PasswordGenerator {
     }
 
     public String generatePassword(){
+        StringBuilder password = new StringBuilder();
 
         String VALIDCHARS = "";
 
-        if (useUpper) VALIDCHARS+=UPPER;
-        if (useLower) VALIDCHARS+=LOWER;
-        if (useNumbers) VALIDCHARS+=NUMBERS;
-        if (useSymbols) VALIDCHARS+=SYMBOLS;
-
-        StringBuilder password = new StringBuilder();
-        
-        for(int i=0; i<passwordlength;i++) {
+        if (useUpper){
+            VALIDCHARS+=UPPER;
+            int index = random.nextInt(UPPER.length());
+            password.append(UPPER.charAt(index));
+        }
+        if (useLower){
+            VALIDCHARS+=LOWER;
+            int index = random.nextInt(LOWER.length());
+            password.append(LOWER.charAt(index));
+        }
+        if (useNumbers){
+            VALIDCHARS+=NUMBERS;
+            int index = random.nextInt(NUMBERS.length());
+            password.append(NUMBERS.charAt(index));
+        }
+        if (useSymbols){
+            VALIDCHARS+=SYMBOLS;
+            int index = random.nextInt(SYMBOLS.length());
+            password.append(SYMBOLS.charAt(index));
+        }
+        while(passwordlength!=password.length()){
             int index = random.nextInt(VALIDCHARS.length());
             password.append(VALIDCHARS.charAt(index));
         }
-        return password.toString();
+        ArrayList<Character> passwordList = new ArrayList<Character>();
+        for (char c : password.toString().toCharArray()){
+            passwordList.add(c);
+        }
+
+        Collections.shuffle(passwordList,random);
+
+        String passwordReturn="";
+        for (char c:passwordList){
+            passwordReturn+=String.valueOf(c);
+        }
+        return passwordReturn;
+    }
+
+    private String removeDuplicates(String stringWithDups){
+        HashSet<Character> symbolSet = new HashSet<>();
+        for (char c:stringWithDups.toCharArray()){
+            symbolSet.add(c);
+        }
+        String symbolString="";
+        for(char c:symbolSet){
+            symbolString+=String.valueOf(c);
+        }
+        return symbolString;
     }
 }
