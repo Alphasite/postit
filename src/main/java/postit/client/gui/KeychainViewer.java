@@ -201,7 +201,7 @@ public class KeychainViewer {
         JMenu settingsMenu = new JMenu("Settings");
         menuBar.add(settingsMenu);
 
-        menuItem = new JMenuItem("Password Gen");
+        menuItem = new JMenuItem("Pwd Gen Settings");
         menuItem.addActionListener( e -> {passwordGenerator.editSettings(frame);});
         settingsMenu.add(menuItem);
 
