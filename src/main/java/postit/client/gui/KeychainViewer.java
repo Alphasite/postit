@@ -14,6 +14,8 @@ import postit.client.keychain.Password;
 import postit.shared.Crypto;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -80,6 +82,7 @@ public class KeychainViewer {
         JFrame frame = new JFrame("Keychain");
         frame.setLayout(new GridLayout());
         frame.setMinimumSize(new Dimension(520, 485));
+        frame.setMaximumSize(new Dimension(520, 485));
         menuBar = new JMenuBar();
 
         //FILE Menu Items
@@ -89,21 +92,28 @@ public class KeychainViewer {
         addPass = new JMenuItem("New Password");
         addPass.addActionListener(e -> {
             JTextField newtitle = new JTextField();
+            JTextField newusername = new JTextField();
             JTextField newpassword = new JTextField();
             JButton generatePass = new JButton("Generate Password");
             generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
             Object[] message = {
                     "Title:", newtitle,
+                    "Username", newusername,
                     "Password:", newpassword,
                     generatePass
             };
 
             int option = JOptionPane.showConfirmDialog(frame, message, "New Password", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (option == JOptionPane.OK_OPTION) {
-                if (newtitle.getText().length() > 0 && newpassword.getText().length() > 0) {
-                    directoryController.createPassword(getActiveKeychain(),
-                            newtitle.getText(),
+                if (newtitle.getText().length() > 0 && newpassword.getText().length() > 0
+                        && newusername.getText().length() > 0) {
+                    boolean success = directoryController.createPassword(getActiveKeychain(),
+                            newtitle.getText(), newusername.getText(),
                             Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
+                    if (!success){
+                        JOptionPane.showMessageDialog(frame,"Unable to add " + newtitle.getText() +" password",
+                                "Warning!",JOptionPane.WARNING_MESSAGE);
+                    }
                 }
             }
             refreshTabbedPanes();
@@ -195,6 +205,16 @@ public class KeychainViewer {
         menuItem.addActionListener( e -> {passwordGenerator.editSettings(frame);});
         settingsMenu.add(menuItem);
 
+        tabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                delPass.setEnabled(false);
+                for (JTable t:tables){
+                    t.clearSelection();
+                }
+            }
+        });
+
         frame.setJMenuBar(menuBar);
 
         refreshTabbedPanes();
@@ -256,7 +276,7 @@ public class KeychainViewer {
                 data[i][1] = "";
         }
 
-        JTable table = new JTable(data, columnNames) {
+        JTable table= new JTable(data, columnNames) {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
