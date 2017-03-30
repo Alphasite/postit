@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import postit.client.backend.MockBackingStore;
 import postit.client.backend.MockKeyService;
+import postit.client.communication.Client;
 import postit.client.keychain.Account;
 import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
@@ -20,7 +21,6 @@ import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.netty.RequestInitializer;
 import postit.shared.Crypto;
-import postit.client.communication.Client;
 
 import javax.net.ssl.SSLContext;
 import java.nio.file.Files;
@@ -28,10 +28,8 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.*;
-import static org.springframework.util.Assert.notNull;
 
 /**
  * Created by nishadmathur on 8/3/17.
@@ -154,7 +152,7 @@ public class ServerControllerTest {
     public void setKeychain() throws Exception {
         LOGGER.info("----setKeychain");
         Keychain keychain = directoryController.getKeychain("testServerController1").get();
-        directoryController.createPassword(keychain, "password1", Crypto.secretKeyFromBytes("secret1".getBytes()));
+        directoryController.createPassword(keychain, "password1",  "testuser",Crypto.secretKeyFromBytes("secret1".getBytes()));
         serverController.setKeychain(directoryController.getKeychains().get(0));
     }
 
