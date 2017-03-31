@@ -68,6 +68,7 @@ public class PasswordViewer {
         Map<String,String> metadata = p.metadata;
 
         titleField.setText(p.identifier);
+        titleField.setEditable(false);
         if (metadata.containsKey("username"))
             userField.setText(metadata.get("username"));
         else

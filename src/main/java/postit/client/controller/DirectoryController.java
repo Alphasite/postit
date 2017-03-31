@@ -59,6 +59,7 @@ public class DirectoryController {
         if (keychain.passwords.stream().noneMatch(p -> p.identifier.equals(identifier))) {
             Password password = new Password(identifier, key, keychain);
             password.metadata.put("username", username);
+            password.markUpdated();
             return keychain.passwords.add(password) && store.save();
         } else {
             return false;
@@ -67,6 +68,7 @@ public class DirectoryController {
 
     public boolean updatePassword(Password pass, SecretKey key) {
         pass.password = key;
+        pass.markUpdated();
         System.out.println("edited pass to: " + pass.dump().build());
         return store.save();
     }
@@ -74,6 +76,7 @@ public class DirectoryController {
     public boolean updatePasswordTitle(Password pass, String title) {
         if (pass.keychain.passwords.stream().noneMatch(p -> p.identifier.equals(title))) {
             pass.identifier = title;
+            pass.markUpdated();
             return store.save();
         } else {
             return false;
@@ -82,6 +85,7 @@ public class DirectoryController {
 
     public boolean updateMetadataEntry(Password password, String name, String entry) {
         password.metadata.put(name, entry);
+        password.markUpdated();
         return store.save();
     }
 
@@ -91,6 +95,7 @@ public class DirectoryController {
                 .findAny();
         if (directoryEntry.isPresent()) {
             directoryEntry.get().setName(name);
+            directoryEntry.get().markUpdated();
             return store.save();
         }
         return false;
@@ -98,18 +103,22 @@ public class DirectoryController {
 
     public boolean removeMetadataEntryIfExists(Password password, String name) {
         password.metadata.remove(name);
+        password.markUpdated();
         return store.save();
     }
 
     public boolean deleteKeychain(Keychain k) {
+        k.markUpdated();
         return k.delete() && store.save();
     }
 
     public boolean deleteEntry(DirectoryEntry entry) {
+        entry.markUpdated();
         return entry.delete() && store.save();
     }
 
     public boolean deletePassword(Password p) {
+        p.markUpdated();
         return p.delete() && store.save();
     }
 
@@ -187,6 +196,7 @@ public class DirectoryController {
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {
         entry.serverid = id;
+        entry.markUpdated();
         return store.save();
     }
 }

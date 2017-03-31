@@ -188,7 +188,6 @@ public class Crypto {
             return Optional.of(out.readObject());
         } catch (JsonParsingException e) {
             LOGGER.warning("Mac Check Failed or Malformed json for object: " + e.getMessage());
-            e.printStackTrace();
             return Optional.empty();
         } catch (JsonException | IllegalStateException e) {
             LOGGER.warning("Couldn't read json object, error in underlying streams: " + e.getMessage());

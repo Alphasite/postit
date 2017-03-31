@@ -1,6 +1,7 @@
 package postit.client.keychain;
 
 import javax.json.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,10 @@ public class Keychain {
         for (int i = 0; i < passwordArray.size(); i++) {
             this.passwords.add(new Password(passwordArray.getJsonObject(i), this));
         }
+    }
+
+    public void markUpdated() {
+        this.directoryEntry.markUpdated();
     }
 
     public JsonObjectBuilder dump() {
