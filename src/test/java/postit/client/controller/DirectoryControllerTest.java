@@ -140,8 +140,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test5");
         Keychain keychain = controller.getKeychain("test5").get();
-        assertThat(controller.createPassword(keychain, "password1", Crypto.secretKeyFromBytes("secret1".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password2", Crypto.secretKeyFromBytes("secret2".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password1", "testuser", Crypto.secretKeyFromBytes("secret1".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password2", "testuser", Crypto.secretKeyFromBytes("secret2".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
         List<String> passwordNames = passwords.stream()
@@ -216,8 +216,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test8");
         Keychain keychain = controller.getKeychain("test8").get();
-        assertThat(controller.createPassword(keychain, "password3", Crypto.secretKeyFromBytes("secret3".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password4", Crypto.secretKeyFromBytes("secret4".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password3", "testuser", Crypto.secretKeyFromBytes("secret3".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password4", "testuser", Crypto.secretKeyFromBytes("secret4".getBytes())), is(true));
 
         List<Password> passwords = controller.getKeychain("test8").get().passwords;
         assertThat(passwords.size(), is(2));
@@ -238,8 +238,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test8");
         Keychain keychain = controller.getKeychain("test8").get();
-        assertThat(controller.createPassword(keychain, "password3", Crypto.secretKeyFromBytes("secret3".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password4", Crypto.secretKeyFromBytes("secret4".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password3", "testuser", Crypto.secretKeyFromBytes("secret3".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password4", "testuser", Crypto.secretKeyFromBytes("secret4".getBytes())), is(true));
 
         reloadPersistent();
 
@@ -262,8 +262,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test9");
         Keychain keychain = controller.getKeychain("test9").get();
-        assertThat(controller.createPassword(keychain, "password5", Crypto.secretKeyFromBytes("secret5".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password6", Crypto.secretKeyFromBytes("secret6".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password5", "testuser", Crypto.secretKeyFromBytes("secret5".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password6", "testuser", Crypto.secretKeyFromBytes("secret6".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
         List<String> passwordNames = passwords.stream()
@@ -286,8 +286,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -316,8 +316,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -416,9 +416,9 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test13");
         Keychain keychain = controller.getKeychain("test13").get();
-        assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password11", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password12", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password10", "testuser", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password11", "testuser", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password12", "testuser", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -458,9 +458,9 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test13");
         Keychain keychain = controller.getKeychain("test13").get();
-        assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password11", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password12", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password10", "testuser", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password11", "testuser", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password12", "testuser", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -582,12 +582,14 @@ public class DirectoryControllerTest {
         controller.createPassword(
                 controller.getKeychain("old").get(),
                 "test",
+                "testuser",
                 expectedPasswordForTest
         );
 
         controller.createPassword(
                 controller.getKeychain("old").get(),
                 "json",
+                "testuser",
                 Crypto.secretKeyFromBytes("DEADBEEF".getBytes())
         );
 
@@ -645,12 +647,14 @@ public class DirectoryControllerTest {
         controller.createPassword(
                 controller.getKeychain("old").get(),
                 "test",
+                "testuser",
                 expectedPasswordForTest
         );
 
         controller.createPassword(
                 controller.getKeychain("old").get(),
                 "json",
+                "testuser",
                 Crypto.secretKeyFromBytes("DEADBEEF".getBytes())
         );
 
@@ -769,8 +773,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser",Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser",Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -797,8 +801,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser",Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser",Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -827,8 +831,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser",Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser",Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -869,8 +873,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser",Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser",Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -913,9 +917,9 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test13");
         Keychain keychain = controller.getKeychain("test13").get();
-        assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password11", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password12", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password10", "testuser",Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password11", "testuser",Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password12", "testuser",Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -968,9 +972,9 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test13");
         Keychain keychain = controller.getKeychain("test13").get();
-        assertThat(controller.createPassword(keychain, "password10", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password11", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password12", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password10", "testuser", Crypto.secretKeyFromBytes("secret10".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password11", "testuser", Crypto.secretKeyFromBytes("secret11".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password12", "testuser", Crypto.secretKeyFromBytes("secret12".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -1082,8 +1086,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
@@ -1106,8 +1110,8 @@ public class DirectoryControllerTest {
 
         controller.createKeychain("test10");
         Keychain keychain = controller.getKeychain("test10").get();
-        assertThat(controller.createPassword(keychain, "password7", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
-        assertThat(controller.createPassword(keychain, "password8", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password7", "testuser", Crypto.secretKeyFromBytes("secret7".getBytes())), is(true));
+        assertThat(controller.createPassword(keychain, "password8", "testuser", Crypto.secretKeyFromBytes("secret8".getBytes())), is(true));
 
         List<Password> passwords = controller.getPasswords(keychain);
 
