@@ -3,6 +3,7 @@ package postit.client.keychain;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import javax.json.Json;
@@ -37,6 +38,10 @@ public class Password {
         for (String key: metadataObject.keySet()) {
             this.metadata.put(key, metadataObject.getString(key));
         }
+    }
+
+    public void markUpdated() {
+        this.keychain.markUpdated();
     }
 
     public JsonObjectBuilder dump() {

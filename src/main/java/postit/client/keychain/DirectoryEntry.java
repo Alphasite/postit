@@ -89,6 +89,10 @@ public class DirectoryEntry {
         }
     }
 
+    public void markUpdated() {
+        this.lastModified = LocalDateTime.now();
+    }
+
     public boolean delete() {
         return this.directory.delete(this);
     }

@@ -1,5 +1,6 @@
 package postit.client.communication;
 
+import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
 
 import javax.json.Json;
@@ -8,13 +9,16 @@ import javax.json.JsonObject;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Created by Zhan on 3/7/2017.
  */
 public class Client {
+    private final static Logger LOGGER = Logger.getLogger(Client.class.getName());
 
     private int port;
     private String url;
@@ -72,10 +76,12 @@ public class Client {
                     System.out.println("No response");
                 }
             } catch (JsonException | IllegalStateException e) {
-                e.printStackTrace();
+                LOGGER.warning("Error decrypting or parsing Json Response...: " + e.getMessage());
                 return Optional.empty();
+            } catch (SocketTimeoutException e) {
+                LOGGER.warning("Socket timed out... retrying: " + e.getMessage());
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.warning("IO error with socket: " + e.getMessage());
             }
         }
 
