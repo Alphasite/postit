@@ -2,7 +2,6 @@
 package postit.client.gui;
 
 
-import postit.client.passwordtools.PasswordGenerator;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
@@ -11,8 +10,10 @@ import postit.client.keychain.Directory;
 import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
+import postit.client.passwordtools.PasswordGenerator;
 import postit.shared.Crypto;
 
+import javax.crypto.SecretKey;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -44,6 +45,7 @@ public class KeychainViewer {
     private Password selectedPassword;
     private JMenuItem addPass;
     private JMenuItem delPass;
+    private JMenuItem movePass;
     private JMenuItem delKey;
 
 
@@ -121,6 +123,42 @@ public class KeychainViewer {
         addPass.setEnabled(false);
         fileMenu.add(addPass);
 
+        movePass = new JMenuItem("Move Password");
+        movePass.addActionListener(e -> {
+            ArrayList<String> choicesList = new ArrayList<String>();
+            for(DirectoryEntry de : keychains){
+                choicesList.add(de.name);
+            }
+            String[] choices = choicesList.toArray(new String[choicesList.size()]);
+            String input =(String) JOptionPane.showInputDialog(null,
+                    "Move "+ selectedPassword.identifier +" to...",
+                    "Move to...", JOptionPane.PLAIN_MESSAGE, null,
+                    choices, // Array of choices
+                    choices[tabbedPane.getSelectedIndex()]); // Initial choice
+
+            if (input != null) {
+                DirectoryEntry keychainDestination = keychains.get(choicesList.indexOf(input));
+                String identifier = selectedPassword.identifier;
+                String username = selectedPassword.metadata.get("username");
+                SecretKey password =  selectedPassword.password;
+                directoryController.deletePassword(selectedPassword);
+                Optional<String> comments = Optional.ofNullable((selectedPassword.metadata.get("comments")));
+
+                Keychain newDestination = this.keychains.get(choicesList.indexOf(input)).readKeychain().get();
+                directoryController.createPassword(newDestination,
+                        identifier, username, password);
+
+                Password addedPassword = newDestination.passwords.get(newDestination.passwords.size()-1);
+                if(comments.isPresent())
+                    directoryController.updateMetadataEntry(addedPassword,"comments",comments.get());
+
+                refreshTabbedPanes();
+            }
+        });
+        movePass.setEnabled(false);
+        fileMenu.add(movePass);
+
+
         delPass = new JMenuItem("Delete Password");
         delPass.addActionListener(e -> {
             int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
@@ -146,6 +184,11 @@ public class KeychainViewer {
         menuItem = new JMenuItem("Close");
         menuItem.addActionListener(e -> frame.dispose());
         fileMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Refresh");
+        menuItem.addActionListener(e -> refreshTabbedPanes());
+        fileMenu.add(menuItem);
+
 
         //KEYCHAIN Menu Item
         JMenu keychainMenu = new JMenu("Keychain");
@@ -209,6 +252,7 @@ public class KeychainViewer {
             @Override
             public void stateChanged(ChangeEvent e) {
                 delPass.setEnabled(false);
+                movePass.setEnabled(false);
                 for (JTable t:tables){
                     t.clearSelection();
                 }
@@ -244,6 +288,7 @@ public class KeychainViewer {
         }
 
         delPass.setEnabled(false);
+        movePass.setEnabled(false);
         if (this.keychains.size() == 0) {
             addPass.setEnabled(false);
             delKey.setEnabled(false);
@@ -287,6 +332,7 @@ public class KeychainViewer {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 1) {
                     delPass.setEnabled(true);
+                    movePass.setEnabled(true);
                     selectedPassword = getActivePassword(passwords, e);
                 } else if (e.getClickCount() == 2) {
                     Password activePassword = getActivePassword(passwords, e);
