@@ -47,7 +47,6 @@ public class Crypto {
     private static final int MEMORY_SCALING_FACTOR = 10;
     private static final int PARALLELISM_SCALING_FACTOR = 10;
     private static final int KEY_LENGTH = 32;
-    public static final String CERT_PATH = "load-der.crt";
 
     private static SecureRandom random;
     private static KeyGenerator keyGenerator;
