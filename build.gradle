@@ -7,28 +7,49 @@ buildscript {
     }
 
     dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.0'
         classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
     }
 }
 
-subprojects {
-    // Apply the java plugin to add support for Java
-    apply plugin: 'java'
+apply plugin: 'idea'
 
-    // Apply the application plugin to add support for building an application
-    apply plugin: "info.solidsoft.pitest"
-    apply plugin: "jacoco"
-    //apply plugin: 'findbugs'
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
 
-    apply plugin: 'idea'
+subprojects {subproject ->
+    if (!subproject.name.startsWith("android")) {
+        apply plugin: 'java'
 
-    idea {
-        module {
-            downloadJavadoc = true
-            downloadSources = true
+        apply plugin: "info.solidsoft.pitest"
+
+        sourceCompatibility = 1.8
+
+        pitest {
+            targetClasses = ['postit.*']  //by default "${project.group}.*"
+            pitestVersion = "1.1.0" //not needed when a default PIT version should be used
+            threads = 4
+            outputFormats = ['XML', 'HTML']
+            reportDir = "build/reports/pit"
+            excludedClasses = ['postit.server.*']
+            avoidCallsTo = ['postit.server.*']
+        }
+
+        dependencies {
+            // Use JUnit test framework
+            testCompile 'junit:junit:4.12'
+            testCompile 'commons-io:commons-io:2.5'
+
+            testCompile project(':testUtilities')
         }
     }
 
+    apply plugin: "jacoco"
+    //apply plugin: 'findbugs'
 
     // In this section you declare where to find the dependencies of your project
     repositories {
@@ -36,31 +57,6 @@ subprojects {
         // You can declare any Maven/Ivy/file repository here.
         jcenter()
         mavenCentral()
-    }
-
-    dependencies {
-        // Client Dependencies
-        compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
-        compile group: 'org.glassfish', name: 'javax.json', version: '1.0.4'
-        compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.56'
-
-        // Use JUnit test framework
-        testCompile 'junit:junit:4.12'
-        testCompile 'commons-io:commons-io:2.5'
-
-        testCompile project(':testUtilities')
-    }
-
-    sourceCompatibility = 1.8
-
-    pitest {
-        targetClasses = ['postit.*']  //by default "${project.group}.*"
-        pitestVersion = "1.1.0" //not needed when a default PIT version should be used
-        threads = 4
-        outputFormats = ['XML', 'HTML']
-        reportDir = "build/reports/pit"
-        excludedClasses = ['postit.server.*']
-        avoidCallsTo = ['postit.server.*']
     }
 
     /*findbugsMain {
@@ -71,7 +67,13 @@ subprojects {
             html.enabled = true
         }
     }*/
+}
 
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+allprojects {
     tasks.withType(Test) {
         testLogging {
             // set options for log level LIFECYCLE

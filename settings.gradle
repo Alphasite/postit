@@ -20,6 +20,7 @@ include 'testUtilities'
 include 'shared'
 include 'server'
 include 'client'
-include 'gui'
+include 'swing'
+include 'android'
 
 rootProject.name = 'postit'

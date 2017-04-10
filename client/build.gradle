@@ -1,5 +1,10 @@
 
 dependencies {
     compile project(":shared")
+
+    compile 'javax.json:javax.json-api:1.0'
+    compile 'org.glassfish:javax.json:1.0.4'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.56'
+
     testCompile project(":server")
 }
