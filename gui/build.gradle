@@ -1,0 +1,9 @@
+
+apply plugin: 'application'
+
+dependencies {
+    compile project(":client")
+    compile project(":shared")
+}
+
+mainClassName = 'postit.client.GuiApp'

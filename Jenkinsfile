@@ -38,6 +38,12 @@ pipeline {
             }
         }
 
+        stage('Findbugs') {
+            steps {
+                sh "./gradlew findbugsMain"
+            }
+        }
+
         stage('Results') {
             steps {
                 junit '**/test-results/test/TEST-*.xml'

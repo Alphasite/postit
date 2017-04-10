@@ -1,0 +1,26 @@
+
+apply plugin: 'application'
+
+dependencies {
+    compile project(":shared")
+
+    // Client Dependencies
+    compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
+    compile group: 'org.glassfish', name: 'javax.json', version: '1.0.4'
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.56'
+
+    // Server Dependencies
+    compile group: 'io.netty', name: 'netty-all', version: '4.1.9.Final'
+    compile group: 'c3p0', name: 'c3p0', version: '0.9.0.4'
+    compile 'mysql:mysql-connector-java:6.0.+'
+    compile 'org.json:json:20160212'
+
+    // Use JUnit test framework
+    testCompile 'junit:junit:4.12'
+    testCompile 'commons-io:commons-io:2.5'
+    testCompile 'com.h2database:h2:1.4.194'
+    testCompile 'ch.vorburger.mariaDB4j:mariaDB4j:2.2.2'
+
+}
+
+mainClassName = 'postit.server.ServerApp'

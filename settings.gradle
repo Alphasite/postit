@@ -15,4 +15,9 @@ include 'api'
 include 'services:webservice'
 */
 
+include 'shared'
+include 'client'
+include 'server'
+include 'gui'
+
 rootProject.name = 'postit'
