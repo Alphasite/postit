@@ -4,6 +4,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
+import postit.server.ServerMessagePackager;
 import postit.server.model.ServerAccount;
 import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager;
@@ -13,6 +14,8 @@ import postit.shared.MessagePackager.Asset;
 import java.util.Base64;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static postit.server.ServerMessagePackager.*;
 
 /**
  * 
@@ -69,7 +72,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		if (!json.has("username") || !json.has("password")) {
 			if (act != Action.ADD && asset != Asset.ACCOUNT) {
 				LOGGER.info("Malformed request missing login details");
-				return MessagePackager.createResponse(false, "", "Missing username or password as input", asset, null);
+				return createResponse(false, "", "Missing username or password as input", asset, null);
 			}
 
 			username = "";
@@ -82,7 +85,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			// TODO check this.
 			if (!ah.authenticate(username, password)) {
 				LOGGER.info("Incorrect sign in attempt");
-				return MessagePackager.createResponse(false, username, "Incorrect login information.", asset, null);
+				return createResponse(false, username, "Incorrect login information.", asset, null);
 			}
 		}
 
@@ -101,10 +104,10 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 						obj.getString("firstname"), obj.getString("lastname")); 
 				if (ah.addAccount(serverAccount)) {
 					LOGGER.info("Success: Created serverAccount for " + serverAccount.getUsername());
-					return MessagePackager.createResponse(true, serverAccount.getUsername(), "", asset, serverAccount);
+					return createResponse(true, serverAccount.getUsername(), "", asset, serverAccount);
 				}
 				else
-					return MessagePackager.createResponse(false, "", "Failed to create new serverAccount", asset, null);
+					return createResponse(false, "", "Failed to create new serverAccount", asset, null);
 			case KEYCHAIN:
 				JSONObject js = kh.createKeychain(username, obj.getString("name"));
 				if (js.getString("status").equals("success")){
@@ -116,7 +119,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					);
 
 					LOGGER.info("Success: Created directory " + keychain.getName() + " for " + username);
-					return MessagePackager.createResponse(true, username, "", asset, keychain);
+					return createResponse(true, username, "", asset, keychain);
 				}
 				else 
 					return js.toString();
@@ -126,7 +129,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		case AUTHENTICATE:
 			switch(asset){
 			case ACCOUNT:
-				return MessagePackager.createResponse(true, username, "", asset, null);
+				return createResponse(true, username, "", asset, null);
 			default:
 				break;
 			}
@@ -134,25 +137,25 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			switch(asset){
 			case ACCOUNT:
 				if (!username.equals(obj.getString("username")))
-					return MessagePackager.createResponse(false, username, "ServerAccount information has wrong username", asset, null);
+					return createResponse(false, username, "ServerAccount information has wrong username", asset, null);
 				ServerAccount serverAccount = ah.getAccount(username);
 				if (serverAccount != null)
-					return MessagePackager.createResponse(true, username, "", asset, serverAccount);
+					return createResponse(true, username, "", asset, serverAccount);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to get serverAccount information of " + username, asset, null);
+					return createResponse(false, username, "Unable to get serverAccount information of " + username, asset, null);
 			case KEYCHAIN:
 				int keychainId = obj.getInt("directoryEntryId");
 				ServerKeychain keychain;
 				if (keychainId != -1) keychain = kh.getKeychain(username, keychainId);
 				else keychain = kh.getKeychain(username, obj.getString("name"));
 				if (keychain != null)
-					return MessagePackager.createResponse(true, username, "", asset, keychain);
+					return createResponse(true, username, "", asset, keychain);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to get keychain information of " + keychainId, asset, null);
+					return createResponse(false, username, "Unable to get keychain information of " + keychainId, asset, null);
 			case KEYCHAINS:
 				List<ServerKeychain> list = kh.getKeychains(username);
 
-				return MessagePackager.createResponse(true, username, "", asset, list); //list is non-null always according to FindBugs
+				return createResponse(true, username, "", asset, list); //list is non-null always according to FindBugs
 //				if (list != null)
 //					return MessagePackager.createResponse(true, username, "", asset, list);
 //				else
@@ -165,24 +168,24 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			switch(asset){
 			case ACCOUNT:
 				if (! username.equals(obj.getString("username")))
-					return MessagePackager.createResponse(false, username, "ServerAccount information has wrong username", asset, null);
+					return createResponse(false, username, "ServerAccount information has wrong username", asset, null);
 				if (ah.removeAccount(username, obj.getString("password"))) 
-					return MessagePackager.createResponse(true, username, "", asset, null);
+					return createResponse(true, username, "", asset, null);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to remove account " + username, asset, null);
+					return createResponse(false, username, "Unable to remove account " + username, asset, null);
 			case KEYCHAIN:
 				long deId;
 
 				if (!obj.has("directoryEntryId") || obj.getInt("directoryEntryId") == -1){
-					return MessagePackager.createResponse(false, username, "Must provide id to remove keychain", asset, null);
+					return createResponse(false, username, "Must provide id to remove keychain", asset, null);
 				} else {
 					deId = obj.getInt("directoryEntryId");
 				}
 
 				if (kh.removeKeychain(deId))
-					return MessagePackager.createResponse(true, username, "", asset, null);
+					return createResponse(true, username, "", asset, null);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to remove keychain " + deId, asset, null);
+					return createResponse(false, username, "Unable to remove keychain " + deId, asset, null);
 			default:
 				break;
 			}
@@ -192,9 +195,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				ServerAccount serverAccount = new ServerAccount(obj.getString("username"), obj.getString("password"), obj.getString("email"),
 						obj.getString("firstname"), obj.getString("lastname"));
 				if (ah.updateAccount(serverAccount))
-					return MessagePackager.createResponse(true, username, "", asset, serverAccount);
+					return createResponse(true, username, "", asset, serverAccount);
 				else
-					return MessagePackager.createResponse(false, username, "Unable to update serverAccount information of " + serverAccount.getUsername(),
+					return createResponse(false, username, "Unable to update serverAccount information of " + serverAccount.getUsername(),
 							asset, null);
 			case KEYCHAIN:
 				ServerKeychain keychain = new ServerKeychain();
@@ -204,12 +207,12 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				if (obj.has("data")) keychain.setData(obj.getString("data"));
 
 				if (keychain.getDirectoryEntryId() == -1){
-					return MessagePackager.createResponse(false, username, "Keychain lacks server id", asset, keychain);
+					return createResponse(false, username, "Keychain lacks server id", asset, keychain);
 				}
 				else if (kh.updateKeychain(username, keychain))
-					return MessagePackager.createResponse(true, username, "", asset, keychain);
+					return createResponse(true, username, "", asset, keychain);
 				else 
-					return MessagePackager.createResponse(false, username, "Unable to update keychain information of " + keychain.getName(), asset, null);
+					return createResponse(false, username, "Unable to update keychain information of " + keychain.getName(), asset, null);
 			default:
 				break;
 			}
@@ -217,6 +220,6 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			break;
 		}
 		
-		return MessagePackager.createResponse(false, username, String.format("Invalid parameters: (%s, %s)", act, asset), null, null);
+		return createResponse(false, username, String.format("Invalid parameters: (%s, %s)", act, asset), null, null);
 	}
 }

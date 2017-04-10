@@ -1,0 +1,9 @@
+
+dependencies {
+    compile project(":shared")
+    compile project(":client")
+    compile project(":server")
+
+    compile 'com.h2database:h2:1.4.194'
+    compile 'ch.vorburger.mariaDB4j:mariaDB4j:2.2.2'
+}

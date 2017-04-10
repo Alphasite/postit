@@ -9,7 +9,6 @@ import static org.junit.Assert.*;
 import java.security.SecureRandom;
 
 import postit.server.database.Database;
-import postit.server.database.MySQL;
 import postit.server.database.TestH2;
 
 /**

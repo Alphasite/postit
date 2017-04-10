@@ -47,6 +47,8 @@ subprojects {
         // Use JUnit test framework
         testCompile 'junit:junit:4.12'
         testCompile 'commons-io:commons-io:2.5'
+
+        testCompile project(':testUtilities')
     }
 
     sourceCompatibility = 1.8

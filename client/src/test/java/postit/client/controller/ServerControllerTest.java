@@ -10,8 +10,6 @@ import io.netty.handler.logging.LoggingHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import postit.client.backend.MockBackingStore;
-import postit.client.backend.MockKeyService;
 import postit.client.communication.Client;
 import postit.client.keychain.Account;
 import postit.client.keychain.Directory;

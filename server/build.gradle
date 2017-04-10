@@ -14,13 +14,6 @@ dependencies {
     compile group: 'c3p0', name: 'c3p0', version: '0.9.0.4'
     compile 'mysql:mysql-connector-java:6.0.+'
     compile 'org.json:json:20160212'
-
-    // Use JUnit test framework
-    testCompile 'junit:junit:4.12'
-    testCompile 'commons-io:commons-io:2.5'
-    testCompile 'com.h2database:h2:1.4.194'
-    testCompile 'ch.vorburger.mariaDB4j:mariaDB4j:2.2.2'
-
 }
 
 mainClassName = 'postit.server.ServerApp'
