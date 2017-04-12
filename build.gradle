@@ -2,6 +2,7 @@
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
         //Needed only for SNAPSHOT versions
         //maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
     }
@@ -74,6 +75,9 @@ task clean(type: Delete) {
 }
 
 allprojects {
+    repositories {
+        jcenter()
+    }
     tasks.withType(Test) {
         testLogging {
             // set options for log level LIFECYCLE
@@ -102,4 +106,9 @@ allprojects {
             }
         }
     }
+}
+
+ext {
+    buildToolsVersion = "24.0.3"
+    supportLibVersion = "24.2.1"
 }
