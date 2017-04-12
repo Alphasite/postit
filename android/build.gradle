@@ -28,8 +28,6 @@ dependencies {
     compile 'com.android.support:design:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 
-    exclude group: 'org.json', module: 'json'
-
     compile project(':shared')
     compile project(':client')
 
