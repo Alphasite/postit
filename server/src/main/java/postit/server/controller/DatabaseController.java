@@ -21,24 +21,56 @@ public class DatabaseController {
 
     private Database database;
 
-    private static final String getAccountSQL = "SELECT * FROM " + ACCOUNT + " WHERE `user_name`=?;";
-    private static final String addAccountSQL = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `salt`) VALUES (?,?,?,?,?,?);";
-    private static final String updateAccountSQL = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=? WHERE `user_name`=?;";
-    private static final String removeAccountSQL = "DELETE FROM " + ACCOUNT + " WHERE `user_name`=?;";
+    private static final String getAccountSQL
+            = "SELECT * FROM " + ACCOUNT + " "
+            + "WHERE `user_name`=?;";
+
+    private static final String addAccountSQL
+            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `salt`) VALUES (?,?,?,?,?,?);";
+
+    private static final String updateAccountSQL
+            = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=? "
+            + "WHERE `user_name`=?;";
+
+    private static final String removeAccountSQL
+            = "DELETE FROM " + ACCOUNT + " "
+            + "WHERE `user_name`=?;";
     
-    private static final String addDirectoryEntrySQL = "INSERT INTO " + DIRECTORY_ENTRY + " (`owner_user_name`, `name`, `data`) VALUES (?,?,?);";
-    private static final String updateDirectoryEntrySQL = "UPDATE " + DIRECTORY_ENTRY + " " + "SET `name`=?, `data`=? WHERE `directory_entry_id`=?;";
-    private static final String getDirectoryEntrySQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
-    private static final String getDirectoryEntryWithNameSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `owner_user_name`=? AND `name`=?;";
-    private static final String getDirectoryEntriesSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `owner_user_name`=?;";
-    private static final String removeDirectoryEntrySQL = "DELETE FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
+    private static final String addDirectoryEntrySQL
+            = "INSERT INTO " + DIRECTORY_ENTRY + " "
+            + "(`owner_user_name`, `owner_directory_entry_id`, `shared_user_name`, `shared_write_permission`, `name`, `data`) "
+            + "VALUES (?,?,?,?,?,?);";
+
+    private static final String updateDirectoryEntrySQL
+            = "UPDATE " + DIRECTORY_ENTRY + " " + "SET `name`=?, `data`=? "
+            + "WHERE `directory_entry_id`=?;";
+
+    private static final String updateWriteableDirectoryEntrySQL
+            = "UPDATE " + DIRECTORY_ENTRY + " " + "SET `shared_write_permission`=? "
+            + "WHERE `owner_directory_entry_id`=? AND `shared_user_name`=?;";
+
+    private static final String getDirectoryEntrySQL
+            = "SELECT * FROM " + DIRECTORY_ENTRY + " "
+            + "WHERE `directory_entry_id`=?;";
+
+    private static final String getDirectoryEntryForOwnerSQL
+            = "SELECT * FROM " + DIRECTORY_ENTRY + " "
+            + "WHERE `owner_user_name`=? AND (`owner_directory_entry_id`=? OR `directory_entry_id`=?);";
+
+    private static final String getDirectoryEntriesSQL
+            = "SELECT * FROM " + DIRECTORY_ENTRY + " "
+            + "WHERE (`owner_user_name`=? AND `shared_user_name` IS NULL) OR `shared_user_name`=?;";
+
+    private static final String removeDirectoryEntrySQL
+            = "DELETE FROM " + DIRECTORY_ENTRY + " "
+            + "WHERE `directory_entry_id`=?;";
 
 
     public DatabaseController(Database database) {
         this.database = database;
     }
 
-    public ServerAccount getAccount(String username) {
+    ServerAccount getAccount(String username) {
         ResultSet resultSet;
         ServerAccount serverAccount = null;
 
@@ -59,7 +91,7 @@ public class DatabaseController {
         return serverAccount;
     }
 
-    public String getSalt(String username){
+    String getSalt(String username){
         ResultSet resultSet;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
@@ -78,7 +110,7 @@ public class DatabaseController {
         return null;
     }
     
-    public String getPassword(String username){
+    String getPassword(String username){
         ResultSet resultSet;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
@@ -97,7 +129,7 @@ public class DatabaseController {
         return null;
     }
     
-    public boolean addAccount(ServerAccount serverAccount) {
+    boolean addAccount(ServerAccount serverAccount) {
         int add = 0;
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(addAccountSQL)) {
 
@@ -116,7 +148,7 @@ public class DatabaseController {
         return add == 1;
     }
 
-    public boolean updateAccount(ServerAccount serverAccount) {
+    boolean updateAccount(ServerAccount serverAccount) {
         int modify = 0;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(updateAccountSQL)) {
@@ -136,7 +168,7 @@ public class DatabaseController {
         return modify == 1;
     }
 
-    public boolean removeAccount(String username) {
+    boolean removeAccount(String username) {
         int remove = 0;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(removeAccountSQL)) {
@@ -150,7 +182,7 @@ public class DatabaseController {
     }
 
     //TODO change this from JSONObject to ServerKeychain
-    public JSONObject addDirectoryEntry(String ownerUsername, String name, String data) {
+    JSONObject addDirectoryEntry(String ownerUsername, long ownerDirectoryId, String sharedUsername, boolean sharedCanWrite, String name, String data) {
         int add;
         int id = 0;
         boolean success;
@@ -158,8 +190,11 @@ public class DatabaseController {
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(addDirectoryEntrySQL, Statement.RETURN_GENERATED_KEYS)){
 
             statement.setString(1, ownerUsername);
-            statement.setString(2, name);
-            statement.setString(3, data);
+            statement.setLong(2, ownerDirectoryId);
+            statement.setString(2, sharedUsername);
+            statement.setBoolean(3, sharedCanWrite);
+            statement.setString(4, name);
+            statement.setString(5, data);
 
             add = statement.executeUpdate();
 
@@ -187,7 +222,7 @@ public class DatabaseController {
         return res;
     }
 
-    public boolean updateDirectoryEntry(ServerKeychain de) {
+    boolean updateDirectoryEntry(ServerKeychain de) {
         int modify = 0;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(updateDirectoryEntrySQL)) {
@@ -203,7 +238,7 @@ public class DatabaseController {
         return modify == 1;
     }
 
-    public ServerKeychain getDirectoryEntry(long directoryEntryId) {
+    ServerKeychain getDirectoryEntry(long directoryEntryId) {
         ResultSet resultSet;
         ServerKeychain de = null;
 
@@ -213,64 +248,53 @@ public class DatabaseController {
             resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
-                de = new ServerKeychain(
-                        directoryEntryId, 
-                        resultSet.getString("owner_user_name"),
-                        resultSet.getString("name"), 
-                        resultSet.getString("data")
-                );
+                de = resultSetToServerKeychain(resultSet);
             }
+
+            return de;
 
         } catch (SQLException e) {
             System.out.println("An error occurred in getDirectoryEntry");
+            return null;
         } catch (Exception e) {
             System.out.println("An error occurred");
+            return null;
         }
-
-        return de;
     }
 
-    public ServerKeychain getDirectoryEntry(String ownerUsername, String name) {
+    List<ServerKeychain> getAllInstancesOfDirectoryEntry(String ownerUsername, Long id) {
         ResultSet resultSet;
-        ServerKeychain de = null;
+        ArrayList<ServerKeychain> list = new ArrayList<>();
 
-        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getDirectoryEntryWithNameSQL)) {
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getDirectoryEntryForOwnerSQL)) {
             statement.setString(1, ownerUsername);
-            statement.setString(2, name);
+            statement.setLong(2, id);
+            statement.setLong(3, id);
             resultSet = statement.executeQuery();
 
-            if (resultSet.next()) {
-                de = new ServerKeychain(
-                        resultSet.getInt("directory_entry_id"), 
-                        ownerUsername,
-                        name,
-                        resultSet.getString("data") 
-                );
+            while (resultSet.next()) {
+                list.add(resultSetToServerKeychain(resultSet));
             }
         } catch (SQLException e) {
-            System.out.println("An error occurred in getDirectoryEntry");
+            System.out.println("An error occurred in getAllInstancesOfDirectoryEntry");
         } catch (Exception e) {
             System.out.println("An error occurred");
         }
 
-        return de;
+        return list;
     }
 
-    public List<ServerKeychain> getDirectoryEntries(String ownerUsername) {
+    List<ServerKeychain> getDirectoryEntries(String ownerUsername) {
         ResultSet resultSet;
         ArrayList<ServerKeychain> list = new ArrayList<>();
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getDirectoryEntriesSQL)) {
             statement.setString(1, ownerUsername);
+            statement.setString(2, ownerUsername);
             resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
-                list.add(new ServerKeychain(
-                        resultSet.getInt("directory_entry_id"), 
-                        resultSet.getString("owner_user_name"), 
-                        resultSet.getString("name"),
-                        resultSet.getString("data")
-                ));
+                list.add(resultSetToServerKeychain(resultSet));
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getDirectoryEntry");
@@ -281,7 +305,19 @@ public class DatabaseController {
         return list;
     }
 
-    public boolean removeDirectoryEntry(long directoryEntryId) {
+    private static ServerKeychain resultSetToServerKeychain(ResultSet resultSet) throws SQLException {
+        return new ServerKeychain(
+                resultSet.getInt("directory_entry_id"),
+                resultSet.getString("owner_user_name"),
+                resultSet.getLong("owner_directory_entry_id"),
+                resultSet.getString("shared_user_name"),
+                resultSet.getBoolean("shared_write_permission"),
+                resultSet.getString("name"),
+                resultSet.getString("data")
+        );
+    }
+
+    boolean removeDirectoryEntry(long directoryEntryId) {
         int remove = 0;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(removeDirectoryEntrySQL)){
@@ -292,5 +328,21 @@ public class DatabaseController {
         }
 
         return remove == 1;
+    }
+
+    boolean setSharedKeychainWriteable(long id, String sharedUsername, boolean writeable) {
+        int modify = 0;
+
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(updateWriteableDirectoryEntrySQL)) {
+            statement.setBoolean(1, writeable);
+            statement.setLong(2, id);
+            statement.setString(3, sharedUsername);
+
+            modify = statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("SetSharedKeychainWriteable does not exist");
+        }
+
+        return modify == 1;
     }
 }

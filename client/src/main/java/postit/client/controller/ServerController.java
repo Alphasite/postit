@@ -298,4 +298,8 @@ public class ServerController {
             return false;
         }
     }
+
+    public boolean shareKeychain(DirectoryEntry entry) {
+
+    }
 }

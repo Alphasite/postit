@@ -1,6 +1,7 @@
 package postit.server.controller;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.json.JSONObject;
 
@@ -26,15 +27,8 @@ public class KeychainHandler {
 
 
     public JSONObject createKeychain(String username, String name) {
-        JSONObject response = db.addDirectoryEntry(username, name, "");
-
-        if (response.getString("status").equals("success")) {
-            return response;
-        } else {
-            JSONObject res = new JSONObject();
-            res.put("status", "failure");
-            return res;
-        }
+        JSONObject response = db.addDirectoryEntry(username, -1, null, false, name, "");
+        return checkResponse(response);
     }
 
     /**
@@ -47,7 +41,9 @@ public class KeychainHandler {
     public boolean updateKeychain(String username, long directoryEntryId, String name, String data) {
         ServerKeychain entry = db.getDirectoryEntry(directoryEntryId);
 
-        if (!entry.getOwnerUsername().equals(username)) {
+        boolean isOwner = entry.getOwnerUsername().equals(username);
+        boolean isShared = Objects.equals(entry.getSharedUsername(), username);
+        if (!(isOwner || (isShared && entry.isSharedHasWritePermission()))) {
             return false;
         }
 
@@ -66,22 +62,89 @@ public class KeychainHandler {
         return updateKeychain(username, keychain.getDirectoryEntryId(), keychain.getName(), keychain.getData());
     }
 
-    public boolean removeKeychain(long directoryEntryId) {
-        return db.removeDirectoryEntry(directoryEntryId);
+    public JSONObject shareKeychain(String ownerUsername, String sharedUsername, boolean sharedCanWrite, long id) {
+        ServerKeychain keychain = getKeychain(ownerUsername, id);
+
+        if (keychain == null) {
+            JSONObject res = new JSONObject();
+            res.put("status", "failure");
+            return res;
+        }
+
+        JSONObject response = db.addDirectoryEntry(
+                ownerUsername,
+                keychain.getDirectoryEntryId(),
+                sharedUsername,
+                sharedCanWrite,
+                keychain.getName(),
+                keychain.getData()
+        );
+
+        return checkResponse(response);
     }
 
-    public ServerKeychain getKeychain(String username, int directoryEntryId) {
+    private static JSONObject checkResponse(JSONObject response) {
+        if (response.getString("status").equals("success")) {
+            return response;
+        } else {
+            JSONObject res = new JSONObject();
+            res.put("status", "failure");
+            return res;
+        }
+    }
+
+    public boolean removeKeychain(String username, long directoryEntryId) {
         ServerKeychain entry = db.getDirectoryEntry(directoryEntryId);
 
-        if (entry != null && entry.getOwnerUsername().equals(username)) {
+        if (entry == null) {
+            return false;
+        }
+
+        boolean isOwner = entry.getOwnerUsername().equals(username);
+        boolean isShared = Objects.equals(entry.getSharedUsername(), username);
+
+        if (isOwner || (isShared && entry.isSharedHasWritePermission())) {
+            return db.removeDirectoryEntry(directoryEntryId);
+        } else {
+            return false;
+        }
+    }
+
+    public ServerKeychain getKeychain(String username, long directoryEntryId) {
+        ServerKeychain entry = db.getDirectoryEntry(directoryEntryId);
+
+        if (entry == null) {
+            return null;
+        }
+
+        boolean isOwner = entry.getOwnerUsername().equals(username);
+        boolean isShared = Objects.equals(entry.getSharedUsername(), username);
+
+        if (isOwner || (isShared && entry.isSharedHasWritePermission())) {
             return entry;
         } else {
             return null;
         }
     }
 
-    public ServerKeychain getKeychain(String username, String name) {
-        return db.getDirectoryEntry(username, name);
+    public List<ServerKeychain> getSharedKeychains(String username, Long id) {
+        return db.getAllInstancesOfDirectoryEntry(username, id);
+    }
+
+    public boolean setSharedKeychainWriteable(String username, long id, String sharedUsername, boolean writeable) {
+        ServerKeychain entry = db.getDirectoryEntry(id);
+
+        if (entry == null) {
+            return false;
+        }
+
+        boolean isOwner = entry.getOwnerUsername().equals(username);
+
+        if (isOwner) {
+            return db.setSharedKeychainWriteable(id, sharedUsername, writeable);
+        } else {
+            return false;
+        }
     }
 
     public List<ServerKeychain> getKeychains(String username) {

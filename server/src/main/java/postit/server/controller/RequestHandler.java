@@ -54,8 +54,8 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 	/**
 	 * Takes in request, process the request, and outputs the proper response
-	 * @param request
-	 * @return
+	 * @param request json as string
+	 * @return response string
 	 */
 	public String handleRequest(String request) {
 		//TODO refactor this gigantic thing using multiple engine classes that handle requests
@@ -67,7 +67,6 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		Asset asset = Asset.valueOf(json.getString("asset"));
 
 		String username; // only empty for ADD ACCOUNT
-		String password;
 
 		if (!json.has("username") || !json.has("password")) {
 			if (act != Action.ADD && asset != Asset.ACCOUNT) {
@@ -76,8 +75,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			}
 
 			username = "";
-			password = "";
 		} else {
+			String password;
+
 			username = json.getString("username");
 			password = json.getString("password");
 			password = new String(Base64.getDecoder().decode(password));
@@ -96,12 +96,24 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			obj = json.getJSONObject(assetName);
 		}
 
+		if (obj == null) {
+			return createResponse(false, "", "Request is missing asset parameter.", asset, null);
+		}
+
+		JSONObject js;
+
 		switch(act){
 		case ADD:
 			switch(asset){
 			case ACCOUNT:
-				ServerAccount serverAccount = new ServerAccount(obj.getString("username"), obj.getString("password"), obj.getString("email"),
-						obj.getString("firstname"), obj.getString("lastname")); 
+				ServerAccount serverAccount = new ServerAccount(
+						obj.getString("username"),
+						obj.getString("password"),
+						obj.getString("email"),
+						obj.getString("firstname"),
+						obj.getString("lastname")
+				);
+
 				if (ah.addAccount(serverAccount)) {
 					LOGGER.info("Success: Created serverAccount for " + serverAccount.getUsername());
 					return createResponse(true, serverAccount.getUsername(), "", asset, serverAccount);
@@ -109,20 +121,47 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				else
 					return createResponse(false, "", "Failed to create new serverAccount", asset, null);
 			case KEYCHAIN:
-				JSONObject js = kh.createKeychain(username, obj.getString("name"));
+				js = kh.createKeychain(username, obj.getString("name"));
 				if (js.getString("status").equals("success")){
 					ServerKeychain keychain = new ServerKeychain(
 							js.getInt("directoryEntryId"),
 							username,
+							-1,
+							null,
+							false,
 							obj.getString("name"),
 							""
 					);
 
-					LOGGER.info("Success: Created directory " + keychain.getName() + " for " + username);
+					LOGGER.info("Success: Created directory " + keychain.getName() + " with " + username);
 					return createResponse(true, username, "", asset, keychain);
-				}
-				else 
+				} else {
 					return js.toString();
+				}
+			case SHARED_KEYCHAINS:
+				js = kh.shareKeychain(
+						username,
+						obj.getString("sharedUsername"),
+						obj.getBoolean("sharedHasWritePermission"),
+						obj.getLong("ownerDirectoryEntryId")
+				);
+
+				if (js.getString("status").equals("success")) {
+					ServerKeychain keychain = new ServerKeychain(
+							js.getInt("directoryEntryId"),
+							username,
+							obj.getInt("directoryEntryId"),
+							obj.getString("shared username"),
+							obj.getBoolean("writeable"),
+							obj.getString("name"),
+							""
+					);
+
+					LOGGER.info("Success: Created directory " + keychain.getName() + " with " + username);
+					return createResponse(true, username, "", asset, keychain);
+				} else {
+					return js.toString();
+				}
 			default:
 				break;
 			}
@@ -145,21 +184,19 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					return createResponse(false, username, "Unable to get serverAccount information of " + username, asset, null);
 			case KEYCHAIN:
 				int keychainId = obj.getInt("directoryEntryId");
-				ServerKeychain keychain;
+				ServerKeychain keychain = null;
 				if (keychainId != -1) keychain = kh.getKeychain(username, keychainId);
-				else keychain = kh.getKeychain(username, obj.getString("name"));
 				if (keychain != null)
 					return createResponse(true, username, "", asset, keychain);
 				else
 					return createResponse(false, username, "Unable to get keychain information of " + keychainId, asset, null);
 			case KEYCHAINS:
 				List<ServerKeychain> list = kh.getKeychains(username);
+				return createResponse(true, username, "", asset, list);
 
-				return createResponse(true, username, "", asset, list); //list is non-null always according to FindBugs
-//				if (list != null)
-//					return MessagePackager.createResponse(true, username, "", asset, list);
-//				else
-//					return MessagePackager.createResponse(false, username, "Unable to get keychains of " + username, asset, null);
+			case SHARED_KEYCHAINS:
+				kh.getSharedKeychains(username, obj.getLong("ownerDirectoryEntryId"));
+
 			default:
 				break;
 			}
@@ -182,10 +219,12 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					deId = obj.getInt("directoryEntryId");
 				}
 
-				if (kh.removeKeychain(deId))
+				if (kh.removeKeychain(username, deId))
 					return createResponse(true, username, "", asset, null);
 				else
 					return createResponse(false, username, "Unable to remove keychain " + deId, asset, null);
+			case SHARED_KEYCHAINS:
+				// TODO
 			default:
 				break;
 			}
@@ -203,6 +242,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				ServerKeychain keychain = new ServerKeychain();
 				if (obj.has("ownerUsername")) keychain.setOwnerUsername(obj.getString("ownerUsername"));
 				if (obj.has("directoryEntryId")) keychain.setDirectoryEntryId(obj.getInt("directoryEntryId"));
+				if (obj.has("ownerDirectoryEntryId")) keychain.setOwnerDirectoryEntryId(obj.getInt("ownerDirectoryEntryId"));
+				if (obj.has("sharedUsername")) keychain.setSharedUsername(obj.getString("sharedUsername"));
+				if (obj.has("sharedHasWritePermission")) keychain.setSharedHasWritePermission(obj.getBoolean("sharedHasWritePermission"));
 				if (obj.has("name")) keychain.setName(obj.getString("name"));
 				if (obj.has("data")) keychain.setData(obj.getString("data"));
 
@@ -213,6 +255,20 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					return createResponse(true, username, "", asset, keychain);
 				else 
 					return createResponse(false, username, "Unable to update keychain information of " + keychain.getName(), asset, null);
+
+			case SHARED_KEYCHAINS:
+				boolean applied = kh.setSharedKeychainWriteable(
+						username,
+						obj.getLong("ownerDirectoryEntryId"),
+						obj.getString("sharedUsername"),
+						obj.getBoolean("sharedHasWritePermission")
+				);
+
+				if (applied)
+					return createResponse(true, username, "Successfully changed write ability", asset, null);
+				else
+					return createResponse(false, username, "Unable to update write ability information of " + obj.getLong("id"), asset, null);
+
 			default:
 				break;
 			}

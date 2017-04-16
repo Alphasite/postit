@@ -33,17 +33,7 @@ public class RequestMessenger {
 		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
 		return createRequest(Action.REMOVE, null, Asset.ACCOUNT, account);
 	}
-	
-	public static String createGetDirectoryMessage(Account account){
-	
-		return "";
-	}
-	
-	public static String createUpdateDirectoryMessage(Account account){
-		
-		return "";
-	}
-	
+
 	public static String createAddKeychainsMessage(Account account, String name, String data){
 		ServerKeychain keychain = new ServerKeychain();
 		keychain.setName(name);
@@ -77,4 +67,36 @@ public class RequestMessenger {
 		keychain.setData(data);
 		return createRequest(Action.UPDATE, account, Asset.KEYCHAIN, keychain);
 	}
+
+	public static String createSharedKeychainMessage(Account account, long serverId, String sharedUsername, boolean writeable) {
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setOwnerDirectoryEntryId(serverId);
+		keychain.setSharedUsername(sharedUsername);
+		keychain.setSharedHasWritePermission(writeable);
+		return createRequest(Action.ADD, account, Asset.SHARED_KEYCHAINS, keychain);
+	}
+
+	public static String createUpdateSharedKeychainMessage(Account account, long serverId, String sharedUsername, boolean writeable) {
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setOwnerDirectoryEntryId(serverId);
+		keychain.setSharedUsername(sharedUsername);
+		keychain.setSharedHasWritePermission(writeable);
+		return createRequest(Action.UPDATE, account, Asset.SHARED_KEYCHAINS, keychain);
+	}
+
+	public static String deleteSharedKeychainMessage(Account account, long serverId, String sharedUsername, boolean writeable) {
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setOwnerDirectoryEntryId(serverId);
+		keychain.setSharedUsername(sharedUsername);
+		keychain.setSharedHasWritePermission(writeable);
+		return createRequest(Action.REMOVE, account, Asset.SHARED_KEYCHAINS, keychain);
+	}
+
+	public static String createGetKeychainsMessage(Account account, long serverId){
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setOwnerUsername(account.getUsername());
+		keychain.setOwnerDirectoryEntryId(serverId);
+		return createRequest(Action.GET, account, Asset.KEYCHAINS, keychain);
+	}
+
 }

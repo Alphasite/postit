@@ -11,6 +11,7 @@ public class MessagePackager {
 	 * Currently supported requests:
 	 * - add account
 	 * - add keychain
+	 * - add shared keychain
 	 * - update account
 	 * - update keychain
 	 * - remove account
@@ -18,6 +19,7 @@ public class MessagePackager {
 	 * - get account
 	 * - get keychain
 	 * - get keychains
+	 * - get shared keychains
 	 * - authenticate account
 	 *
 	 */
@@ -34,7 +36,8 @@ public class MessagePackager {
 		ACCOUNT,
 		ACCOUNTS,
 		KEYCHAIN,
-		KEYCHAINS
+		KEYCHAINS,
+		SHARED_KEYCHAINS
 	}
 	
 	public static String typeToString(Asset asset){
@@ -47,6 +50,8 @@ public class MessagePackager {
 			return "keychain";
 		case KEYCHAINS:
 			return "keychains";
+		case SHARED_KEYCHAINS:
+			return "shared keychains";
 		default:
 			return null;
 		}

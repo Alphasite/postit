@@ -56,6 +56,9 @@ DROP TABLE IF EXISTS `directory_entry`;
 CREATE TABLE `directory_entry` (
   `directory_entry_id` int(11) NOT NULL AUTO_INCREMENT,
   `owner_user_name` VARCHAR(25) NOT NULL,
+  `owner_directory_entry_id` int(11),
+  `shared_user_name` VARCHAR(25),
+  `shared_write_permission` BIT,
   `name` varchar(45) NOT NULL,
   `data` MEDIUMTEXT,
   PRIMARY KEY (`directory_entry_id`)
