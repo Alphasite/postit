@@ -34,16 +34,6 @@ public class RequestMessenger {
 		return createRequest(Action.REMOVE, null, Asset.ACCOUNT, account);
 	}
 	
-	public static String createGetDirectoryMessage(Account account){
-	
-		return "";
-	}
-	
-	public static String createUpdateDirectoryMessage(Account account){
-		
-		return "";
-	}
-	
 	public static String createAddKeychainsMessage(Account account, String name, String data){
 		ServerKeychain keychain = new ServerKeychain();
 		keychain.setName(name);
@@ -76,5 +66,17 @@ public class RequestMessenger {
 		keychain.setDirectoryEntryId(serverId);
 		keychain.setData(data);
 		return createRequest(Action.UPDATE, account, Asset.KEYCHAIN, keychain);
+	}
+
+	public static String createShareKeychainRequest(Account account, long serverId, String sharedUsername, boolean permissions) {
+		return null; // TODO
+	}
+
+	public static String createUpdateSharedKeychainRequest(Account account, long serverId, String sharedUsername, boolean permissions) {
+		return null; // TODO
+	}
+	
+	public static String createFindInstancesOfSharedKeychainRequest(Account account, long serverId) {
+		return null; // TODO
 	}
 }
