@@ -6,11 +6,9 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
 import postit.client.controller.ServerController;
-import postit.client.keychain.Directory;
-import postit.client.keychain.DirectoryEntry;
-import postit.client.keychain.Keychain;
-import postit.client.keychain.Password;
+import postit.client.keychain.*;
 import postit.client.passwordtools.PasswordGenerator;
+import postit.shared.Classify;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -18,8 +16,19 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +59,8 @@ public class KeychainViewer {
 
 
     private PasswordGenerator passwordGenerator;
+    private Classify classify;
+
 
     public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService) {
 
@@ -70,7 +81,7 @@ public class KeychainViewer {
         }
 
         passwordGenerator = new PasswordGenerator();
-
+        classify = new Classify();
     }
 
     /**
@@ -96,13 +107,34 @@ public class KeychainViewer {
             JTextField newtitle = new JTextField();
             JTextField newusername = new JTextField();
             JTextField newpassword = new JTextField();
+
             JButton generatePass = new JButton("Generate Password");
+            JButton evaluatePass = new JButton("Evaluate Password");
+            JLabel passwordStrength = new JLabel("\n");
+            newpassword.addFocusListener(new FocusListener() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    //TODO evaluate newpassword.getText() and set text
+                    passwordStrength.setText("\n");
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+
+                }
+            });
             generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
+            evaluatePass.addActionListener(ee->{
+                String strength = classify.strengthCheck(newpassword.getText());
+                passwordStrength.setText("Password Strength: "+strength);
+            });
             Object[] message = {
                     "Title:", newtitle,
                     "Username", newusername,
                     "Password:", newpassword,
-                    generatePass
+                    generatePass,
+                    evaluatePass,
+                    passwordStrength
             };
 
             int option = JOptionPane.showConfirmDialog(frame, message, "New Password", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
@@ -174,8 +206,35 @@ public class KeychainViewer {
         fileMenu.addSeparator();
         menuItem = new JMenuItem("Change Master Password");
         menuItem.setEnabled(false);
+        JTextField oldMasterPassword = new JTextField();
+        JTextField newMasterPassword = new JTextField();
+        Object[] changeMasterMessage = {
+                "Current master password", oldMasterPassword,
+                "New master password", newMasterPassword
+        };
+        menuItem.addActionListener(e ->{
+            int option = JOptionPane.showConfirmDialog(frame, changeMasterMessage, "New Master Password", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
+            if (option == JOptionPane.OK_OPTION) {
+                /**
+                if (()) {
+
+                }
+                 **/
+            }
+        });
         fileMenu.add(menuItem);
 
+        menuItem = new JMenuItem("Create public keyfile");
+        menuItem.setEnabled(false); //Delete this line when done
+        menuItem.addActionListener(e->{
+            PublicKey publickey = directoryController.getAccount().get().getKeyPair().getPublic();
+            //TODO public keyfile
+            // Generate the file <username_"public_key">
+            // Or let them choose the location
+        });
+
+
+        fileMenu.add(menuItem);
 
         menuItem = new JMenuItem(("Sync"));
         menuItem.addActionListener(e -> serverController.sync(() -> invokeLater(this::refreshTabbedPanes)));
@@ -236,9 +295,89 @@ public class KeychainViewer {
         keychainMenu.add(delKey);
 
 
-        menuItem = new JMenuItem("Keychain Permissions");
-        menuItem.setEnabled(false);
+        menuItem = new JMenuItem("Add Keychain Permissions");
+        menuItem.addActionListener(e ->{
+
+            JFileChooser fc = new JFileChooser();
+            JTextField shareusername = new JTextField();
+            JCheckBox writepriv = new JCheckBox();
+
+            final File[] file = new File[1];
+            JTextField filename = new JTextField();
+            filename.setEditable(false);
+            JButton openfile = new JButton();
+
+            openfile.addActionListener(ee->{
+                int returnVal=fc.showOpenDialog(frame);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    file[0] = fc.getSelectedFile();
+                    filename.setText(file[0].getName());
+                }
+            });
+
+            Object[] message = {
+                    "Username:", shareusername,
+                    "Can edit? ", writepriv,
+                    "Public key file: ", filename,
+                    openfile
+            };
+
+            int option = JOptionPane.showConfirmDialog(frame, message, "Share", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
+            if (option == JOptionPane.OK_OPTION) {
+                if (shareusername.getText().length() > 0 && filename.getText().length()>0 && file[0].exists()) {
+                    DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
+                    String username = shareusername.getText();
+                    Boolean readWrite = writepriv.isSelected();
+                    //Try to read public key
+                    try{
+                        byte[] keyBytes = Files.readAllBytes(file[0].toPath());
+                        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+                        KeyFactory kf = KeyFactory.getInstance("RSA");
+                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);;
+                        Share newshare = new Share(activeDE.serverid,username,readWrite, publicKey);
+                        directoryController.shareKeychain(activeDE,newshare);
+                    }catch (IOException | ClassCastException|
+                            InvalidKeySpecException |NoSuchAlgorithmException e1){
+                        JOptionPane.showMessageDialog(frame,"Unable to read public key file");
+                    }
+                }
+            }
+        });
         keychainMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Remove Keychain Permissions");
+        menuItem.addActionListener(e ->{
+            String unshareUser = (String) JOptionPane.showInputDialog(
+                    frame,
+                    "Who to unshare with?",
+                    "Unshare",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "");
+
+            if ((unshareUser != null) && (unshareUser.length() > 0)) {
+                DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
+                ArrayList<Share> shareList = (ArrayList<Share>) activeDE.shares;
+                Share unshare=null;
+                for (Share s:shareList){
+                    if (s.username.equals(unshareUser)){
+                        unshare=s;
+                    }
+                }
+                if(unshare==null){
+                    JOptionPane.showMessageDialog(frame,"Unable to find "+unshareUser+" in shared list",
+                            "Unshare error",JOptionPane.PLAIN_MESSAGE);
+                }
+                else {
+                    directoryController.unshareKeychain(activeDE, unshare);
+                }
+            }
+
+        });
+        keychainMenu.add(menuItem);
+
 
         //SETTINGS Menu Item
         JMenu settingsMenu = new JMenu("Settings");
