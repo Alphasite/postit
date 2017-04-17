@@ -21,7 +21,14 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -322,9 +329,18 @@ public class KeychainViewer {
                     DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
                     String username = shareusername.getText();
                     Boolean readWrite = writepriv.isSelected();
-                    PublicKey publicKey;
-                    Share newshare = Share(activeDE.serverid,shareusername.getText(),readWrite, publicKey);
-                    directoryController.shareKeychain(activeDE,newshare);
+                    //Try to read public key
+                    try{
+                        byte[] keyBytes = Files.readAllBytes(file[0].toPath());
+                        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+                        KeyFactory kf = KeyFactory.getInstance("RSA");
+                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);;
+                        Share newshare = new Share(activeDE.serverid,username,readWrite, publicKey);
+                        directoryController.shareKeychain(activeDE,newshare);
+                    }catch (IOException | ClassCastException|
+                            InvalidKeySpecException |NoSuchAlgorithmException e1){
+                        JOptionPane.showMessageDialog(frame,"Unable to read public key file");
+                    }
                 }
             }
         });
@@ -332,6 +348,32 @@ public class KeychainViewer {
 
         menuItem = new JMenuItem("Remove Keychain Permissions");
         menuItem.addActionListener(e ->{
+            String unshareUser = (String) JOptionPane.showInputDialog(
+                    frame,
+                    "Who to unshare with?",
+                    "Unshare",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    "");
+
+            if ((unshareUser != null) && (unshareUser.length() > 0)) {
+                DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
+                ArrayList<Share> shareList = (ArrayList<Share>) activeDE.shares;
+                Share unshare;
+                for (Share s:shareList){
+                    if (s.username.equals(unshareUser)){
+                        unshare=s;
+                    }
+                }
+                if(unshare==null){
+                    JOptionPane.showMessageDialog(frame,"Unable to find "+unshareUser+" in shared list",
+                            "Unshare error",JOptionPane.PLAIN_MESSAGE);
+                }
+                else {
+                    directoryController.unshareKeychain(activeDE, unshare);
+                }
+            }
 
         });
         keychainMenu.add(menuItem);
