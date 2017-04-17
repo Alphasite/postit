@@ -4,7 +4,7 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
-import postit.shared.Classify;
+import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;

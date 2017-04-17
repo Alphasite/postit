@@ -7,8 +7,8 @@ import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
 import postit.client.controller.ServerController;
 import postit.client.keychain.*;
+import postit.client.passwordtools.Classify;
 import postit.client.passwordtools.PasswordGenerator;
-import postit.shared.Classify;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -56,7 +56,6 @@ public class KeychainViewer {
     private JMenuItem delPass;
     private JMenuItem movePass;
     private JMenuItem delKey;
-
 
     private PasswordGenerator passwordGenerator;
     private Classify classify;
