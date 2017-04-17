@@ -91,15 +91,14 @@ public class GUIKeyService implements KeyService {
             }
         }
 
-    	Optional<Directory> directory = readDirectory();
+    	Optional<Directory> directory = backingStore.readDirectory();
     	
         if (!directory.isPresent()) {
-            LOGGER.warning("Failed to load directory.");
             return false;
         }
 
         for (DirectoryEntry entry : directory.get().getKeychains()) {
-            writeKeychain(entry);
+            backingStore.writeKeychain(entry);
         }
         
         key = Crypto.secretKeyFromBytes(password.getBytes());
@@ -108,7 +107,6 @@ public class GUIKeyService implements KeyService {
         backingStore.writeDirectory();
         
         if (! backingStore.saveContainer()){
-        	LOGGER.warning("Failed to store directory.");
         	return null;
         }
 
