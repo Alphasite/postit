@@ -10,6 +10,8 @@ import io.netty.handler.logging.LoggingHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import postit.client.backend.MockBackingStore;
+import postit.client.backend.MockKeyService;
 import postit.client.communication.Client;
 import postit.client.keychain.Account;
 import postit.client.keychain.Directory;
@@ -143,7 +145,7 @@ public class ServerControllerTest {
 
         directoryController.createKeychain("testServerController1");
         DirectoryEntry mykeychain = directoryController.getKeychains().get(0);
-        Boolean condition = serverController.createKeychain(mykeychain);
+        Boolean condition = serverController.createKeychain(account, mykeychain);
         assertTrue(condition);
     }
 
@@ -151,12 +153,12 @@ public class ServerControllerTest {
         LOGGER.info("----setKeychain");
         Keychain keychain = directoryController.getKeychain("testServerController1").get();
         directoryController.createPassword(keychain, "password1",  "testuser",Crypto.secretKeyFromBytes("secret1".getBytes()));
-        serverController.setKeychain(directoryController.getKeychains().get(0));
+        serverController.setKeychain(account, directoryController.getKeychains().get(0));
     }
 
     public void getKeychains() throws Exception {
         LOGGER.info("----getKeychains");
-        ArrayList<Long> serverKeychains = (ArrayList) serverController.getKeychains();
+        ArrayList<Long> serverKeychains = (ArrayList) serverController.getKeychains(account);
         ArrayList<Long> directoryKeychains = new ArrayList<Long>();
         for (int i = 0; i < directoryController.getKeychains().size(); i++) {
             directoryKeychains.add(directoryController.getKeychains().get(i).serverid);
@@ -167,6 +169,6 @@ public class ServerControllerTest {
 
     public void deleteKeychain() throws Exception {
         LOGGER.info("----deleteKeychain");
-        assertTrue(serverController.deleteKeychain(directoryController.getKeychains().get(0).serverid));
+        assertTrue(serverController.deleteKeychain(account, directoryController.getKeychains().get(0).serverid));
     }
 }

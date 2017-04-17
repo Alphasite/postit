@@ -613,7 +613,8 @@ public class DirectoryControllerTest {
         assertThat(controller.updateLocalIfIsOlder(
                 entry,
                 entry1.dump().build(),
-                keychain1.dump().build()
+                keychain1.dump().build(),
+                Optional.empty()
         ), is(true));
 
         assertThat(controller.getKeychains().size(), is(1));
@@ -678,7 +679,8 @@ public class DirectoryControllerTest {
         assertThat(controller.updateLocalIfIsOlder(
                 entry,
                 entry1.dump().build(),
-                keychain1.dump().build()
+                keychain1.dump().build(),
+                Optional.empty()
         ), is(true));
 
         reloadPersistent();
@@ -1031,8 +1033,8 @@ public class DirectoryControllerTest {
 
         assertThat(controller.getAccount(), notNullValue());
 
-        assertThat(controller.getAccount().getUsername(), is("test"));
-        assertThat(controller.getAccount().getSecretKey(), notNullValue());
+        assertThat(controller.getAccount().get().getUsername(), is("test"));
+        assertThat(controller.getAccount().get().getSecretKey(), notNullValue());
     }
 
     @Test
@@ -1043,8 +1045,8 @@ public class DirectoryControllerTest {
 
         assertThat(controller.getAccount(), notNullValue());
 
-        assertThat(controller.getAccount().getUsername(), is("test"));
-        assertThat(controller.getAccount().getSecretKey(), notNullValue());
+        assertThat(controller.getAccount().get().getUsername(), is("test"));
+        assertThat(controller.getAccount().get().getSecretKey(), notNullValue());
     }
 
     @Test

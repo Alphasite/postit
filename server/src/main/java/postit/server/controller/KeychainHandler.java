@@ -3,7 +3,6 @@ package postit.server.controller;
 import java.util.List;
 import java.util.Objects;
 
-import com.sun.security.ntlm.Server;
 import org.json.JSONObject;
 
 import postit.server.model.*;

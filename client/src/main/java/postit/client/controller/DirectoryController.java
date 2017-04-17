@@ -8,6 +8,7 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
@@ -213,7 +214,7 @@ public class DirectoryController {
         }
 
         return new DirectoryKeychain(keychain.get().dump().build(), entry.dump().build())
-                .dump(account.getKeyPair().getPublic());
+                .dump(entry, account.getKeyPair().getPublic());
     }
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {
