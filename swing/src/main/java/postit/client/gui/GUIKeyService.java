@@ -78,13 +78,13 @@ public class GUIKeyService implements KeyService {
 
         while (true) {
         	String passwordOld1 = new String(getMasterKey().getEncoded());
-        	String passwordOld2 = new String(getKey("Please enter CURRENT master password: "));
+        	String passwordOld2 = new String(getKey("Current master password"));
         	if (! passwordOld1.equals(passwordOld2)){
         		JOptionPane.showMessageDialog(null, "The CURRENT master password is incorrect.");
         		return null;
         	}
-            String password1 = new String(getKey("Please enter NEW master password: "));
-            String password2 = new String(getKey("Please re-enter NEW master password: "));
+            String password1 = new String(getKey("New master password"));
+            String password2 = new String(getKey("Re-enter new master password"));
             if (password1.equals(password2)) {
                 password = password1;
                 break;
