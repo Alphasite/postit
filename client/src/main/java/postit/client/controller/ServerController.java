@@ -1,8 +1,6 @@
 package postit.client.controller;
 
-import postit.client.keychain.Account;
-import postit.client.keychain.DirectoryEntry;
-import postit.client.keychain.DirectoryKeychain;
+import postit.client.keychain.*;
 import postit.server.model.ServerKeychain;
 import postit.client.communication.Client;
 
@@ -41,9 +39,15 @@ public class ServerController {
     public boolean sync(Runnable callback) {
 
         Runnable sync = () -> {
+            Optional<Account> account = directoryController.getAccount();
+
+            if (!account.isPresent()) {
+                LOGGER.warning("Not logged in. Aborting.");
+            }
+
             LOGGER.info("Entering sync...");
 
-            List<Long> retrievedServerKeychainIds = this.getKeychains();
+            List<Long> retrievedServerKeychainIds = this.getKeychains(account.get());
 
             if (retrievedServerKeychainIds == null) {
                 LOGGER.warning("Failed to sync, server returned no keychains.");
@@ -101,22 +105,25 @@ public class ServerController {
             System.out.println("Server keychains: " + serverKeychains);
             System.out.println("Client keychains: " + clientKeychainNames);
 
+            // Delete keychains on server which have been deleted on the client
             for (Long serverid : serverKeychainsToDelete) {
-                if (!deleteKeychain(serverid)) {
+                if (!deleteKeychain(account.get(), serverid)) {
                     LOGGER.warning("Failed to delete keychain (" + serverid + ") from server.");
                     return;
                 }
             }
 
+            // Upload newly created keychains
             for (DirectoryEntry entry : keychainsToUpload) {
-                if (!createKeychain(entry)) {
+                if (!createKeychain(account.get(), entry)) {
                     LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
                     return;
                 }
             }
 
+            // Download fresh keychains which the client has permission to access.
             for (Long serverid : keychainsToDownload) {
-                Optional<DirectoryKeychain> directoryKeychain = getDirectoryKeychainObject(directoryController.getAccount(), serverid);
+                Optional<DirectoryKeychain> directoryKeychain = getDirectoryKeychainObject(account.get(), serverid);
 
                 if (directoryKeychain.isPresent()) {
                     if (!directoryController.createKeychain(
@@ -132,6 +139,8 @@ public class ServerController {
                 }
             }
 
+            // This is the meat of the sync function
+            // It handles downloading and merging server copies of the keychains.
             for (DirectoryEntry entry : new ArrayList<>(directoryController.getKeychains())) {
                 if (localKeychainsToDelete.contains(entry.serverid)) {
                     directoryController.deleteEntry(entry);
@@ -139,20 +148,72 @@ public class ServerController {
                 }
 
                 if (keychainsToUpdate.contains(entry.serverid)) {
-                    Optional<DirectoryKeychain> directoryKeychain = getDirectoryKeychainObject(directoryController.getAccount(), entry.serverid);
 
-                    if (!directoryKeychain.isPresent()) {
-                        LOGGER.warning("Failed to fetch keychain for update (" + entry.name + ").");
-                        return;
+                    if (Objects.equals(entry.owner, account.get().getUsername())) {
+                        Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry);
+
+                        if (!allInstancesOfKeychain.isPresent()) {
+                            LOGGER.warning("Failed to fetch keychains for update (" + entry.name + ").");
+                            return;
+                        }
+
+                        Set<Long> sharedKeychainsOnServer = allInstancesOfKeychain.get().stream()
+                                .map(DirectoryKeychain::getServerid)
+                                .collect(Collectors.toSet());
+
+                        for (DirectoryKeychain directoryKeychain : allInstancesOfKeychain.get()) {
+                            Optional<Share> share;
+                            if (directoryKeychain.getServerid() == entry.serverid) {
+                                share = Optional.empty();
+                            } else {
+                                share = entry.shares.stream()
+                                        .filter(s -> s.serverid == directoryKeychain.getServerid())
+                                        .findAny();
+                            }
+
+                            directoryController.updateLocalIfIsOlder(
+                                entry,
+                                directoryKeychain.entry,
+                                directoryKeychain.keychain,
+                                share
+                            );
+                        }
+
+                        for (Share share : new ArrayList<>(entry.shares)) {
+                            if (share.serverid != -1 && !sharedKeychainsOnServer.contains(share.serverid)) {
+                                directoryController.unshareKeychain(entry, share);
+                            }
+
+                            if (share.serverid == -1) {
+                                this.shareKeychain(account.get(), entry, share);
+                            }
+                        }
+                    } else {
+                        Optional<DirectoryKeychain> ownDirectoryKeychainObject = this.getDirectoryKeychainObject(account.get(), entry.serverid);
+                        Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(account.get(), entry.serverid);
+
+                        Optional<Share> share = entry.shares.stream()
+                            .filter(s -> s.serverid == ownerDirectoryKeychainObject.get().getServerid())
+                            .findAny();
+
+                        if (share.get().canWrite) {
+                            directoryController.updateLocalIfIsOlder(
+                                    entry,
+                                    ownDirectoryKeychainObject.get().entry,
+                                    ownDirectoryKeychainObject.get().keychain,
+                                    share
+                            );
+                        }
+
+                        directoryController.updateLocalIfIsOlder(
+                                entry,
+                                ownerDirectoryKeychainObject.get().entry,
+                                ownerDirectoryKeychainObject.get().keychain,
+                                share
+                        );
                     }
 
-                    directoryController.updateLocalIfIsOlder(
-                            entry,
-                            directoryKeychain.get().entry,
-                            directoryKeychain.get().keychain
-                    );
-
-                    if (!setKeychain(entry)) {
+                    if (!setKeychain(account.get(), entry)) {
                         LOGGER.warning("Failed to update keychain (" + entry.name + ")  on server...");
                         return;
                     }
@@ -187,8 +248,8 @@ public class ServerController {
         return sendAndCheckIfSuccess(req);
     }
 
-    public List<Long> getKeychains() {
-        String req = RequestMessenger.createGetKeychainsMessage(directoryController.getAccount());
+    public List<Long> getKeychains(Account account) {
+        String req = RequestMessenger.createGetKeychainsMessage(account);
         Optional<JsonObject> response = clientToServer.send(req);
 
         if (response.isPresent()) {
@@ -214,7 +275,16 @@ public class ServerController {
     private Optional<DirectoryKeychain> getDirectoryKeychainObject(Account account, long serverid) {
         String req = RequestMessenger.createGetKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
+        return parseDirectoryKeychainResponse(account, response);
+    }
 
+    private Optional<DirectoryKeychain> getOwnerDirectoryKeychainObject(Account account, long serverid) {
+        String req = RequestMessenger.createGetOwnerKeychainMessage(account, serverid);
+        Optional<JsonObject> response = clientToServer.send(req);
+        return parseDirectoryKeychainResponse(account, response);
+    }
+
+    private static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response) {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             try {
                 String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(response.get().getJsonObject("keychain").getString("data")));
@@ -229,8 +299,8 @@ public class ServerController {
         }
     }
 
-    public boolean createKeychain(DirectoryEntry entry) {
-        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
+    public boolean createKeychain(Account account, DirectoryEntry entry) {
+        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(account, entry);
 
         if (!keychainEntryObject.isPresent()) {
             return false;
@@ -239,7 +309,7 @@ public class ServerController {
         String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().toString().getBytes());
 
         String req = RequestMessenger.createAddKeychainsMessage(
-                directoryController.getAccount(),
+                account,
                 entry.name,
                 encodedKeychainEntryObject
         );
@@ -252,7 +322,7 @@ public class ServerController {
 
             directoryController.setKeychainOnlineId(entry, id);
 
-            return setKeychain(entry);
+            return setKeychain(account, entry);
         } else {
             return false;
         }
@@ -263,8 +333,8 @@ public class ServerController {
         return true;
     }
 
-    public boolean setKeychain(DirectoryEntry entry) {
-        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
+    public boolean setKeychain(Account account, DirectoryEntry entry) {
+        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(account, entry);
 
         if (!keychainEntryObject.isPresent()) {
             return false;
@@ -274,7 +344,7 @@ public class ServerController {
 
         // TODO fill this in?
         String req = RequestMessenger.createUpdateKeychainMessage(
-                directoryController.getAccount(),
+                account,
                 entry.serverid,
                 entry.name,
                 encodedKeychainEntryObject
@@ -283,8 +353,8 @@ public class ServerController {
         return sendAndCheckIfSuccess(req);
     }
 
-    public boolean deleteKeychain(long id) {
-        String req = RequestMessenger.createRemoveKeychainMessage(directoryController.getAccount(), id);
+    public boolean deleteKeychain(Account account, long id) {
+        String req = RequestMessenger.createRemoveKeychainMessage(account, id);
         return sendAndCheckIfSuccess(req);
     }
 
@@ -299,15 +369,67 @@ public class ServerController {
         }
     }
 
-    private boolean shareKeychain(DirectoryEntry entry) {
-        return false;
+    private boolean shareKeychain(Account account, DirectoryEntry entry, Share share) {
+        String req = RequestMessenger.createGetKeychainsMessage(account);
+        Optional<JsonObject> response = clientToServer.send(req);
+
+        if (response.isPresent() && response.get().getString("status").equals("success")) {
+            ServerKeychain serverKeychain = new ServerKeychain(response.get().getJsonObject("keychain"));
+            long id = serverKeychain.getDirectoryEntryId();
+
+            return directoryController.setKeychainSharedId(entry, id, share);
+        } else {
+            return false;
+        }
     }
 
-    private List<Long> getAllInstances(DirectoryEntry entry) {
-        return null;
+    private Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry) {
+        String req = RequestMessenger.createGetKeychainsMessage(account, entry.serverid);
+        Optional<JsonObject> response = clientToServer.send(req);
+
+        List<DirectoryKeychain> directoryKeychains = new ArrayList<>();
+
+        if (response.isPresent()) {
+            JsonArray list = response.get().getJsonArray("keychains");
+
+            if (list == null) {
+                LOGGER.warning("Failed to fetch keychains: " + response.get().getString("message"));
+                return Optional.empty();
+            }
+
+            for (int i = 0; i < list.size(); i++) {
+                JsonObject keychain = list.getJsonObject(i);
+
+                try {
+                    String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
+                    JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
+                    Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(object, account.getKeyPair().getPrivate());
+
+                    if (!directoryKeychain.isPresent()) {
+                        LOGGER.warning("Failed to parse json object");
+                        return Optional.empty();
+                    }
+
+                    directoryKeychains.add(directoryKeychain.get());
+
+                } catch (JsonException | IllegalStateException e) {
+                    LOGGER.warning("Failed to parse server keychain response: " + e.getMessage());
+                    return Optional.empty();
+                }
+            }
+
+            return Optional.of(directoryKeychains);
+        } else {
+            return Optional.empty();
+        }
     }
 
-    public boolean setUserCanWrite(DirectoryEntry entry, String username, boolean userCanWrite) {
-        return false;
+    public boolean setUserCanWrite(Account account, Share share) {
+        return sendAndCheckIfSuccess(RequestMessenger.createUpdateSharedKeychainMessage(
+            account,
+            share.serverid,
+            share.username,
+            share.canWrite
+        ));
     }
 }

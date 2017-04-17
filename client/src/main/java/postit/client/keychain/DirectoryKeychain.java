@@ -1,6 +1,7 @@
 package postit.client.keychain;
 
 import postit.client.backend.BackingStore;
+import postit.server.model.ServerKeychain;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -8,6 +9,7 @@ import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.swing.text.html.parser.Entity;
 import java.io.StringReader;
 import java.security.Key;
 import java.security.PrivateKey;
@@ -62,7 +64,7 @@ public class DirectoryKeychain {
         }
     }
 
-    public Optional<JsonObject> dump(PublicKey publicKey) {
+    public Optional<JsonObject> dump(DirectoryEntry entryObject, PublicKey publicKey) {
         SecretKey key = Crypto.generateKey();
         byte[] nonce = Crypto.getNonce();
 
@@ -96,5 +98,9 @@ public class DirectoryKeychain {
                         .add("parameters", encryptedParameters)
                         .build()
         );
+    }
+
+    public long getServerid() {
+        return entry.getJsonNumber("serverid").longValue();
     }
 }

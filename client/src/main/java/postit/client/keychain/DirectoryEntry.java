@@ -4,11 +4,12 @@ import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
+import java.security.InvalidKeyException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -27,9 +28,13 @@ public class DirectoryEntry {
     Directory directory;
     Keychain keychain;
 
+    public List<Share> shares;
+
     BackingStore backingStore;
 
     public LocalDateTime lastModified;
+
+    public String owner;
 
     public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, BackingStore backingStore) {
         this.name = name;
@@ -39,12 +44,15 @@ public class DirectoryEntry {
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
         this.serverid = -1L;
+        this.shares = new ArrayList<>();
+        this.owner = null;
     }
 
     public DirectoryEntry(JsonObject object, Directory directory, BackingStore backingStore) {
         this.directory = directory;
         this.keychain = null;
         this.backingStore = backingStore;
+        this.shares = new ArrayList<>();
         this.updateFrom(object);
     }
 
@@ -55,6 +63,16 @@ public class DirectoryEntry {
         this.setNonce(decoder.decode(object.getString("nonce")));
         this.serverid = object.getJsonNumber("serverid").longValue();
         this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
+        this.owner = object.getString("owner", null);
+
+        JsonArray shareArray = object.getJsonArray("passwords");
+        for (int i = 0; i < shareArray.size(); i++) {
+            try {
+                this.shares.add(new Share(shareArray.getJsonObject(i)));
+            } catch (InvalidKeyException e) {
+                LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
+            }
+        }
     }
 
     public JsonObjectBuilder dump() {
@@ -66,6 +84,21 @@ public class DirectoryEntry {
         builder.add("nonce", encoder.encodeToString(getNonce()));
         builder.add("serverid", serverid);
         builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
+
+        if (this.owner == null && this.directory.getAccount().isPresent()) {
+            this.owner = this.directory.getAccount().get().getUsername();
+        }
+
+        if (this.owner != null) {
+            builder.add("owner", this.owner);
+        }
+
+        JsonArrayBuilder shareArray = Json.createArrayBuilder();
+        for (Share share: shares) {
+            shareArray.add(share.dump());
+        }
+
+        builder.add("shared", shareArray);
 
         return builder;
     }

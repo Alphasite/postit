@@ -28,10 +28,13 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	private AccountHandler ah;
 	private KeychainHandler kh;
 
+	private boolean authenticated;
+
 	public RequestHandler(AccountHandler accountHandler, KeychainHandler keychainHandler) throws ExceptionInInitializerError {
 		System.out.println("Initialised new Request Handler");
-		ah = accountHandler;
-		kh = keychainHandler;
+		this.ah = accountHandler;
+		this.kh = keychainHandler;
+		this.authenticated = false;
 	}
 
 	@Override
@@ -49,8 +52,6 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		super.exceptionCaught(ctx, cause);
 	}
-
-
 
 	/**
 	 * Takes in request, process the request, and outputs the proper response
@@ -83,9 +84,11 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			password = new String(Base64.getDecoder().decode(password));
 
 			// TODO check this.
-			if (!ah.authenticate(username, password)) {
+			if (!authenticated || !ah.authenticate(username, password)) {
 				LOGGER.info("Incorrect sign in attempt");
 				return createResponse(false, username, "Incorrect login information.", asset, null);
+			} else {
+				authenticated = true;
 			}
 		}
 
@@ -101,6 +104,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		}
 
 		JSONObject js;
+		List<ServerKeychain> list;
 
 		switch(act){
 		case ADD:
@@ -191,11 +195,16 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				else
 					return createResponse(false, username, "Unable to get keychain information of " + keychainId, asset, null);
 			case KEYCHAINS:
-				List<ServerKeychain> list = kh.getKeychains(username);
+				list = kh.getKeychains(username);
 				return createResponse(true, username, "", asset, list);
 
 			case SHARED_KEYCHAINS:
-				kh.getSharedKeychains(username, obj.getLong("ownerDirectoryEntryId"));
+				list = kh.getSharedKeychains(username, obj.getLong("ownerDirectoryEntryId"));
+				return createResponse(true, username, "", asset, list);
+
+			case OWNER_KEYCHAIN:
+				list = kh.getSharedKeychains(username, obj.getLong("directoryEntryId"));
+				return createResponse(true, username, "", asset, list);
 
 			default:
 				break;

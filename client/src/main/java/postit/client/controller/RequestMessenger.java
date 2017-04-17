@@ -99,4 +99,9 @@ public class RequestMessenger {
 		return createRequest(Action.GET, account, Asset.KEYCHAINS, keychain);
 	}
 
+	public static String createGetOwnerKeychainMessage(Account account, long serverId){
+		ServerKeychain keychain = new ServerKeychain();
+		keychain.setDirectoryEntryId(serverId);
+		return createRequest(Action.GET, account, Asset.OWNER_KEYCHAIN, keychain);
+	}
 }

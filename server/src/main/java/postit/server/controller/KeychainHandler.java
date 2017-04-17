@@ -3,6 +3,7 @@ package postit.server.controller;
 import java.util.List;
 import java.util.Objects;
 
+import com.sun.security.ntlm.Server;
 import org.json.JSONObject;
 
 import postit.server.model.*;
@@ -129,6 +130,16 @@ public class KeychainHandler {
 
     public List<ServerKeychain> getSharedKeychains(String username, Long id) {
         return db.getAllInstancesOfDirectoryEntry(username, id);
+    }
+
+    public ServerKeychain getOwnersKeychain(String ussername, Long id) {
+        ServerKeychain ownKeychain = this.getKeychain(ussername, id);
+
+        if (ownKeychain == null) {
+            return null;
+        }
+
+        return this.getKeychain(ownKeychain.getOwnerUsername(), ownKeychain.getOwnerDirectoryEntryId());
     }
 
     public boolean setSharedKeychainWriteable(String username, long id, String sharedUsername, boolean writeable) {

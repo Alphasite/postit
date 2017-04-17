@@ -25,7 +25,7 @@ public class Directory {
     public List<DirectoryEntry> keychains;
     public List<Long> deletedKeychains;
 
-    public Account account;
+    private Account account;
 
     public Directory(BackingStore backingStore, KeyService keyService) {
         this.backingStore = backingStore;
@@ -108,5 +108,13 @@ public class Directory {
 
         this.keychains.remove(keychain);
         return this.backingStore.deleteKeychain(keychain.name);
+    }
+
+    public Optional<Account> getAccount() {
+        return Optional.of(account);
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
     }
 }

@@ -37,7 +37,8 @@ public class MessagePackager {
 		ACCOUNTS,
 		KEYCHAIN,
 		KEYCHAINS,
-		SHARED_KEYCHAINS
+		SHARED_KEYCHAINS,
+		OWNER_KEYCHAIN
 	}
 	
 	public static String typeToString(Asset asset){

@@ -130,19 +130,41 @@ public class DirectoryController {
         return directory.deletedKeychains;
     }
 
-    public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject) {
+    public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject, Optional<Share> entryShare) {
         LocalDateTime lastModified = LocalDateTime.parse(entryObject.getString("lastModified"));
 
         // TODO make better (e.g. handle simultaneous edits)
         // merge
 
+        if (entryShare.isPresent() && !entryShare.get().canWrite) {
+            return true;
+        }
+
         boolean localIsOlder = entry.lastModified.isBefore(lastModified);
         if (localIsOlder) {
             entry.updateFrom(entryObject);
+
         }
 
         Optional<Keychain> keychain = entry.readKeychain();
         if (keychain.isPresent()) {
+            Set<Long> shareIdentifiers = entry.shares.stream()
+                    .map(share -> share.serverid)
+                    .collect(Collectors.toSet());
+
+            DirectoryEntry newEntry = new DirectoryEntry(entryObject, null, null);
+
+            for (Share share : newEntry.shares) {
+                if (!shareIdentifiers.contains(share.serverid) || localIsOlder) {
+                    Optional<Share> localShare = entry.shares.stream()
+                            .filter(s -> s.serverid == share.serverid)
+                            .findAny();
+
+                    entry.shares.remove(localShare);
+                    entry.shares.add(share);
+                }
+            }
+
             // TODO replace this later
             JsonArray passwordArray = keychainObject.getJsonArray("passwords");
             Map<String, Password> passwords = new HashMap<>();
@@ -178,11 +200,11 @@ public class DirectoryController {
         return store.save();
     }
 
-    public Account getAccount() {
-        return this.directory.account;
+    public Optional<Account> getAccount() {
+        return this.directory.getAccount();
     }
 
-    public Optional<JsonObject> buildKeychainEntryObject(DirectoryEntry entry) {
+    public Optional<JsonObject> buildKeychainEntryObject(Account account, DirectoryEntry entry) {
         Optional<Keychain> keychain = entry.readKeychain();
 
         if (!keychain.isPresent()) {
@@ -191,12 +213,28 @@ public class DirectoryController {
         }
 
         return new DirectoryKeychain(keychain.get().dump().build(), entry.dump().build())
-                .dump(getAccount().getKeyPair().getPublic());
+                .dump(account.getKeyPair().getPublic());
     }
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {
         entry.serverid = id;
         entry.markUpdated();
+        return store.save();
+    }
+
+    public boolean setKeychainSharedId(DirectoryEntry entry, long id, Share share) {
+        share.serverid = id;
+        entry.markUpdated();
+        return store.save();
+    }
+
+    public boolean shareKeychain(DirectoryEntry entry, Share share) {
+        entry.shares.add(share);
+        return store.save();
+    }
+
+    public boolean unshareKeychain(DirectoryEntry entry, Share share) {
+        entry.shares.remove(share);
         return store.save();
     }
 }
