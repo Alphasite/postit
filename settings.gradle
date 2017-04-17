@@ -21,6 +21,6 @@ include 'shared'
 include 'server'
 include 'client'
 include 'swing'
-include 'android'
+//include 'android'
 
 rootProject.name = 'postit'

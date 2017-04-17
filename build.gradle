@@ -2,12 +2,10 @@
 buildscript {
     repositories {
         mavenCentral()
-        //Needed only for SNAPSHOT versions
-        //maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
+//        classpath 'com.android.tools.build:gradle:2.4.0-alpha6'
         classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
     }
 }
