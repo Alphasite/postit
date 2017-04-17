@@ -14,6 +14,8 @@ public interface KeyService {
     SecretKey createMasterKey();
 
     SecretKey getMasterKey();
+    
+    SecretKey updateMasterKey();
 
     SecretKey getClientKey();
 

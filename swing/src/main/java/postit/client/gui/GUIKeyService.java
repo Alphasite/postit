@@ -73,6 +73,49 @@ public class GUIKeyService implements KeyService {
     }
 
     @Override
+    public SecretKey updateMasterKey(){
+        String password;
+
+        while (true) {
+        	String passwordOld1 = new String(getMasterKey().getEncoded());
+        	String passwordOld2 = new String(getKey("Please enter CURRENT master password: "));
+        	if (! passwordOld1.equals(passwordOld2)){
+        		JOptionPane.showMessageDialog(null, "The CURRENT master password is incorrect.");
+        		return null;
+        	}
+            String password1 = new String(getKey("Please enter NEW master password: "));
+            String password2 = new String(getKey("Please re-enter NEW master password: "));
+            if (password1.equals(password2)) {
+                password = password1;
+                break;
+            }
+        }
+
+    	Optional<Directory> directory = readDirectory();
+    	
+        if (!directory.isPresent()) {
+            LOGGER.warning("Failed to load directory.");
+            return false;
+        }
+
+        for (DirectoryEntry entry : directory.get().getKeychains()) {
+            writeKeychain(entry);
+        }
+        
+        key = Crypto.secretKeyFromBytes(password.getBytes());
+        retrieved = Instant.now();
+        
+        backingStore.writeDirectory();
+        
+        if (! backingStore.saveContainer()){
+        	LOGGER.warning("Failed to store directory.");
+        	return null;
+        }
+
+        return key;
+    }
+    
+    @Override
     public SecretKey getMasterKey() {
         if (key == null || retrieved == null || Instant.now().isAfter(retrieved.plus(GUIKeyService.timeout))) {
 
