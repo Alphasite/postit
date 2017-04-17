@@ -48,8 +48,8 @@ public class KeychainHandlerTest {
 		assertTrue(res == expected);
 	}
 	
-	public static void testRemoveKeychain(KeychainHandler kh, int directoryEntryId, boolean expected){
-		boolean res = kh.removeKeychain(directoryEntryId);
+	public static void testRemoveKeychain(KeychainHandler kh, String username, int directoryEntryId, boolean expected){
+		boolean res = kh.removeKeychain(username, directoryEntryId);
 		System.out.printf("Removing keychain %d %s%n", directoryEntryId, res ? "successful" : "failed");
 		assertTrue(res == expected);
 	}	
@@ -64,13 +64,13 @@ public class KeychainHandlerTest {
 		int id1 = testAddKeychain(kh, username, "netflix", true);
 		testUpdateKeychain(kh, username, id1, null, "test1", true);
 		int id2 = testAddKeychain(kh, username, "fb", true);
-		testRemoveKeychain(kh, id2, true);
+		testRemoveKeychain(kh, username, id2, true);
 
 		List<ServerKeychain> list = kh.getKeychains(username);
 		assertEquals(1, list.size());
 		System.out.println(list);
 		
-		testRemoveKeychain(kh, id1, true);
+		testRemoveKeychain(kh, username, id1, true);
 		list = kh.getKeychains(username);
 		assertEquals(list.size(), 0);
 		System.out.println(kh.getKeychains(username));
