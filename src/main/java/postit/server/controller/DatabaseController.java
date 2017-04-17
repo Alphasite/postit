@@ -12,12 +12,16 @@ import org.json.JSONObject;
 
 import postit.server.database.Database;
 import postit.server.model.*;
+import postit.shared.AuditLog;
+import postit.shared.AuditLog.EventType;
+import postit.shared.AuditLog.LogEntry;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class DatabaseController {
 
     private static final String ACCOUNT = "account";
     private static final String DIRECTORY_ENTRY = "directory_entry";
+    private static final String LOGIN = "login";
 
     private Database database;
 
@@ -33,7 +37,8 @@ public class DatabaseController {
     private static final String getDirectoryEntriesSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `owner_user_name`=?;";
     private static final String removeDirectoryEntrySQL = "DELETE FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
 
-
+    private static final String getLoginsSQL = "SELECT * FROM " + LOGIN + " WHERE `user_name`=?;";
+    
     public DatabaseController(Database database) {
         this.database = database;
     }
@@ -292,5 +297,29 @@ public class DatabaseController {
         }
 
         return remove == 1;
+    }
+    
+    
+    public List<LogEntry> getLogins(String username) {
+        ResultSet resultSet;
+        LogEntry log = null;
+
+        List<LogEntry> list = new ArrayList<LogEntry>();
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getLoginsSQL)) {
+            statement.setString(1, username);
+            resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+            	log = new LogEntry(resultSet.getTime("time").getTime(), AuditLog.EventType.AUTHENTICATE, resultSet.getString("username"), 
+            			resultSet.getBoolean("status"), resultSet.getString("message"));
+            	list.add(log);
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred in getAccount " + e.getMessage()); // should be contained in JSONObject returned to view
+        } catch (Exception e) {
+            System.out.println("An error occurred: " + e.getMessage()); // should be contained in JSONObject returned to view
+        }
+
+        return list;
     }
 }

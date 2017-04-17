@@ -4,6 +4,7 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
+import postit.client.log.AuthenticationLog;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -24,10 +25,12 @@ public class GUIKeyService implements KeyService {
     private Instant retrieved;
 
     private ServerController sc;
+    private AuthenticationLog al;
     private BackingStore backingStore;
 
-    public GUIKeyService(ServerController sc) {
+    public GUIKeyService(ServerController sc, AuthenticationLog al) {
         this.sc = sc;
+        this.al = al;
     }
 
     public void setBackingStore(BackingStore backingStore) {
@@ -118,6 +121,8 @@ public class GUIKeyService implements KeyService {
                                 "Please ensure your keypair is in the data directory. Select any option to proceed"
                         );
 
+                        al.addAuthenticationLogEntry(username, true, "Login successful");
+                        
                         Optional<KeyPair> keyPair = backingStore.readKeypair();
                         if (keyPair.isPresent()) {
                             newAccount.setKeyPair(keyPair.get());
@@ -126,7 +131,12 @@ public class GUIKeyService implements KeyService {
                             JOptionPane.showMessageDialog(null, "Failed to load keypair.");
                         }
                     } else {
+                    	al.addAuthenticationLogEntry(username, false, "Login credentials are invalid");
                         JOptionPane.showMessageDialog(null, "Login credentials invalid");
+                        
+                        int numFails = al.getLatestNumFailedLogins();
+                        //if (numFails > 4)
+                        //	lp.disableLogin(numFails * 30);
                     }
 
                 } else if (lp.tabbedPane.getSelectedIndex() == 1) {
@@ -140,20 +150,24 @@ public class GUIKeyService implements KeyService {
                     String email = lp.r_emailfield.getText();
 
                     if (pass1.equals(pass2) && LoginPanel.isValidEmailAddress(email)) {
-                        Account newAccount = new Account(username, pass1);
-                        if (sc.addUser(newAccount, email, first, last)) {
-                            if (backingStore.writeKeypair(newAccount.getKeyPair())) {
-                                JOptionPane.showMessageDialog(
-                                    null,
-                                    "Generated a new keypair and saved it to the disk. Please transfer this " +
-                                            "to a memory stick and store it in a safe, or other secure location as you " +
-                                            "will need it to login at new locations."
-                                );
+                    	Account newAccount = new Account(username, pass1);
+                    	if (sc.addUser(newAccount, email, first, last)) {
+                    		if (backingStore.writeKeypair(newAccount.getKeyPair())) {
+                    			JOptionPane.showMessageDialog(
+                    					null,
+                    					"Generated a new keypair and saved it to the disk. Please transfer this " +
+                    							"to a memory stick and store it in a safe, or other secure location as you " +
+                    							"will need it to login at new locations."
+                    					);
 
-                                return newAccount;
-                            } else {
-                                JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
-                            }                        }
+                    			return newAccount;
+                    		} else {
+                    			JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
+                    		}      
+                    	}
+                    	else{
+                    		JOptionPane.showMessageDialog(null, "Failed to register new user.");
+                    	}
                     } else if (!pass1.equals(pass2)) {
                         JOptionPane.showMessageDialog(null, "Passwords do not match");
                     } else {
