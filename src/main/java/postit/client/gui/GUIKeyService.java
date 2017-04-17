@@ -112,15 +112,14 @@ public class GUIKeyService implements KeyService {
                     // LOGIN
                 	
                 	int numFails = al.getLatestNumFailedLogins();
-                	if (numFails > 4){
+                	long diff;
+                	if (numFails > 4 && (diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
                 		// disabled time is linear right now. may change to exponential
-                		long diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000;
-                		if (diff > 0){
-                			JOptionPane.showMessageDialog(
-                					null,
-                					String.format("Login is temporarily disabled. Try again in %d seconds.", diff)
-                					);
-                		}
+                		JOptionPane.showMessageDialog(
+                				null,
+                				String.format("Login is temporarily disabled. Try again in %d seconds.", diff)
+                				);
+
                 	}
                 	else{
                 		String username = lp.l_accountfield.getText();
