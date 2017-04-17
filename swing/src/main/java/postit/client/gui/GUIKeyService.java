@@ -4,6 +4,8 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
+import postit.client.keychain.Directory;
+import postit.client.keychain.DirectoryEntry;
 import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
 
@@ -91,15 +93,14 @@ public class GUIKeyService implements KeyService {
             }
         }
 
-    	Optional<Directory> directory = readDirectory();
-    	
+    	Optional<Directory> directory = backingStore.readDirectory();
+
         if (!directory.isPresent()) {
-            LOGGER.warning("Failed to load directory.");
-            return false;
+            return null;
         }
 
         for (DirectoryEntry entry : directory.get().getKeychains()) {
-            writeKeychain(entry);
+            backingStore.writeKeychain(entry);
         }
         
         key = Crypto.secretKeyFromBytes(password.getBytes());
@@ -108,7 +109,6 @@ public class GUIKeyService implements KeyService {
         backingStore.writeDirectory();
         
         if (! backingStore.saveContainer()){
-        	LOGGER.warning("Failed to store directory.");
         	return null;
         }
 

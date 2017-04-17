@@ -218,7 +218,7 @@ public class KeychainViewer {
         menuItem.addActionListener(e ->{
             int option = JOptionPane.showConfirmDialog(frame, changeMasterMessage, "New Master Password", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (option == JOptionPane.OK_OPTION) {
-            	keyService.updateMasterPassword();
+            	//keyService.updateMasterPassword();
                 /**
                 if (()) {
 
