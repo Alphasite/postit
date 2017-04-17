@@ -299,7 +299,15 @@ public class ServerController {
         }
     }
 
-    public boolean shareKeychain(DirectoryEntry entry) {
+    private boolean shareKeychain(DirectoryEntry entry) {
+        return false;
+    }
 
+    private List<Long> getAllInstances(DirectoryEntry entry) {
+        return null;
+    }
+
+    public boolean setUserCanWrite(DirectoryEntry entry, String username, boolean userCanWrite) {
+        return false;
     }
 }
