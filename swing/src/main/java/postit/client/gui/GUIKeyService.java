@@ -96,7 +96,7 @@ public class GUIKeyService implements KeyService {
     	Optional<Directory> directory = backingStore.readDirectory();
 
         if (!directory.isPresent()) {
-            return null;
+            return null
         }
 
         for (DirectoryEntry entry : directory.get().getKeychains()) {
