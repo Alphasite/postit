@@ -307,7 +307,7 @@ public class KeychainViewer {
             filename.setEditable(false);
             JButton openfile = new JButton();
 
-            openfile.addActionListener(e->{
+            openfile.addActionListener(ee->{
                 int returnVal=fc.showOpenDialog(frame);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -360,7 +360,7 @@ public class KeychainViewer {
             if ((unshareUser != null) && (unshareUser.length() > 0)) {
                 DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
                 ArrayList<Share> shareList = (ArrayList<Share>) activeDE.shares;
-                Share unshare;
+                Share unshare=null;
                 for (Share s:shareList){
                     if (s.username.equals(unshareUser)){
                         unshare=s;
