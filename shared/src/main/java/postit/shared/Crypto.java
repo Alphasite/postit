@@ -43,9 +43,9 @@ public class Crypto {
     private static final int GCM_NONCE_LENGTH = 12;
     private static final String ENCRYPTION_CIPHER = "AES";
 
-    private static final int CPU_SCALING_FACTOR = 10;
-    private static final int MEMORY_SCALING_FACTOR = 10;
-    private static final int PARALLELISM_SCALING_FACTOR = 10;
+    private static final int CPU_SCALING_FACTOR = (int)Math.exp(2,20);
+    private static final int MEMORY_SCALING_FACTOR = 8;
+    private static final int PARALLELISM_SCALING_FACTOR = 1;
     private static final int KEY_LENGTH = 32;
 
     private static SecureRandom random;
