@@ -4,6 +4,7 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
+import postit.shared.Classify;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -37,9 +38,18 @@ public class GUIKeyService implements KeyService {
     @Override
     public byte[] getKey(String displayMessage) {
         String key = null;
-        while (key == null) {
-            key = JOptionPane.showInputDialog(null,displayMessage,"",JOptionPane.PLAIN_MESSAGE);
-        }
+        Classify classify = new Classify();
+        boolean strong = false;
+        do {
+            while (key == null) {
+                key = JOptionPane.showInputDialog(null, displayMessage, "", JOptionPane.PLAIN_MESSAGE);
+                strong = classify.strengthCheck(key)!="LOW";
+            }
+            if (!strong){
+                JOptionPane.showMessageDialog(null,"Master password is too weak");
+                key=null;
+            }
+        }while (!strong);
         return key.getBytes();
     }
 
@@ -139,7 +149,8 @@ public class GUIKeyService implements KeyService {
                     String pass2 = String.valueOf(lp.r_pass2field.getPassword());
                     String email = lp.r_emailfield.getText();
 
-                    if (pass1.equals(pass2) && LoginPanel.isValidEmailAddress(email)) {
+                    Classify classify = new Classify();
+                    if (pass1.equals(pass2) && !classify.isWeak(pass1) && LoginPanel.isValidEmailAddress(email)) {
                         Account newAccount = new Account(username, pass1);
                         if (sc.addUser(newAccount, email, first, last)) {
                             if (backingStore.writeKeypair(newAccount.getKeyPair())) {
@@ -156,8 +167,10 @@ public class GUIKeyService implements KeyService {
                             }                        }
                     } else if (!pass1.equals(pass2)) {
                         JOptionPane.showMessageDialog(null, "Passwords do not match");
-                    } else {
+                    } else if (!LoginPanel.isValidEmailAddress(email)){
                         JOptionPane.showMessageDialog(null, "Email is invalid");
+                    } else{
+                        JOptionPane.showMessageDialog(null, "Password is too weak");
                     }
                 }
 
