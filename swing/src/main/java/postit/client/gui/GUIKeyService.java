@@ -4,7 +4,9 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
-import postit.shared.Classify;
+import postit.client.keychain.Directory;
+import postit.client.keychain.DirectoryEntry;
+import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -72,6 +74,47 @@ public class GUIKeyService implements KeyService {
         return key;
     }
 
+    @Override
+    public SecretKey updateMasterKey(){
+        String password;
+
+        while (true) {
+        	String passwordOld1 = new String(getMasterKey().getEncoded());
+        	String passwordOld2 = new String(getKey("Current master password"));
+        	if (! passwordOld1.equals(passwordOld2)){
+        		JOptionPane.showMessageDialog(null, "The CURRENT master password is incorrect.");
+        		return null;
+        	}
+            String password1 = new String(getKey("New master password"));
+            String password2 = new String(getKey("Re-enter new master password"));
+            if (password1.equals(password2)) {
+                password = password1;
+                break;
+            }
+        }
+
+    	Optional<Directory> directory = backingStore.readDirectory();
+
+        if (!directory.isPresent()) {
+            return null
+        }
+
+        for (DirectoryEntry entry : directory.get().getKeychains()) {
+            backingStore.writeKeychain(entry);
+        }
+        
+        key = Crypto.secretKeyFromBytes(password.getBytes());
+        retrieved = Instant.now();
+        
+        backingStore.writeDirectory();
+        
+        if (! backingStore.saveContainer()){
+        	return null;
+        }
+
+        return key;
+    }
+    
     @Override
     public SecretKey getMasterKey() {
         if (key == null || retrieved == null || Instant.now().isAfter(retrieved.plus(GUIKeyService.timeout))) {
