@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -37,7 +39,8 @@ public class DatabaseController {
     private static final String getDirectoryEntriesSQL = "SELECT * FROM " + DIRECTORY_ENTRY + " WHERE `owner_user_name`=?;";
     private static final String removeDirectoryEntrySQL = "DELETE FROM " + DIRECTORY_ENTRY + " WHERE `directory_entry_id`=?;";
 
-    private static final String getLoginsSQL = "SELECT * FROM " + LOGIN + " WHERE `user_name`=?;";
+    private static final String getLoginsSQL = "SELECT * FROM " + LOGIN + " WHERE `user_name`=? ORDER BY time;";
+    private static final String addLoginSQL = "INSERT INTO " + LOGIN + " (`time`, `user_name`, `status`, `message`) VALUES (?,?,?,?);";
     
     public DatabaseController(Database database) {
         this.database = database;
@@ -315,11 +318,28 @@ public class DatabaseController {
             	list.add(log);
             }
         } catch (SQLException e) {
-            System.out.println("An error occurred in getAccount " + e.getMessage()); // should be contained in JSONObject returned to view
+            System.out.println("An error occurred in getLogins " + e.getMessage()); // should be contained in JSONObject returned to view
         } catch (Exception e) {
             System.out.println("An error occurred: " + e.getMessage()); // should be contained in JSONObject returned to view
         }
 
         return list;
+    }
+    
+    public boolean addLoginEntry(LogEntry log){
+        int add = 0;
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(addAccountSQL)) {
+
+            statement.setTime(1, new Time(log.time));
+            statement.setString(2, log.username);
+            statement.setBoolean(3, log.status);
+            statement.setString(4, log.message);
+            add = statement.executeUpdate();
+        } catch (SQLException e) {
+        	e.printStackTrace();
+            System.out.println("An error occurred in addLog: " + e.getMessage()); 
+        }
+
+        return add == 1;
     }
 }

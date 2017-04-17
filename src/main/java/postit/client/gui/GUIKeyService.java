@@ -110,35 +110,48 @@ public class GUIKeyService implements KeyService {
             if (result == JOptionPane.OK_OPTION) {
                 if (lp.tabbedPane.getSelectedIndex() == 0) {
                     // LOGIN
-                    String username = lp.l_accountfield.getText();
-                    String password = String.valueOf(lp.l_passfield.getPassword());
+                	
+                	int numFails = al.getLatestNumFailedLogins();
+                	if (numFails > 4){
+                		// disabled time is linear right now. may change to exponential
+                		long diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000;
+                		if (diff > 0){
+                			JOptionPane.showMessageDialog(
+                					null,
+                					String.format("Login is temporarily disabled. Try again in %d seconds.", diff)
+                					);
+                		}
+                	}
+                	else{
+                		String username = lp.l_accountfield.getText();
+                		String password = String.valueOf(lp.l_passfield.getPassword());
 
-                    Account newAccount = new Account(username, password);
+                		Account newAccount = new Account(username, password);
 
-                    if (sc.authenticate(newAccount)) {
-                        JOptionPane.showConfirmDialog(
-                                null,
-                                "Please ensure your keypair is in the data directory. Select any option to proceed"
-                        );
+                		if (sc.authenticate(newAccount)) {
+                			JOptionPane.showConfirmDialog(
+                					null,
+                					"Please ensure your keypair is in the data directory. Select any option to proceed"
+                					);
 
-                        al.addAuthenticationLogEntry(username, true, "Login successful");
-                        
-                        Optional<KeyPair> keyPair = backingStore.readKeypair();
-                        if (keyPair.isPresent()) {
-                            newAccount.setKeyPair(keyPair.get());
-                            return newAccount;
-                        } else {
-                            JOptionPane.showMessageDialog(null, "Failed to load keypair.");
-                        }
-                    } else {
-                    	al.addAuthenticationLogEntry(username, false, "Login credentials are invalid");
-                        JOptionPane.showMessageDialog(null, "Login credentials invalid");
-                        
-                        int numFails = al.getLatestNumFailedLogins();
-                        //if (numFails > 4)
-                        //	lp.disableLogin(numFails * 30);
-                    }
+                			al.addAuthenticationLogEntry(username, true, "Login successful");
 
+                			Optional<KeyPair> keyPair = backingStore.readKeypair();
+                			if (keyPair.isPresent()) {
+                				newAccount.setKeyPair(keyPair.get());
+                				return newAccount;
+                			} else {
+                				JOptionPane.showMessageDialog(null, "Failed to load keypair.");
+                			}
+                		} else {
+                			al.addAuthenticationLogEntry(username, false, "Login credentials are invalid");
+                			JOptionPane.showMessageDialog(null, "Login credentials invalid");
+
+                			//int numFails = al.getLatestNumFailedLogins();
+                			//if (numFails > 4)
+                			//	lp.disableLogin(numFails * 30);
+                		}
+                	}
                 } else if (lp.tabbedPane.getSelectedIndex() == 1) {
 
                     // REGISTRATION

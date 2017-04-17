@@ -14,6 +14,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.swing.JOptionPane;
+
 /**
  * 
  * @author Ning
@@ -24,11 +26,13 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 	private AccountHandler ah;
 	private KeychainHandler kh;
+	private LogController lc;
 
-	public RequestHandler(AccountHandler accountHandler, KeychainHandler keychainHandler) throws ExceptionInInitializerError {
+	public RequestHandler(AccountHandler accountHandler, KeychainHandler keychainHandler, LogController logController) throws ExceptionInInitializerError {
 		System.out.println("Initialised new Request Handler");
 		ah = accountHandler;
 		kh = keychainHandler;
+		lc = logController;
 	}
 
 	@Override
@@ -78,6 +82,17 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			username = json.getString("username");
 			password = json.getString("password");
 			password = new String(Base64.getDecoder().decode(password));
+			
+			int numFails = lc.getLatestNumFailedLogins(username);
+			if (numFails > 4){
+        		// disabled time is linear right now. may change to exponential
+        		long diff = (numFails - 4) * 30 - (System.currentTimeMillis() - lc.getLastLoginTime(username)) / 1000;
+        		if (diff > 0){
+        			LOGGER.info("Sign in disabled");
+    				return MessagePackager.createResponse(false, username, String.format("Login is temporarily disabled. Try again in %d seconds.", diff), 
+    						asset, null);
+        		}
+        	}
 
 			// TODO check this.
 			if (!ah.authenticate(username, password)) {

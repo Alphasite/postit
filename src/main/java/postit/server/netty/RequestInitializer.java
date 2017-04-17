@@ -13,6 +13,7 @@ import io.netty.handler.ssl.SslHandler;
 import postit.server.controller.AccountHandler;
 import postit.server.controller.DatabaseController;
 import postit.server.controller.KeychainHandler;
+import postit.server.controller.LogController;
 import postit.server.controller.RequestHandler;
 import postit.server.database.Database;
 import postit.shared.Crypto;
@@ -29,12 +30,14 @@ public class RequestInitializer extends ChannelInitializer<SocketChannel> {
     private final SSLContext context;
     private final AccountHandler accountHandler;
     private final KeychainHandler keychainHandler;
+    private final LogController logController;
 
     public RequestInitializer(SSLContext context, Database database) {
         DatabaseController db = new DatabaseController(database);
 
         this.accountHandler = new AccountHandler(db, Crypto.getRandom());
         this.keychainHandler = new KeychainHandler(db);
+        this.logController = new LogController(db);
         this.context = context;
     }
 
@@ -58,7 +61,7 @@ public class RequestInitializer extends ChannelInitializer<SocketChannel> {
                 new LineBasedFrameDecoder(1024 * 1024, true, true),
                 new StringDecoder(),
                 new StringEncoder(),
-                new RequestHandler(accountHandler, keychainHandler) // And our handler.
+                new RequestHandler(accountHandler, keychainHandler, logController) // And our handler.
         );
     }
 }

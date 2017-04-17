@@ -26,7 +26,7 @@ public class AuthenticationLog {
 		// Appends new log in attempt to log
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(AUTH_LOG)));
+			writer = new PrintWriter(new FileWriter(new File(AUTH_LOG), true));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -45,7 +45,6 @@ public class AuthenticationLog {
 			BufferedReader reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
 			String line = reader.readLine();
 			while (line != null){
-				System.out.println("line: " + line);
 				LogEntry entry = AuditLog.parseLogEntry(line);
 				if (username == null || entry.username.equals(username)){
 					if (entry.status)
@@ -65,8 +64,37 @@ public class AuthenticationLog {
 		return numFailed;
 	}
 
+
 	public int getLatestNumFailedLogins(){
 		return getLatestNumFailedLogins(null);
+	}
+	
+	public long getLastLoginTime(String username){
+		// Returns the number of consecutive failed log-ins
+		// GUI should lock up accordingly
+		long time = -1; // -1 if never logged in before
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
+			String line = reader.readLine();
+			while (line != null){
+				LogEntry entry = AuditLog.parseLogEntry(line);
+				if (username == null || entry.username.equals(username)){
+					time = entry.time;
+				}
+				line = reader.readLine();
+			}
+			
+			reader.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return time;
+	}
+	
+	public long getLastLoginTime(){
+		return getLastLoginTime(null);
 	}
 	
 	public static void main(String[] args){
