@@ -1,13 +1,18 @@
 package postit.shared;
 
+import org.bouncycastle.crypto.AsymmetricBlockCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.generators.SCrypt;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.CipherOutputStream;
 import org.bouncycastle.crypto.modes.AEADBlockCipher;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
+import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Cipher;
@@ -24,7 +29,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
-import java.security.cert.CertificateException;
+import java.security.cert.*;
+import java.security.cert.Certificate;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +43,7 @@ public class Crypto {
     private static final int GCM_NONCE_LENGTH = 12;
     private static final String ENCRYPTION_CIPHER = "AES";
 
-    private static final int CPU_SCALING_FACTOR = 2^20;
+    private static final int CPU_SCALING_FACTOR = (int) Math.pow(2,20);
     private static final int MEMORY_SCALING_FACTOR = 8;
     private static final int PARALLELISM_SCALING_FACTOR = 1;
     private static final int KEY_LENGTH = 32;
