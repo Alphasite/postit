@@ -243,7 +243,6 @@ public class KeychainViewer {
                 String path = file.getPath();
 
                 RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getKeyPair().getPublic();
-                System.out.println(publicKey);
                 X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
 
                 try {
@@ -347,7 +346,7 @@ public class KeychainViewer {
                     openfile
             };
 
-            int option = JOptionPane.showConfirmDialog(frame, message, "Share", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
+            int option = JOptionPane.showConfirmDialog(frame, message, "Share Keychain: "+getActiveKeychain().getName(), JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (option == JOptionPane.OK_OPTION) {
                 if (shareusername.getText().length() > 0 && filename.getText().length()>0 && file[0].exists()) {
                     DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
@@ -358,8 +357,7 @@ public class KeychainViewer {
                         byte[] keyBytes = Files.readAllBytes(file[0].toPath());
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
-                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);;
-                        System.out.println(publicKey);
+                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
                         Share newshare = new Share(activeDE.serverid,username,readWrite, publicKey);
                         directoryController.shareKeychain(activeDE,newshare);
                     }catch (IOException | ClassCastException|
@@ -376,7 +374,7 @@ public class KeychainViewer {
             String unshareUser = (String) JOptionPane.showInputDialog(
                     frame,
                     "Who to unshare with?",
-                    "Unshare",
+                    "Unshare Keychain: "+getActiveKeychain().getName(),
                     JOptionPane.PLAIN_MESSAGE,
                     null,
                     null,
