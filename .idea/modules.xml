@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/post_It.iml" filepath="$PROJECT_DIR$/post_It.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/postit.iml" filepath="$PROJECT_DIR$/.idea/modules/postit.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/postit_main.iml" filepath="$PROJECT_DIR$/.idea/modules/postit_main.iml" group="postit" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/postit_test.iml" filepath="$PROJECT_DIR$/.idea/modules/postit_test.iml" group="postit" />
