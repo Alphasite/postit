@@ -6,6 +6,7 @@ import ch.vorburger.mariadb4j.DBConfigurationBuilder;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -37,9 +38,10 @@ public class TestH2 extends AbstractDatabase implements Closeable {
     public boolean initDatabase() {
         try {
             db.createDB("postit");
-            db.source("./database/init_schema.sql", null, null, "postit");
+            db.run(this.getSetupSQL(), null, null, "postit");
+//            db.source("./database/init_schema.sql", null, null, "postit");
             return true;
-        } catch (ManagedProcessException e) {
+        } catch (ManagedProcessException | IOException | URISyntaxException e) {
             e.printStackTrace();
             return false;
         }

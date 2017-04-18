@@ -16,13 +16,14 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -56,6 +57,9 @@ public class KeychainViewer {
     private JMenuItem delPass;
     private JMenuItem movePass;
     private JMenuItem delKey;
+    private JMenuItem rnKey;
+    private JMenuItem addKeyPerm;
+    private JMenuItem rmKeyPerm;
 
     private PasswordGenerator passwordGenerator;
     private Classify classify;
@@ -206,35 +210,33 @@ public class KeychainViewer {
 
         fileMenu.addSeparator();
         menuItem = new JMenuItem("Change Master Password");
-        menuItem.setEnabled(false);
-        JTextField oldMasterPassword = new JTextField();
-        JTextField newMasterPassword = new JTextField();
-        JTextField newMasterPassword2 = new JTextField();
-        Object[] changeMasterMessage = {
-                "Current master password", oldMasterPassword,
-                "New master password", newMasterPassword,
-                "Re-enter new master password", newMasterPassword2
-        };
         menuItem.addActionListener(e ->{
-            int option = JOptionPane.showConfirmDialog(frame, changeMasterMessage, "New Master Password", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
-            if (option == JOptionPane.OK_OPTION) {
-            	//keyService.updateMasterPassword();
-                /**
-                if (()) {
-
-                }
-                 **/
-            }
+            keyService.updateMasterKey();
         });
         fileMenu.add(menuItem);
 
-        menuItem = new JMenuItem("Create public keyfile");
-        menuItem.setEnabled(false); //Delete this line when done
-        menuItem.addActionListener(e->{
-            PublicKey publickey = directoryController.getAccount().get().getKeyPair().getPublic();
-            //TODO public keyfile
-            // Generate the file <username_"public_key">
-            // Or let them choose the location
+        menuItem = new JMenuItem("Create Public Keyfile");
+        menuItem.addActionListener((ActionEvent e) ->{
+            String username = directoryController.getAccount().get().getUsername();
+            JFileChooser fc = new JFileChooser();
+            JFileChooser fileChooser = new JFileChooser();
+            if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                // save to file
+                String path = file.getPath();
+
+                RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getKeyPair().getPublic();
+                X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
+
+                try {
+                    FileOutputStream fos = new FileOutputStream(path);
+                    fos.write(x509EncodedKeySpec.getEncoded());
+                    fos.close();
+                } catch (IOException e1) {
+                    JOptionPane.showConfirmDialog(frame, "Unable to write to location: "+path);
+                }
+            }
+
         });
 
 
@@ -277,15 +279,15 @@ public class KeychainViewer {
 
         keychainMenu.addSeparator();
 
-        menuItem = new JMenuItem("Rename Keychain");
-        menuItem.addActionListener(e -> {
+        rnKey = new JMenuItem("Rename Keychain");
+        rnKey.addActionListener(e -> {
             String newName = JOptionPane.showInputDialog(frame,"New keychain name:","Update name",JOptionPane.PLAIN_MESSAGE);
             if (newName!=null){
                 directoryController.renameKeychain(getActiveKeychain(),newName);
                 refreshTabbedPanes();
             }
         });
-        keychainMenu.add(menuItem);
+        keychainMenu.add(rnKey);
 
         delKey = new JMenuItem("Delete Keychain");
         delKey.addActionListener(e -> {
@@ -299,8 +301,8 @@ public class KeychainViewer {
         keychainMenu.add(delKey);
 
 
-        menuItem = new JMenuItem("Add Keychain Permissions");
-        menuItem.addActionListener(e ->{
+        addKeyPerm = new JMenuItem("Add Keychain Permissions");
+        addKeyPerm.addActionListener(e ->{
 
             JFileChooser fc = new JFileChooser();
             JTextField shareusername = new JTextField();
@@ -309,7 +311,7 @@ public class KeychainViewer {
             final File[] file = new File[1];
             JTextField filename = new JTextField();
             filename.setEditable(false);
-            JButton openfile = new JButton();
+            JButton openfile = new JButton("Attach public key file");
 
             openfile.addActionListener(ee->{
                 int returnVal=fc.showOpenDialog(frame);
@@ -327,7 +329,7 @@ public class KeychainViewer {
                     openfile
             };
 
-            int option = JOptionPane.showConfirmDialog(frame, message, "Share", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
+            int option = JOptionPane.showConfirmDialog(frame, message, "Share Keychain: "+getActiveKeychain().getName(), JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (option == JOptionPane.OK_OPTION) {
                 if (shareusername.getText().length() > 0 && filename.getText().length()>0 && file[0].exists()) {
                     DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
@@ -338,7 +340,7 @@ public class KeychainViewer {
                         byte[] keyBytes = Files.readAllBytes(file[0].toPath());
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
-                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);;
+                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
                         Share newshare = new Share(activeDE.serverid,username,readWrite, publicKey);
                         directoryController.shareKeychain(activeDE,newshare);
                     }catch (IOException | ClassCastException|
@@ -348,14 +350,14 @@ public class KeychainViewer {
                 }
             }
         });
-        keychainMenu.add(menuItem);
+        keychainMenu.add(addKeyPerm);
 
-        menuItem = new JMenuItem("Remove Keychain Permissions");
-        menuItem.addActionListener(e ->{
+        rmKeyPerm = new JMenuItem("Remove Keychain Permissions");
+        rmKeyPerm.addActionListener(e ->{
             String unshareUser = (String) JOptionPane.showInputDialog(
                     frame,
                     "Who to unshare with?",
-                    "Unshare",
+                    "Unshare Keychain: "+getActiveKeychain().getName(),
                     JOptionPane.PLAIN_MESSAGE,
                     null,
                     null,
@@ -380,7 +382,7 @@ public class KeychainViewer {
             }
 
         });
-        keychainMenu.add(menuItem);
+        keychainMenu.add(rmKeyPerm);
 
 
         //SETTINGS Menu Item
@@ -435,9 +437,15 @@ public class KeychainViewer {
         if (this.keychains.size() == 0) {
             addPass.setEnabled(false);
             delKey.setEnabled(false);
+            rnKey.setEnabled(false);
+            addKeyPerm.setEnabled(false);
+            rmKeyPerm.setEnabled(false);
         } else {
             addPass.setEnabled(true);
             delKey.setEnabled(true);
+            rnKey.setEnabled(true);
+            addKeyPerm.setEnabled(true);
+            rmKeyPerm.setEnabled(true);
         }
         if(activeKeychainidx>-1 && activeKeychainidx<tabbedPane.getTabCount()){
             tabbedPane.setSelectedIndex(activeKeychainidx);

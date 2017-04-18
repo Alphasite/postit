@@ -41,6 +41,12 @@ public class MockKeyService implements KeyService {
     }
 
     @Override
+    public SecretKey updateMasterKey() {
+        this.masterKey = newMasterKey;
+        return this.newMasterKey;
+    }
+
+    @Override
     public SecretKey getClientKey() {
         return clientKeys.remove(0);
     }
