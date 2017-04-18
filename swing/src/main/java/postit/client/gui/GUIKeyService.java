@@ -43,7 +43,7 @@ public class GUIKeyService implements KeyService {
         do {
             while (key == null) {
                 key = JOptionPane.showInputDialog(null, displayMessage, "", JOptionPane.PLAIN_MESSAGE);
-                strong = classify.strengthCheck(key)!="LOW";
+                strong = !classify.isWeak(key);
             }
             if (!strong){
                 JOptionPane.showMessageDialog(null,"Master password is too weak");

@@ -2,6 +2,7 @@
 package postit.client.gui;
 
 
+import org.json.JSONObject;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
@@ -130,8 +131,11 @@ public class KeychainViewer {
             });
             generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
             evaluatePass.addActionListener(ee->{
-                String strength = classify.strengthCheck(newpassword.getText());
-                passwordStrength.setText("Password Strength: "+strength);
+                JSONObject result = classify.strengthCheck(newpassword.getText());
+                String strength = (String) result.get("strength");
+                String evaluation = (String) result.get("evaluation");
+
+                passwordStrength.setText("Password Strength: "+strength + ", " + evaluation);
             });
             Object[] message = {
                     "Title:", newtitle,
