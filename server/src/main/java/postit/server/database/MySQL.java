@@ -18,7 +18,7 @@ import java.sql.Statement;
  *
  */
 @SuppressWarnings("ALL")
-public class MySQL implements Database {
+public class MySQL extends AbstractDatabase {
 	String databaseName;
 	//private String user;
 	String password;
@@ -63,11 +63,7 @@ public class MySQL implements Database {
 	@Override
 	public boolean initDatabase() {
 		try (Connection connection = connect(); Statement statement = connection.createStatement()){
-			URL resource = ClassLoader.getSystemClassLoader().getResource("./database/init_schema.sql");
-			byte[] bytes = Files.readAllBytes(Paths.get(resource.toURI()));
-
-
-			final String sql = new String(bytes);
+			final String sql = getSetupSQL();
             PreparedStatement ps = connection.prepareStatement("?");
             ps.setString(1,sql);
 			Boolean res = ps.execute();

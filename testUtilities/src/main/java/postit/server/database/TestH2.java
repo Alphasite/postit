@@ -15,7 +15,7 @@ import java.util.Random;
 /**
  * Created by nishadmathur on 22/3/17.
  */
-public class TestH2 implements Database, Closeable {
+public class TestH2 extends AbstractDatabase implements Closeable {
     DB db;
     DBConfigurationBuilder configBuilder;
 
