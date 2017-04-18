@@ -34,6 +34,7 @@ import static org.junit.Assert.*;
 /**
  * Created by nishadmathur on 8/3/17.
  */
+@SuppressWarnings("Duplicates")
 public class ServerControllerTest {
     private final static Logger LOGGER = Logger.getLogger(ServerControllerTest.class.getName());
 

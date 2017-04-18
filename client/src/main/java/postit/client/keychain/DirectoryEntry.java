@@ -65,7 +65,7 @@ public class DirectoryEntry {
         this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
         this.owner = object.getString("owner", null);
 
-        JsonArray shareArray = object.getJsonArray("passwords");
+        JsonArray shareArray = object.getJsonArray("shares");
         for (int i = 0; i < shareArray.size(); i++) {
             try {
                 this.shares.add(new Share(shareArray.getJsonObject(i)));
@@ -98,7 +98,7 @@ public class DirectoryEntry {
             shareArray.add(share.dump());
         }
 
-        builder.add("shared", shareArray);
+        builder.add("shares", shareArray);
 
         return builder;
     }

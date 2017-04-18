@@ -4,8 +4,6 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
-import postit.client.keychain.Directory;
-import postit.client.keychain.DirectoryEntry;
 import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
 
@@ -175,7 +173,6 @@ public class GUIKeyService implements KeyService {
                     }
 
                 } else if (lp.tabbedPane.getSelectedIndex() == 1) {
-
                     // REGISTRATION
                     String first = lp.r_firstfield.getText();
                     String last = lp.r_lastfield.getText();
@@ -199,7 +196,8 @@ public class GUIKeyService implements KeyService {
                                 return newAccount;
                             } else {
                                 JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
-                            }                        }
+                            }
+                        }
                     } else if (!pass1.equals(pass2)) {
                         JOptionPane.showMessageDialog(null, "Passwords do not match");
                     } else if (!LoginPanel.isValidEmailAddress(email)){
