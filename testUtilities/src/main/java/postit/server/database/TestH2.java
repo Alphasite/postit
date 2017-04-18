@@ -11,12 +11,11 @@ import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Random;
 
 /**
  * Created by nishadmathur on 22/3/17.
  */
-public class TestH2 extends AbstractDatabase implements Closeable {
+public class TestH2 implements Database, Closeable {
     DB db;
     DBConfigurationBuilder configBuilder;
 
@@ -38,10 +37,10 @@ public class TestH2 extends AbstractDatabase implements Closeable {
     public boolean initDatabase() {
         try {
             db.createDB("postit");
-//            db.run(this.getSetupSQL(), null, null, "postit");
-            db.source("./database/init_schema.sql", null, null, "postit");
+            db.run(DatabaseUtils.getSetupSQL(), null, null, "postit");
+//            db.source("./database/init_schema.sql", null, null, "postit");
             return true;
-        } catch (ManagedProcessException /*| IOException | URISyntaxException */ e) {
+        } catch (ManagedProcessException | IOException | URISyntaxException e) {
             e.printStackTrace();
             return false;
         }

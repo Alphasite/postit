@@ -9,9 +9,8 @@ import java.nio.file.Paths;
 /**
  * Created by nishadmathur on 17/4/17.
  */
-public abstract class AbstractDatabase implements Database {
-    @Override
-    public String getSetupSQL() throws IOException, URISyntaxException {
+public class DatabaseUtils {
+    public static String getSetupSQL() throws IOException, URISyntaxException {
         URL resource = ClassLoader.getSystemClassLoader().getResource("./database/init_schema.sql");
         byte[] bytes = Files.readAllBytes(Paths.get(resource.toURI()));
 
