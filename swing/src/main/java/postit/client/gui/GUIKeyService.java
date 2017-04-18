@@ -93,22 +93,14 @@ public class GUIKeyService implements KeyService {
             }
         }
 
-    	Optional<Directory> directory = backingStore.readDirectory();
-
-        if (!directory.isPresent()) {
-            return null
-        }
-
-        for (DirectoryEntry entry : directory.get().getKeychains()) {
-            backingStore.writeKeychain(entry);
-        }
+    	backingStore.readDirectory();
         
         key = Crypto.secretKeyFromBytes(password.getBytes());
         retrieved = Instant.now();
         
         backingStore.writeDirectory();
         
-        if (! backingStore.saveContainer()){
+        if (!backingStore.saveContainer()){
         	return null;
         }
 

@@ -96,7 +96,7 @@ public class BackingStore {
         }
     }
 
-    private boolean saveContainer() {
+    public boolean saveContainer() {
         if (container != null) {
             return Crypto.writeJsonObjectToFile(getContainer(), container.dump().build());
         } else {
