@@ -66,11 +66,13 @@ public class DirectoryEntry {
         this.owner = object.getString("owner", null);
 
         JsonArray shareArray = object.getJsonArray("passwords");
-        for (int i = 0; i < shareArray.size(); i++) {
-            try {
-                this.shares.add(new Share(shareArray.getJsonObject(i)));
-            } catch (InvalidKeyException e) {
-                LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
+        if (shareArray!=null){
+            for (int i = 0; i < shareArray.size(); i++) {
+                try {
+                    this.shares.add(new Share(shareArray.getJsonObject(i)));
+                } catch (InvalidKeyException e) {
+                    LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
+                }
             }
         }
     }

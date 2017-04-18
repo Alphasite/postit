@@ -210,25 +210,8 @@ public class KeychainViewer {
 
         fileMenu.addSeparator();
         menuItem = new JMenuItem("Change Master Password");
-        menuItem.setEnabled(false);
-        JTextField oldMasterPassword = new JTextField();
-        JTextField newMasterPassword = new JTextField();
-        JTextField newMasterPassword2 = new JTextField();
-        Object[] changeMasterMessage = {
-                "Current master password", oldMasterPassword,
-                "New master password", newMasterPassword,
-                "Re-enter new master password", newMasterPassword2
-        };
         menuItem.addActionListener(e ->{
-            int option = JOptionPane.showConfirmDialog(frame, changeMasterMessage, "New Master Password", JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
-            if (option == JOptionPane.OK_OPTION) {
-            	//keyService.updateMasterPassword();
-                /**
-                if (()) {
-
-                }
-                 **/
-            }
+            keyService.updateMasterKey();
         });
         fileMenu.add(menuItem);
 
