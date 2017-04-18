@@ -3,7 +3,6 @@ package postit.client.passwordtools;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -12,9 +11,9 @@ import java.nio.file.Paths;
 
 public class Classify {
 
-    final String dictionaryWords = "Contains dictionary words";
-    final String comp8 = "Lacks upper case/lower case/symbol/digit";
-    final String bas16 = "Longer password, at least 16 characters";
+    public final String dictionaryWords = "Contains dictionary/easy words";
+    public final String comp8 = "Lacks upper case/lower case/symbol/digit";
+    public final String bas16 = "Longer password, at least 16 characters";
 
     public static class Result {
         private String evaluation;
@@ -119,14 +118,13 @@ public class Classify {
             }
             else {
                 if (!c8 && !bListHard) {
-                    return new Result(bas16 + " " + comp8, Level.LOW).toObject();
+                    return new Result(bas16 + " " + dictionaryWords, Level.LOW).toObject();
                 }
                 if (!c8) {
                     return new Result(bas16 + " " + comp8, Level.LOW).toObject();
                 }
 
                 return new Result(bas16 + " " + dictionaryWords, Level.LOW).toObject();
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -135,15 +133,8 @@ public class Classify {
     }
 
     public static void main (String[] args) {
-        Path curr = Paths.get("");
-        File file = Paths.get("").resolve("src").resolve("main").resolve("resources").
-                resolve("passwordStrength").resolve("password-2011.lst").toFile();
-        System.out.println(curr.toAbsolutePath().toString());
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(file));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
+        Classify classify = new Classify();
+        String pwd = "Bjxdf-92";
+        System.out.println(classify.strengthCheck(pwd).get("strength"));
     }
 }
