@@ -6,13 +6,22 @@ import postit.client.controller.RequestMessenger;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.*;
+import static postit.shared.MessagePackager.typeToString;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import postit.client.keychain.Account;
 import postit.server.database.TestH2;
+import postit.server.model.ServerKeychain;
 import postit.shared.Crypto;
+import postit.shared.MessagePackager;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import java.io.StringReader;
 
 public class RequestHandlerTest {
 	private RequestHandler rh;
@@ -27,9 +36,9 @@ public class RequestHandlerTest {
 		assertTrue(js.getString("status").equals("success") == expected);
 	}
 
-	private static long testAddKeychain(RequestHandler rh, Account account, String name, String pwd, boolean expected){
-		System.out.printf("Adding keychain to %s: (%s, %s)%n", account, name, pwd);
-		String req = RequestMessenger.createAddKeychainsMessage(account, name, pwd);
+	private static long testAddKeychain(RequestHandler rh, Account account, String name, String data, boolean expected){
+		System.out.printf("Adding keychain to %s: (%s, %s)%n", account, name, data);
+		String req = RequestMessenger.createAddKeychainsMessage(account, name, data);
 		String res = rh.handleRequest(req);
 		System.out.println(res);
 		JSONObject js = new JSONObject(res);
@@ -66,6 +75,61 @@ public class RequestHandlerTest {
 		assertThat(js.getString("status").equals("success"), is(expected));
 	}
 
+	public static void testCreateAccount(RequestHandler rh, Account account, String email) {
+		String req = RequestMessenger.createAddUserMessage(account, email, "", "");
+		String res = rh.handleRequest(req);
+		System.out.println(res);
+		JSONObject js = new JSONObject(res);
+		assertThat(js.getString("status").equals("success"), is(true));
+	}
+
+	public static long testShareKeychain(RequestHandler rh, Account owner, Account shared, boolean canWrite, long id) {
+		String req = RequestMessenger.createSharedKeychainMessage(owner, id, shared.getUsername(), canWrite);
+		String res = rh.handleRequest(req);
+		System.out.println(res);
+		JSONObject js1 = new JSONObject(res);
+
+		assertThat(js1.getString("status").equals("success"), is(true));
+		long sharedid = js1.getJSONObject(typeToString(MessagePackager.Asset.SHARED_KEYCHAINS)).getLong("directoryEntryId");
+		System.out.println("Test sharing keychain was successful.");
+
+		req = RequestMessenger.createGetKeychainMessage(shared, sharedid);
+		res = rh.handleRequest(req);
+		JsonObject js2 = Json.createReader(new StringReader(res)).readObject();
+
+		assertThat(js2.getString("status").equals("success"), is(true));
+		ServerKeychain sharedView = new ServerKeychain(js2.getJsonObject("keychain"));
+		assertThat(sharedView.getOwnerUsername(), is(owner.getUsername()));
+		assertThat(sharedView.getSharedUsername(), is(shared.getUsername()));
+		assertThat(sharedView.getOwnerDirectoryEntryId(), is(id));
+		assertThat(sharedView.getDirectoryEntryId(), is(sharedid));
+		System.out.println("Test shared getting keychain was successful");
+
+		req = RequestMessenger.createGetKeychainMessage(owner, sharedid);
+		res = rh.handleRequest(req);
+		JsonObject js3 = Json.createReader(new StringReader(res)).readObject();
+
+		assertThat(js3.getString("status").equals("success"), is(true));
+		ServerKeychain ownerView = new ServerKeychain(js3.getJsonObject("keychain"));
+		assertThat(ownerView.getOwnerUsername(), is(owner.getUsername()));
+		assertThat(ownerView.getSharedUsername(), is(shared.getUsername()));
+		assertThat(ownerView.getOwnerDirectoryEntryId(), is(id));
+		assertThat(ownerView.getDirectoryEntryId(), is(sharedid));
+		System.out.println("Test owner getting keychain was successful");
+
+		req = RequestMessenger.createGetKeychainMessage(shared, id);
+		res = rh.handleRequest(req);
+		JSONObject js4 = new JSONObject(res);
+		assertThat(js4.getString("status").equals("success"), is(false));
+
+		req = RequestMessenger.createGetKeychainMessage(owner, id);
+		res = rh.handleRequest(req);
+		JSONObject js5 = new JSONObject(res);
+		assertThat(js5.getString("status").equals("success"), is(true));
+
+		return sharedid;
+	}
+
 	@Before
 	public void setUp() throws Exception {
 		assertThat(Crypto.init(false), is(true));
@@ -97,6 +161,16 @@ public class RequestHandlerTest {
 		testRemoveKeychain(rh, account, -1, false);
 		testRemoveKeychain(rh, account, fbId, true);
 		testGetKeychains(rh, account, 2);
+
+		Account account1 = new Account("test1", "password");
+		Account account2 = new Account("test2", "password");
+
+		testCreateAccount(rh, account1, "a@b.com");
+		testCreateAccount(rh, account2, "b@b.com");
+
+		long testkcId = testAddKeychain(rh, account1, "testkc", "1234", true);
+
+		testShareKeychain(rh, account1, account2, true, testkcId);
 	}
 
 }

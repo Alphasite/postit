@@ -151,10 +151,10 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					ServerKeychain keychain = new ServerKeychain(
 							js.getInt("directoryEntryId"),
 							username,
-							obj.getInt("directoryEntryId"),
-							obj.getString("shared username"),
-							obj.getBoolean("writeable"),
-							obj.getString("name"),
+							obj.getLong("ownerDirectoryEntryId"),
+							obj.getString("sharedUsername"),
+							obj.getBoolean("sharedHasWritePermission"),
+							"",
 							""
 					);
 

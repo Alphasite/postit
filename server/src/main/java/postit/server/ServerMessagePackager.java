@@ -8,6 +8,8 @@ import java.util.InputMismatchException;
 import java.util.List;
 
 import static postit.shared.MessagePackager.Asset.ACCOUNT;
+import static postit.shared.MessagePackager.Asset.KEYCHAIN;
+import static postit.shared.MessagePackager.Asset.SHARED_KEYCHAINS;
 import static postit.shared.MessagePackager.typeToString;
 
 /**
@@ -30,7 +32,7 @@ public class ServerMessagePackager {
 		if (status){
 			response.put("status", "success");
 			if (bean != null){
-				if (asset == ACCOUNT || asset == MessagePackager.Asset.KEYCHAIN)
+				if (asset == ACCOUNT || asset == KEYCHAIN || asset == SHARED_KEYCHAINS)
 					response.put(typeToString(asset), new JSONObject(bean));
 				else
 					response.put(typeToString(asset), bean);

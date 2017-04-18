@@ -3,13 +3,17 @@ package postit.server.controller;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
+import postit.client.keychain.Account;
 import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.model.ServerKeychain;
+import postit.shared.Crypto;
 
 import java.util.List;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.*;
 
 /**
@@ -22,13 +26,16 @@ public class KeychainHandlerTest {
 	DatabaseController db;
 	//AccountHandler ah;
 	KeychainHandler kh;
+	AccountHandler ah;
 
 	@Before
 	public void setUp() throws Exception {
+		Crypto.init(false);
+
 		database = new TestH2();
 		db = new DatabaseController(database);
-		//ah = new AccountHandler(db, new SecureRandom());
 		kh = new KeychainHandler(db);
+		ah = new AccountHandler(db, Crypto.getRandom());
 
 		assertThat(database.initDatabase(), is(true));
 	}
@@ -52,14 +59,41 @@ public class KeychainHandlerTest {
 		boolean res = kh.removeKeychain(username, directoryEntryId);
 		System.out.printf("Removing keychain %d %s%n", directoryEntryId, res ? "successful" : "failed");
 		assertTrue(res == expected);
-	}	
+	}
+
+	public static long testShareKeychain(KeychainHandler kh, String owner, String shared, boolean canWrite, long id) {
+		JSONObject js = kh.shareKeychain(owner, shared, canWrite, id);
+		assertThat(js.getString("status").equals("success"), is(true));
+		long sharedid = js.getLong("directoryEntryId");
+		System.out.println("Test sharing keychain was successful.");
+
+		ServerKeychain sharedResult = kh.getKeychain(shared, sharedid);
+		assertThat(sharedResult, notNullValue());
+		assertThat(sharedResult.getOwnerUsername(), is(owner));
+		assertThat(sharedResult.getSharedUsername(), is(shared));
+		assertThat(sharedResult.getOwnerDirectoryEntryId(), is(id));
+		System.out.println("Test shared getting keychain was successful");
+
+		ServerKeychain ownerView = kh.getKeychain(owner, sharedid);
+		assertThat(ownerView, notNullValue());
+		assertThat(ownerView.getOwnerUsername(), is(owner));
+		assertThat(ownerView.getSharedUsername(), is(shared));
+		assertThat(ownerView.getOwnerDirectoryEntryId(), is(id));
+		System.out.println("Test owner getting keychain was successful");
+
+		assertThat(kh.getKeychain(shared, id), nullValue());
+
+		return sharedid;
+	}
 	
 	@Test
 	public void runTest(){
 
 		
 		String username = "mc";
-		//boolean res = ah.addAccount(username, "cs5431", "mc@cornell.edu", "m", "c");
+
+		assertThat(ah.addAccount("test1", "cs5431", "test1@cornell.edu", "m", "c"), is(true));
+		assertThat(ah.addAccount("test2", "cs5431", "test2@cornell.edu", "m", "c"), is(true));
 
 		int id1 = testAddKeychain(kh, username, "netflix", true);
 		testUpdateKeychain(kh, username, id1, null, "test1", true);
@@ -74,7 +108,10 @@ public class KeychainHandlerTest {
 		list = kh.getKeychains(username);
 		assertEquals(list.size(), 0);
 		System.out.println(kh.getKeychains(username));
-		
+
+		int id = testAddKeychain(kh, "test1", "banana", true);
+		long sharedId = testShareKeychain(kh, "test1", "test2", true, id);
+
 		db.removeAccount(username);
 	}
 }
