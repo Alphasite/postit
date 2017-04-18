@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 import static postit.server.ServerMessagePackager.*;
 
 /**
- * 
+ *
  * @author Ning
  *
  */
@@ -61,7 +61,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	public String handleRequest(String request) {
 		//TODO refactor this gigantic thing using multiple engine classes that handle requests
 		// associated to specific assets
-		
+
 		JSONObject json = new JSONObject(request);
 
 		Action act = Action.valueOf(json.getString("action"));
@@ -84,7 +84,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			password = new String(Base64.getDecoder().decode(password));
 
 			// TODO check this.
-			if (!authenticated || !ah.authenticate(username, password)) {
+			if (!authenticated && !ah.authenticate(username, password)) {
 				LOGGER.info("Incorrect sign in attempt");
 				return createResponse(false, username, "Incorrect login information.", asset, null);
 			} else {
@@ -95,12 +95,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		String assetName = MessagePackager.typeToString(asset).toLowerCase();
 		LOGGER.info("Handling request of type: " + act.toString() + " " + assetName);
 		JSONObject obj = null;
+
 		if (json.has(assetName)) {
 			obj = json.getJSONObject(assetName);
-		}
-
-		if (obj == null) {
-			return createResponse(false, "", "Request is missing asset parameter.", asset, null);
 		}
 
 		JSONObject js;
@@ -215,7 +212,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			case ACCOUNT:
 				if (! username.equals(obj.getString("username")))
 					return createResponse(false, username, "ServerAccount information has wrong username", asset, null);
-				if (ah.removeAccount(username, obj.getString("password"))) 
+				if (ah.removeAccount(username, obj.getString("password")))
 					return createResponse(true, username, "", asset, null);
 				else
 					return createResponse(false, username, "Unable to remove account " + username, asset, null);
@@ -262,7 +259,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				}
 				else if (kh.updateKeychain(username, keychain))
 					return createResponse(true, username, "", asset, keychain);
-				else 
+				else
 					return createResponse(false, username, "Unable to update keychain information of " + keychain.getName(), asset, null);
 
 			case SHARED_KEYCHAINS:
@@ -284,7 +281,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		default:
 			break;
 		}
-		
+
 		return createResponse(false, username, String.format("Invalid parameters: (%s, %s)", act, asset), null, null);
 	}
 }

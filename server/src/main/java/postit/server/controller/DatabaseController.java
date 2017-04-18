@@ -191,10 +191,10 @@ public class DatabaseController {
 
             statement.setString(1, ownerUsername);
             statement.setLong(2, ownerDirectoryId);
-            statement.setString(2, sharedUsername);
-            statement.setBoolean(3, sharedCanWrite);
-            statement.setString(4, name);
-            statement.setString(5, data);
+            statement.setString(3, sharedUsername);
+            statement.setBoolean(4, sharedCanWrite);
+            statement.setString(5, name);
+            statement.setString(6, data);
 
             add = statement.executeUpdate();
 

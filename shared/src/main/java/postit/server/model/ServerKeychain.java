@@ -32,11 +32,12 @@ public class ServerKeychain {
 	}
 
 	public ServerKeychain(JsonObject object) {
+		System.out.println(object);
 		this.directoryEntryId = object.getJsonNumber("directoryEntryId").longValue();
 		this.ownerUsername = object.getString("ownerUsername");
 		this.ownerDirectoryEntryId = object.getJsonNumber("ownerDirectoryEntryId").longValue();
-		this.sharedUsername = object.getString("sharedUsername");
-		this.sharedHasWritePermission = object.getBoolean("sharedUserCanWrite");
+		this.sharedUsername = object.getString("sharedUsername", null);
+		this.sharedHasWritePermission = object.getBoolean("sharedHasWritePermission");
 		this.name = object.getString("name");
 		this.data = object.getString("data");
 	}

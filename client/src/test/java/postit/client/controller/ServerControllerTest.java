@@ -116,13 +116,19 @@ public class ServerControllerTest {
         assertFalse(authenticate("NOTtestServerController", "password"));
         assertFalse(authenticate("testServerController", "NOTpassword"));
 
+        ServerControllerTest serverControllerTest = this;
+
         createKeychain();
         setKeychain();
-        serverController.sync(new Runnable() {
-            @Override
-            public void run() {
-            }
-        });
+        synchronized (serverControllerTest) {
+            serverController.sync(() -> {
+                synchronized (serverControllerTest) {
+                    serverControllerTest.notifyAll();
+                }
+            });
+
+            this.wait();
+        }
         getKeychains();
         deleteKeychain();
     }

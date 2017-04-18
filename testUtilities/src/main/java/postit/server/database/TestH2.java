@@ -38,10 +38,10 @@ public class TestH2 extends AbstractDatabase implements Closeable {
     public boolean initDatabase() {
         try {
             db.createDB("postit");
-            db.run(this.getSetupSQL(), null, null, "postit");
-//            db.source("./database/init_schema.sql", null, null, "postit");
+//            db.run(this.getSetupSQL(), null, null, "postit");
+            db.source("./database/init_schema.sql", null, null, "postit");
             return true;
-        } catch (ManagedProcessException | IOException | URISyntaxException e) {
+        } catch (ManagedProcessException /*| IOException | URISyntaxException */ e) {
             e.printStackTrace();
             return false;
         }

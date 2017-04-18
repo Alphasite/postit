@@ -43,9 +43,10 @@ public class Crypto {
     private static final int GCM_NONCE_LENGTH = 12;
     private static final String ENCRYPTION_CIPHER = "AES";
 
-    private static final int CPU_SCALING_FACTOR = (int) Math.pow(2,20);
-    private static final int MEMORY_SCALING_FACTOR = 8;
-    private static final int PARALLELISM_SCALING_FACTOR = 1;
+    private static int CPU_SCALING_FACTOR;
+    private static int MEMORY_SCALING_FACTOR;
+    private static int PARALLELISM_SCALING_FACTOR;
+
     private static final int KEY_LENGTH = 32;
 
     private static SecureRandom random;
@@ -56,7 +57,7 @@ public class Crypto {
         return init(true);
     }
 
-    public static boolean init(boolean useSecureRandom) {
+    public static boolean init(boolean isProduction) {
         Crypto.removeCryptographyRestrictions();
         Security.addProvider(new BouncyCastleProvider());
 
@@ -72,10 +73,16 @@ public class Crypto {
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
         try {
-            if (useSecureRandom) {
+            if (isProduction) {
                 random = SecureRandom.getInstanceStrong();
+                CPU_SCALING_FACTOR = (int) Math.pow(2, 20);
+                MEMORY_SCALING_FACTOR = 8;
+                PARALLELISM_SCALING_FACTOR = 1;
             } else {
                 random = new SecureRandom();
+                CPU_SCALING_FACTOR = 5;
+                MEMORY_SCALING_FACTOR = 5;
+                PARALLELISM_SCALING_FACTOR = 5;
             }
         } catch (NoSuchAlgorithmException e) {
             LOGGER.log(Level.SEVERE, "Failed to initialise RNG.");

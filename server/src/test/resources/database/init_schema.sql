@@ -71,7 +71,9 @@ CREATE TABLE `directory_entry` (
 
 LOCK TABLES `directory_entry` WRITE;
 /*!40000 ALTER TABLE `directory_entry` DISABLE KEYS */;
-INSERT INTO `directory_entry` VALUES (1, 'ning', 'test1', 'bar'), (2, 'ning', 'test2', 'foo');
+INSERT INTO `directory_entry` VALUES
+  (1, 'ning', -1, NULL, TRUE, 'test1', 'bar'),
+  (2, 'ning', -1, NULL, TRUE,'test2', 'foo');
 /*!40000 ALTER TABLE `directory_entry` ENABLE KEYS */;
 UNLOCK TABLES;
 

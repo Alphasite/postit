@@ -596,8 +596,8 @@ public class DirectoryControllerTest {
         DirectoryEntry entry1 = new DirectoryEntry(
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
-                null,
-                null
+                directory,
+                backingStore
         );
 
         entry1.setNonce(new byte[16]);
@@ -662,8 +662,8 @@ public class DirectoryControllerTest {
         DirectoryEntry entry1 = new DirectoryEntry(
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
-                null,
-                null
+                directory,
+                backingStore
         );
 
         entry1.setNonce(new byte[16]);
@@ -712,8 +712,8 @@ public class DirectoryControllerTest {
         DirectoryEntry entry1 = new DirectoryEntry(
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
-                null,
-                null
+                directory,
+                backingStore
         );
 
         entry1.setNonce(new byte[16]);
@@ -742,8 +742,8 @@ public class DirectoryControllerTest {
         DirectoryEntry entry1 = new DirectoryEntry(
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
-                null,
-                null
+                directory,
+                backingStore
         );
 
         entry1.setNonce(new byte[16]);
