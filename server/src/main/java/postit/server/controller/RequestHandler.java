@@ -84,7 +84,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			password = new String(Base64.getDecoder().decode(password));
 
 			// TODO check this.
-			if (!authenticated && !ah.authenticate(username, password)) {
+			if (/*!authenticated &&*/ !ah.authenticate(username, password)) {
 				LOGGER.info("Incorrect sign in attempt");
 				return createResponse(false, username, "Incorrect login information.", asset, null);
 			} else {

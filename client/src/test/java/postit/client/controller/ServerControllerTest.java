@@ -127,7 +127,7 @@ public class ServerControllerTest {
                 }
             });
 
-            this.wait();
+            this.wait(10000);
         }
         getKeychains();
         deleteKeychain();
