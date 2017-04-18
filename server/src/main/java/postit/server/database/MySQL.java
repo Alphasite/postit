@@ -4,9 +4,6 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -18,7 +15,7 @@ import java.sql.Statement;
  *
  */
 @SuppressWarnings("ALL")
-public class MySQL extends AbstractDatabase {
+public class MySQL implements Database {
 	String databaseName;
 	//private String user;
 	String password;
@@ -63,7 +60,7 @@ public class MySQL extends AbstractDatabase {
 	@Override
 	public boolean initDatabase() {
 		try (Connection connection = connect(); Statement statement = connection.createStatement()){
-			final String sql = getSetupSQL();
+			final String sql = DatabaseUtils.getSetupSQL();
             PreparedStatement ps = connection.prepareStatement("?");
             ps.setString(1,sql);
 			Boolean res = ps.execute();

@@ -10,8 +10,5 @@ import java.sql.SQLException;
  */
 public interface Database {
     Connection connect() throws SQLException;
-
     boolean initDatabase();
-
-    String getSetupSQL() throws IOException, URISyntaxException;
 }
