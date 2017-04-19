@@ -1,7 +1,13 @@
 package postit.shared;
 
-import com.authy.*;
-import com.authy.api.*;
+import com.authy.AuthyApiClient;
+import com.authy.api.Params;
+import com.authy.api.PhoneVerification;
+import com.authy.api.Verification;
+
+import javax.swing.*;
+import java.security.NoSuchAlgorithmException;
+
 /**
  * Created by zhanzhao on 4/18/17.
  */
@@ -21,6 +27,7 @@ public class EFactorAuth {
 
         verification = phoneVerification.start(phoneNumber, "1", "sms", params);
 
+        System.out.println("SEND");
         System.out.println(verification.getMessage());
         System.out.println(verification.getIsPorted());
         System.out.println(verification.getSuccess());
@@ -35,6 +42,7 @@ public class EFactorAuth {
         Verification verificationCode;
         verificationCode = phoneVerification.check(phoneNumber, "1", code);
 
+        System.out.println("VERIFY");
         System.out.println(verificationCode.getMessage());
         System.out.println(verificationCode.getIsPorted());
         System.out.println(verificationCode.getSuccess());
@@ -43,9 +51,11 @@ public class EFactorAuth {
         return verificationCode.isOk();
     }
 
-//    public static void main (String[] args) {
-//        new EFactorAuth().sendMsg("3154508771");
-//        new EFactorAuth().verifyMsg("3154508771", "9614");
-//    }
+    public static void main (String[] args) throws NoSuchAlgorithmException {
+        Crypto.init();
+        new EFactorAuth().sendMsg("6073794979");
+        String code = JOptionPane.showInputDialog("PIN");
+        new EFactorAuth().verifyMsg("6073794979", code);
+    }
 
 }

@@ -28,6 +28,7 @@ CREATE TABLE `account` (
   `email` varchar(45) NOT NULL,
   `first_name` varchar(45) NOT NULL,
   `last_name` varchar(45) NOT NULL,
+  `phone_number` varchar(15) NOT NULL,
   `salt` VARCHAR(64) NOT NULL,
   PRIMARY KEY (`user_name`),
   UNIQUE KEY `user_name_UNIQUE` (`user_name`),

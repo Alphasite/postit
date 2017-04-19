@@ -6,6 +6,7 @@ import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
 import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
+import postit.shared.EFactorAuth;
 
 import javax.crypto.SecretKey;
 import javax.security.auth.DestroyFailedException;
@@ -154,20 +155,33 @@ public class GUIKeyService implements KeyService {
                     String password = String.valueOf(lp.l_passfield.getPassword());
 
                     Account newAccount = new Account(username, password);
-
+                    //authenticate via password
                     if (sc.authenticate(newAccount)) {
-                        JOptionPane.showConfirmDialog(
-                                null,
-                                "Please ensure your keypair is in the data directory. Select any option to proceed"
-                        );
-
-                        Optional<KeyPair> keyPair = backingStore.readKeypair();
-                        if (keyPair.isPresent()) {
-                            newAccount.setKeyPair(keyPair.get());
-                            return newAccount;
-                        } else {
-                            JOptionPane.showMessageDialog(null, "Failed to load keypair.");
+                        //authenticate via text
+                        //TODO send text
+                        String phoneNumber="6073794979";
+                        new EFactorAuth().sendMsg(phoneNumber);
+                        String pin = null;
+                        while (pin==null){
+                            pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
                         }
+                        if(new EFactorAuth().verifyMsg(phoneNumber,pin)){
+                            JOptionPane.showConfirmDialog(
+                                    null,
+                                    "Please ensure your keypair is in the data directory. Select any option to proceed"
+                            );
+
+                            Optional<KeyPair> keyPair = backingStore.readKeypair();
+                            if (keyPair.isPresent()) {
+                                newAccount.setKeyPair(keyPair.get());
+                                return newAccount;
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Failed to load keypair.");
+                            }
+                        }else {
+                            JOptionPane.showMessageDialog(null, "Incorrect PIN");
+                        }
+
                     } else {
                         JOptionPane.showMessageDialog(null, "Login credentials invalid");
                     }
@@ -180,9 +194,13 @@ public class GUIKeyService implements KeyService {
                     String pass1 = String.valueOf(lp.r_pass1field.getPassword());
                     String pass2 = String.valueOf(lp.r_pass2field.getPassword());
                     String email = lp.r_emailfield.getText();
+                    String phone = lp.r_phonenumber.getText().replaceAll("[-()]","");
 
                     Classify classify = new Classify();
-                    if (pass1.equals(pass2) && !classify.isWeak(pass1) && LoginPanel.isValidEmailAddress(email)) {
+                    if (pass1.equals(pass2)
+                            && !classify.isWeak(pass1)
+                            && LoginPanel.isValidEmailAddress(email)
+                            && LoginPanel.isValidPhoneNumber(phone)) {
                         Account newAccount = new Account(username, pass1);
                         if (sc.addUser(newAccount, email, first, last, null)) { //TODO add phone number
                             if (backingStore.writeKeypair(newAccount.getKeyPair())) {
@@ -202,7 +220,9 @@ public class GUIKeyService implements KeyService {
                         JOptionPane.showMessageDialog(null, "Passwords do not match");
                     } else if (!LoginPanel.isValidEmailAddress(email)){
                         JOptionPane.showMessageDialog(null, "Email is invalid");
-                    } else{
+                    } else if(!LoginPanel.isValidPhoneNumber(phone)){
+                        JOptionPane.showMessageDialog(null, "Phone number should be 10 digits only");
+                    }else{
                         JOptionPane.showMessageDialog(null, "Password is too weak");
                     }
                 }

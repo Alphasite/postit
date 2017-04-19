@@ -341,9 +341,26 @@ public class KeychainViewer {
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
                         RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
-                        Share newshare = new Share(activeDE.getServerid(), username, readWrite, publicKey, false);
-                        directoryController.shareKeychain(activeDE, newshare);
-                    } catch (IOException | ClassCastException | InvalidKeySpecException | NoSuchAlgorithmException e1){
+<<<<<<< Updated upstream
+                        Share
+
+                        Share newshare = new Share(activeDE.getServerid(),username,readWrite, publicKey);
+=======
+
+                        Share newshare = new Share(activeDE.serverid,username,readWrite, publicKey);
+>>>>>>> Stashed changes
+                        boolean success = directoryController.shareKeychain(activeDE,newshare);
+                        if(success){
+                            JOptionPane.showMessageDialog(frame,
+                                    "Successfully shared " + activeDE.name+ " with "+ username);
+                        }
+                        else{
+                            JOptionPane.showMessageDialog(frame,
+                                    "Unable to share " + activeDE.name+ " with "+ username);
+                        }
+                    }catch (IOException | ClassCastException|
+                            InvalidKeySpecException |NoSuchAlgorithmException e1){
+
                         JOptionPane.showMessageDialog(frame,"Unable to read public key file");
                     }
                 }
