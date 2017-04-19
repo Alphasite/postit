@@ -341,7 +341,8 @@ public class KeychainViewer {
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
                         RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
-                        Share newshare = new Share(activeDE.getServerid(),username,readWrite, publicKey,false);
+
+                        Share newshare = new Share(activeDE.getServerid(),username,readWrite, publicKey, false);
 
                         boolean success = directoryController.shareKeychain(activeDE,newshare);
                         if(success){

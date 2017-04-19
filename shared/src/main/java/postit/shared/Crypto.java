@@ -63,15 +63,15 @@ public class Crypto {
             return false;
         }
 
-        System.setProperty("javax.net.ssl.keyStore", keyPath.getPath());
-        System.setProperty("javax.net.ssl.trustStore", keyPath.getPath());
-        System.setProperty("javax.net.ssl.keyStorePassword", "password");
-        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+//        System.setProperty("javax.net.ssl.keyStore", keyPath.getPath());
+//        System.setProperty("javax.net.ssl.trustStore", keyPath.getPath());
+//        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+//        System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
         try {
             if (isProduction) {
                 random = SecureRandom.getInstanceStrong();
-                CPU_SCALING_FACTOR = (int) Math.pow(2, 20);
+                CPU_SCALING_FACTOR = (int) Math.pow(2, 14);
                 MEMORY_SCALING_FACTOR = 8;
                 PARALLELISM_SCALING_FACTOR = 1;
                 RSA_KEY_LENGTH = 4096;
