@@ -13,14 +13,16 @@ public class ServerAccount {
     String firstName;
     String lastName;
     String salt;
+    String phoneNumber;
 
     // CONSTRUCTOR
-    public ServerAccount(String username, String password, String email, String firstName, String lastName) {
+    public ServerAccount(String username, String password, String email, String firstName, String lastName, String phoneNumber) {
     	this.username = username;
     	this.password = password;
     	this.email = email;
     	this.firstName = firstName;
     	this.lastName = lastName;
+    	this.phoneNumber = phoneNumber;
     }
 
     public ServerAccount(ServerAccount a){
@@ -30,6 +32,7 @@ public class ServerAccount {
     	this.firstName = a.firstName;
     	this.lastName = a.lastName;
     	this.salt = a.salt;
+    	this.phoneNumber = a.phoneNumber;
     }
     
     // GETTERS
@@ -64,6 +67,10 @@ public class ServerAccount {
     public String getSalt(){
     	return salt;
     }
+    
+    public String getPhoneNumber(){
+    	return phoneNumber;
+    }
 
     // SETTERS
     public void setUsername(String username){
@@ -90,8 +97,11 @@ public class ServerAccount {
     	this.salt = salt;
     }
 
+    public void setPhoneNumber(String phoneNumber){
+    	this.phoneNumber = phoneNumber;
+    }
     public static ServerAccount fromJSONObject(JsonObject act){
     	return new ServerAccount(act.getString("username"), act.getString("password"),
-    			act.getString("email"), act.getString("firstname"), act.getString("lastname"));
+    			act.getString("email"), act.getString("firstname"), act.getString("lastname"), act.getString("phoneNumber"));
     }
 }

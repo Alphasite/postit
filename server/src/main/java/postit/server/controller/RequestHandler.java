@@ -111,7 +111,8 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 						obj.getString("password"),
 						obj.getString("email"),
 						obj.getString("firstname"),
-						obj.getString("lastname")
+						obj.getString("lastname"),
+						obj.getString("phoneNumber")
 				);
 
 				if (ah.addAccount(serverAccount)) {
@@ -237,7 +238,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			switch(asset){
 			case ACCOUNT:
 				ServerAccount serverAccount = new ServerAccount(obj.getString("username"), obj.getString("password"), obj.getString("email"),
-						obj.getString("firstname"), obj.getString("lastname"));
+						obj.getString("firstname"), obj.getString("lastname"), obj.getString("phoneNumber"));
 				if (ah.updateAccount(serverAccount))
 					return createResponse(true, username, "", asset, serverAccount);
 				else
