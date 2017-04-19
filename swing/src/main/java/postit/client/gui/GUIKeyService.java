@@ -1,5 +1,6 @@
 package postit.client.gui;
 
+import org.json.JSONObject;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
@@ -174,7 +175,7 @@ public class GUIKeyService implements KeyService {
                 		if (sc.authenticate(newAccount)) {
                 			//authenticate via text
                 			//TODO send text
-                			String phoneNumber="6073794979";
+                			String phoneNumber=sc.getPhoneNumber(newAccount);
                 			new EFactorAuth().sendMsg(phoneNumber);
                 			String pin = null;
                 			while (pin==null){
@@ -216,6 +217,8 @@ public class GUIKeyService implements KeyService {
                 	String phone = lp.r_phonefield.getText().replaceAll("[-()\\s]","");
 
                     Classify classify = new Classify();
+                    JSONObject passresult =classify.strengthCheck(pass1);
+                    String evaluation = (String) passresult.get("evaluation");
                     if (pass1.equals(pass2)
                             && !classify.isWeak(pass1)
                             && LoginPanel.isValidEmailAddress(email)
@@ -243,7 +246,7 @@ public class GUIKeyService implements KeyService {
                     } else if(!LoginPanel.isValidPhoneNumber(phone)){
                         JOptionPane.showMessageDialog(null, "Phone number should be 10 digits only");
                     }else{
-                        JOptionPane.showMessageDialog(null, "Password is too weak");
+                        JOptionPane.showMessageDialog(null, "Password is too weak. \n Improvements: "+evaluation);
                     }
                 }
 

@@ -261,7 +261,7 @@ public class ServerController {
     	String req = RequestMessenger.createGetUserMessage(account);
     	Optional<JsonObject> response = clientToServer.send(req);
     	if (response.isPresent()){
-    		return response.get().getString("phoneNumber");
+    		return response.get().getJsonObject("account").getString("phoneNumber");
     	}
     	
     	return null;

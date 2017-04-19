@@ -122,9 +122,8 @@ public class KeychainViewer {
                 public void focusLost(FocusEvent e) {
                     JSONObject result = classify.strengthCheck(newpassword.getText());
                     String strength = (String) result.get("strength");
-                    String evaluation = (String) result.get("evaluation");
 
-                    passwordStrength.setText("Password Strength: "+strength + ", " + evaluation);
+                    passwordStrength.setText("Password Strength: "+strength);
                 }
             });
             generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
@@ -245,9 +244,9 @@ public class KeychainViewer {
         menuItem.addActionListener(e -> frame.dispose());
         fileMenu.add(menuItem);
 
-        menuItem = new JMenuItem("Refresh");
-        menuItem.addActionListener(e -> refreshTabbedPanes());
-        fileMenu.add(menuItem);
+//        menuItem = new JMenuItem("Refresh");
+//        menuItem.addActionListener(e -> refreshTabbedPanes());
+//        fileMenu.add(menuItem);
 
 
         //KEYCHAIN Menu Item
