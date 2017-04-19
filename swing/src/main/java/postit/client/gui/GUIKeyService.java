@@ -184,7 +184,7 @@ public class GUIKeyService implements KeyService {
                     Classify classify = new Classify();
                     if (pass1.equals(pass2) && !classify.isWeak(pass1) && LoginPanel.isValidEmailAddress(email)) {
                         Account newAccount = new Account(username, pass1);
-                        if (sc.addUser(newAccount, email, first, last)) {
+                        if (sc.addUser(newAccount, email, first, last, null)) { //TODO add phone number
                             if (backingStore.writeKeypair(newAccount.getKeyPair())) {
                                 JOptionPane.showMessageDialog(
                                     null,

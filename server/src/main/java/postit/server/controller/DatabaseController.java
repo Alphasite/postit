@@ -26,10 +26,10 @@ public class DatabaseController {
             + "WHERE `user_name`=?;";
 
     private static final String addAccountSQL
-            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `salt`) VALUES (?,?,?,?,?,?);";
+            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `phone_number`, `salt`) VALUES (?,?,?,?,?,?,?);";
 
     private static final String updateAccountSQL
-            = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=? "
+            = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=?, `phone_number`=? "
             + "WHERE `user_name`=?;";
 
     private static final String removeAccountSQL
@@ -80,7 +80,7 @@ public class DatabaseController {
 
             if (resultSet.next()) {
                 serverAccount = new ServerAccount(username, null, resultSet.getString("email"),
-                        resultSet.getString("first_name"), resultSet.getString("last_name"));
+                        resultSet.getString("first_name"), resultSet.getString("last_name"), resultSet.getString("phone_number"));
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getAccount " + e.getMessage()); // should be contained in JSONObject returned to view
@@ -138,7 +138,8 @@ public class DatabaseController {
             statement.setString(3, serverAccount.getEmail());
             statement.setString(4, serverAccount.getFirstname());
             statement.setString(5, serverAccount.getLastname());
-            statement.setString(6, serverAccount.getSalt());
+            statement.setString(6, serverAccount.getPhoneNumber());
+            statement.setString(7, serverAccount.getSalt());
             add = statement.executeUpdate();
         } catch (SQLException e) {
         	e.printStackTrace();
@@ -158,7 +159,8 @@ public class DatabaseController {
             statement.setString(3, serverAccount.getEmail());
             statement.setString(4, serverAccount.getFirstname());
             statement.setString(5, serverAccount.getLastname());
-            statement.setString(6, serverAccount.getUsername());
+            statement.setString(6, serverAccount.getPhoneNumber());
+            statement.setString(7, serverAccount.getUsername());
 
             modify = statement.executeUpdate();
         } catch (SQLException e) {

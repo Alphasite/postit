@@ -49,8 +49,8 @@ public class AccountHandler {
 	 * @param lastname
 	 * @return
 	 */
-	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname){
-		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname));
+	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname, String phoneNumber){
+		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber));
 	}
 	
 	public boolean addAccount(ServerAccount serverAccount){
@@ -63,8 +63,8 @@ public class AccountHandler {
 		return false;
 	}
 	
-	public boolean updateAccount(String username, String pwd, String email, String firstname, String lastname){
-		ServerAccount serverAccount = new ServerAccount(username, pwd, email, firstname, lastname);
+	public boolean updateAccount(String username, String pwd, String email, String firstname, String lastname, String phoneNumber){
+		ServerAccount serverAccount = new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber);
 		if (pwd != null){
 			ServerAccount a = db.getAccount(username);
 			if (a != null)

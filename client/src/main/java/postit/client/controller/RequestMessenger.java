@@ -17,13 +17,14 @@ public class RequestMessenger {
 		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.ACCOUNT, serverAccount);
 	}
 	
-	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname){
+	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber){
 		ServerAccount serverAccount = new ServerAccount();
 		serverAccount.setUsername(clientAccount.getUsername());
 		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
 		serverAccount.setEmail(email);
 		serverAccount.setFirstname(firstname);
 		serverAccount.setLastname(lastname);
+		serverAccount.setPhoneNumber(phoneNumber);
 		return createRequest(Action.ADD, null, Asset.ACCOUNT, serverAccount);
 	}
 	
@@ -31,9 +32,15 @@ public class RequestMessenger {
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
 		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
-		return createRequest(Action.REMOVE, null, Asset.ACCOUNT, account);
+		return createRequest(Action.REMOVE, clientAccount, Asset.ACCOUNT, account);
 	}
 
+	public static String createGetUserMessage(Account clientAccount){
+		ServerAccount account = new ServerAccount();
+		account.setUsername(clientAccount.getUsername()); 
+		return createRequest(Action.GET, clientAccount, Asset.ACCOUNT, account);
+	}
+	
 	public static String createAddKeychainsMessage(Account account, String name, String data){
 		ServerKeychain keychain = new ServerKeychain();
 		keychain.setName(name);

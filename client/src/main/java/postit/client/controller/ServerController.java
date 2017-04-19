@@ -233,8 +233,8 @@ public class ServerController {
         }
     }
 
-    public boolean addUser(Account account, String email, String firstname, String lastname) {
-        String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname);
+    public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber) {
+        String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber);
         return sendAndCheckIfSuccess(req);
     }
 
@@ -248,6 +248,16 @@ public class ServerController {
         return sendAndCheckIfSuccess(req);
     }
 
+    public String getPhoneNumber(Account account){
+    	String req = RequestMessenger.createGetUserMessage(account);
+    	Optional<JsonObject> response = clientToServer.send(req);
+    	if (response.isPresent()){
+    		return response.get().getString("phoneNumber");
+    	}
+    	
+    	return null;
+    }
+    
     public List<Long> getKeychains(Account account) {
         String req = RequestMessenger.createGetKeychainsMessage(account);
         Optional<JsonObject> response = clientToServer.send(req);
