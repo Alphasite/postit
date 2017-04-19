@@ -8,7 +8,6 @@ import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.json.JsonObject;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +45,10 @@ public class BackingStore {
 
     private Path getKeyPairPath() {
         return getVolume().resolve("keypair");
+    }
+
+    private Path getPublicKeyPath() {
+        return getVolume().resolve("rsa_key.pub");
     }
 
     public boolean init() {
@@ -106,7 +109,8 @@ public class BackingStore {
 
     public boolean writeKeypair(KeyPair keyPair) {
         try  {
-            Files.write(getKeyPairPath(), Crypto.serialiseKeypair(keyPair).getBytes());
+            Files.write(getKeyPairPath(), Crypto.serialiseObject(keyPair).getBytes());
+            Files.write(getPublicKeyPath(), Crypto.serialiseObject(keyPair.getPublic()).getBytes());
             return true;
         } catch (IOException e) {
             LOGGER.severe("Failed to save keypair... " + e.getMessage());
@@ -116,7 +120,16 @@ public class BackingStore {
 
     public Optional<KeyPair> readKeypair() {
         try {
-            return Optional.of(Crypto.deserialiseKeypair(new String(Files.readAllBytes(getKeyPairPath()))));
+            return Optional.of(Crypto.deserialiseObject(new String(Files.readAllBytes(getKeyPairPath()))));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+    }
+
+    public Optional<KeyPair> readPublicKey(Path path) {
+        try {
+            return Optional.of(Crypto.deserialiseObject(new String(Files.readAllBytes(path))));
         } catch (IOException e) {
             e.printStackTrace();
             return Optional.empty();

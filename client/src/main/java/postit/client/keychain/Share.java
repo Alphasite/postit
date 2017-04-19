@@ -6,7 +6,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.security.InvalidKeyException;
-import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
 
 /**
@@ -17,12 +16,14 @@ public class Share {
     public String username;
     public boolean canWrite;
     public RSAPublicKey publicKey;
+    public boolean isOwner;
 
-    public Share(long serverid, String username, boolean readWrite, RSAPublicKey publicKey) {
+    public Share(long serverid, String username, boolean readWrite, RSAPublicKey publicKey, boolean isOwner) {
         this.serverid = serverid;
         this.username = username;
         this.canWrite = readWrite;
         this.publicKey = publicKey;
+        this.isOwner = isOwner;
     }
 
     public Share(JsonObject object) throws InvalidKeyException {
@@ -33,6 +34,7 @@ public class Share {
                 object.getJsonNumber("publickey-modulus").bigIntegerValue(),
                 object.getJsonNumber("publickey-exponent").bigIntegerValue()
         );
+        this.isOwner = object.getBoolean("isOwner");
     }
 
     public JsonObjectBuilder dump() {
@@ -40,6 +42,7 @@ public class Share {
                 .add("serverid", serverid)
                 .add("username", username)
                 .add("canWrite", canWrite)
+                .add("isOwner", isOwner)
                 .add("publickey-modulus", publicKey.getModulus())
                 .add("publickey-exponent", publicKey.getPublicExponent());
     }

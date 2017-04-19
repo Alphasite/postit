@@ -8,7 +8,6 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
@@ -131,13 +130,13 @@ public class DirectoryController {
         return directory.deletedKeychains;
     }
 
-    public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject, Optional<Share> entryShare) {
+    public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject, Share entryShare) {
         LocalDateTime lastModified = LocalDateTime.parse(entryObject.getString("lastModified"));
 
         // TODO make better (e.g. handle simultaneous edits)
         // merge
 
-        if (entryShare.isPresent() && !entryShare.get().canWrite) {
+        if (!entryShare.canWrite) {
             return true;
         }
 
@@ -218,7 +217,7 @@ public class DirectoryController {
     }
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {
-        entry.serverid = id;
+        entry.setServerid(id);
         entry.markUpdated();
         return store.save();
     }

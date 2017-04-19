@@ -1,6 +1,5 @@
 package postit.client.keychain;
 
-import postit.client.backend.KeyService;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -10,8 +9,8 @@ import javax.json.JsonObjectBuilder;
 import java.security.KeyPair;
 import java.util.Base64;
 
-import static postit.shared.Crypto.deserialiseKeypair;
-import static postit.shared.Crypto.serialiseKeypair;
+import static postit.shared.Crypto.deserialiseObject;
+import static postit.shared.Crypto.serialiseObject;
 
 /**
  * Created by nishadmathur on 8/3/17.
@@ -36,7 +35,7 @@ public class Account {
     public Account(JsonObject object) {
         this.username = object.getString("username");
         this.secretKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("password")));
-        this.keyPair = deserialiseKeypair(object.getString("keypair"));
+        this.keyPair = deserialiseObject(object.getString("keypair"));
 
     }
 
@@ -60,6 +59,6 @@ public class Account {
         return Json.createObjectBuilder()
                 .add("username", username)
                 .add("password", new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(secretKey))))
-                .add("keypair", serialiseKeypair(keyPair));
+                .add("keypair", serialiseObject(keyPair));
     }
 }

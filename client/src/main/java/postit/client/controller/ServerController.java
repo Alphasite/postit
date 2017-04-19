@@ -1,15 +1,24 @@
 package postit.client.controller;
 
-import postit.client.keychain.*;
-import postit.server.model.ServerKeychain;
 import postit.client.communication.Client;
+import postit.client.keychain.Account;
+import postit.client.keychain.DirectoryEntry;
+import postit.client.keychain.DirectoryKeychain;
+import postit.client.keychain.Share;
+import postit.server.model.ServerKeychain;
 
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonException;
+import javax.json.JsonObject;
 import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import static postit.shared.MessagePackager.Asset.SHARED_KEYCHAINS;
+import static postit.shared.MessagePackager.typeToString;
 
 /**
  * Created by nishadmathur on 7/3/17.
@@ -59,12 +68,12 @@ public class ServerController {
             List<DirectoryEntry> clientKeychains = directoryController.getKeychains();
 
             Set<Long> clientKeychainNames = clientKeychains.stream()
-                    .map(keychain -> keychain.serverid)
+                    .map(keychain -> keychain.getServerid())
                     .collect(Collectors.toSet());
 
             // Figure out which keychains have been uploaded to the server and are no longer there.
             Set<Long> serverDeletedKeychains = clientKeychains.stream()
-                            .map(keychain -> keychain.serverid)
+                            .map(keychain -> keychain.getServerid())
                             .filter(id -> id != -1)
                             .collect(Collectors.toSet());
             serverDeletedKeychains.removeAll(serverKeychains);
@@ -84,7 +93,7 @@ public class ServerController {
 
             // Figure out which keychains to upload to the server
             List<DirectoryEntry> keychainsToUpload = clientKeychains.stream()
-                    .filter(keychain -> keychain.serverid == -1)
+                    .filter(keychain -> keychain.getServerid() == -1)
                     .collect(Collectors.toList());
 
             // Figure out which keychains may need an update, and update them.
@@ -142,14 +151,14 @@ public class ServerController {
             // This is the meat of the sync function
             // It handles downloading and merging server copies of the keychains.
             for (DirectoryEntry entry : new ArrayList<>(directoryController.getKeychains())) {
-                if (localKeychainsToDelete.contains(entry.serverid)) {
+                if (localKeychainsToDelete.contains(entry.getServerid())) {
                     directoryController.deleteEntry(entry);
                     continue;
                 }
 
-                if (keychainsToUpdate.contains(entry.serverid)) {
+                if (keychainsToUpdate.contains(entry.getServerid())) {
 
-                    if (Objects.equals(entry.owner, account.get().getUsername())) {
+                    if (Objects.equals(entry.getOwner(), account.get().getUsername())) {
                         Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry);
 
                         if (!allInstancesOfKeychain.isPresent()) {
@@ -162,14 +171,10 @@ public class ServerController {
                                 .collect(Collectors.toSet());
 
                         for (DirectoryKeychain directoryKeychain : allInstancesOfKeychain.get()) {
-                            Optional<Share> share;
-                            if (directoryKeychain.getServerid() == entry.serverid) {
-                                share = Optional.empty();
-                            } else {
-                                share = entry.shares.stream()
+                            Share share = entry.shares.stream()
                                         .filter(s -> s.serverid == directoryKeychain.getServerid())
-                                        .findAny();
-                            }
+                                        .findAny()
+                                        .get();
 
                             directoryController.updateLocalIfIsOlder(
                                 entry,
@@ -189,14 +194,15 @@ public class ServerController {
                             }
                         }
                     } else {
-                        Optional<DirectoryKeychain> ownDirectoryKeychainObject = this.getDirectoryKeychainObject(account.get(), entry.serverid);
-                        Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(account.get(), entry.serverid);
+                        Optional<DirectoryKeychain> ownDirectoryKeychainObject = this.getDirectoryKeychainObject(account.get(), entry.getServerid());
+                        Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(account.get(), entry.getServerid());
 
-                        Optional<Share> share = entry.shares.stream()
+                        Share share = entry.shares.stream()
                             .filter(s -> s.serverid == ownerDirectoryKeychainObject.get().getServerid())
-                            .findAny();
+                            .findAny()
+                            .get();
 
-                        if (share.get().canWrite) {
+                        if (share.canWrite) {
                             directoryController.updateLocalIfIsOlder(
                                     entry,
                                     ownDirectoryKeychainObject.get().entry,
@@ -299,7 +305,7 @@ public class ServerController {
             try {
                 String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(response.get().getJsonObject("keychain").getString("data")));
                 JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
-                return DirectoryKeychain.init(object, account.getKeyPair().getPrivate());
+                return DirectoryKeychain.init(object, account);
             } catch (JsonException | IllegalStateException e) {
                 LOGGER.warning("Failed to parse server keychain response: " + e.getMessage());
                 return Optional.empty();
@@ -355,7 +361,7 @@ public class ServerController {
         // TODO fill this in?
         String req = RequestMessenger.createUpdateKeychainMessage(
                 account,
-                entry.serverid,
+                entry.getServerid(),
                 entry.name,
                 encodedKeychainEntryObject
         );
@@ -380,12 +386,14 @@ public class ServerController {
     }
 
     private boolean shareKeychain(Account account, DirectoryEntry entry, Share share) {
-        String req = RequestMessenger.createGetKeychainsMessage(account);
+        String req = RequestMessenger.createSharedKeychainMessage(account, entry.getServerid(), share.username, share.canWrite);
         Optional<JsonObject> response = clientToServer.send(req);
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
-            ServerKeychain serverKeychain = new ServerKeychain(response.get().getJsonObject("keychain"));
-            long id = serverKeychain.getDirectoryEntryId();
+            long id = response.get()
+                    .getJsonObject(typeToString(SHARED_KEYCHAINS))
+                    .getJsonNumber("directoryEntryId")
+                    .longValue();
 
             return directoryController.setKeychainSharedId(entry, id, share);
         } else {
@@ -394,13 +402,13 @@ public class ServerController {
     }
 
     private Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry) {
-        String req = RequestMessenger.createGetKeychainsMessage(account, entry.serverid);
+        String req = RequestMessenger.createGetKeychainInstancesMessage(account, entry.getServerid());
         Optional<JsonObject> response = clientToServer.send(req);
 
         List<DirectoryKeychain> directoryKeychains = new ArrayList<>();
 
         if (response.isPresent()) {
-            JsonArray list = response.get().getJsonArray("keychains");
+            JsonArray list = response.get().getJsonArray(typeToString(SHARED_KEYCHAINS));
 
             if (list == null) {
                 LOGGER.warning("Failed to fetch keychains: " + response.get().getString("message"));
@@ -413,7 +421,7 @@ public class ServerController {
                 try {
                     String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
                     JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
-                    Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(object, account.getKeyPair().getPrivate());
+                    Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(object, account);
 
                     if (!directoryKeychain.isPresent()) {
                         LOGGER.warning("Failed to parse json object");

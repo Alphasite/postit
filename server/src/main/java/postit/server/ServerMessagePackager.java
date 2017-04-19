@@ -1,15 +1,9 @@
 package postit.server;
 
 import org.json.JSONObject;
-import postit.server.model.ServerAccount;
 import postit.shared.MessagePackager;
 
-import java.util.InputMismatchException;
-import java.util.List;
-
-import static postit.shared.MessagePackager.Asset.ACCOUNT;
-import static postit.shared.MessagePackager.Asset.KEYCHAIN;
-import static postit.shared.MessagePackager.Asset.SHARED_KEYCHAINS;
+import static postit.shared.MessagePackager.Asset.*;
 import static postit.shared.MessagePackager.typeToString;
 
 /**
@@ -32,7 +26,7 @@ public class ServerMessagePackager {
 		if (status){
 			response.put("status", "success");
 			if (bean != null){
-				if (asset == ACCOUNT || asset == KEYCHAIN || asset == SHARED_KEYCHAINS)
+				if (asset == ACCOUNT || asset == KEYCHAIN || asset == SHARED_KEYCHAIN || asset == OWNER_KEYCHAIN)
 					response.put(typeToString(asset), new JSONObject(bean));
 				else
 					response.put(typeToString(asset), bean);

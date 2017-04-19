@@ -2,17 +2,12 @@ package postit.client.keychain;
 
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
-import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
-import java.io.*;
-import java.security.KeyPair;
+import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 import java.util.logging.Logger;
-
-import static postit.shared.Crypto.deserialiseKeypair;
-import static postit.shared.Crypto.serialiseKeypair;
 
 /**
  * Created by nishadmathur on 23/2/17.
@@ -80,7 +75,8 @@ public class Directory {
                 name,
                 encryptionKey,
                 this,
-                backingStore
+                backingStore,
+                (RSAPublicKey) account.getKeyPair().getPublic()
         );
 
         if (keychains.stream().map(k -> k.name).anyMatch(n -> n.equals(name))) {
@@ -102,8 +98,8 @@ public class Directory {
     }
 
     public boolean delete(DirectoryEntry keychain) {
-        if (keychain.serverid != -1L) {
-            deletedKeychains.add(keychain.serverid);
+        if (keychain.getServerid() != -1L) {
+            deletedKeychains.add(keychain.getServerid());
         }
 
         this.keychains.remove(keychain);

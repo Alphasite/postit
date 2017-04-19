@@ -11,6 +11,7 @@ import javax.crypto.SecretKey;
 import javax.json.JsonObject;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -29,7 +30,7 @@ import static org.junit.Assert.*;
  *
  * Test class for directory controller.
  */
-@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent"})
+@SuppressWarnings({"Duplicates", "OptionalGetWithoutIsPresent", "ConstantConditions"})
 public class DirectoryControllerTest {
     private final static Logger LOGGER = Logger.getLogger(DirectoryControllerTest.class.getName());
 
@@ -41,6 +42,10 @@ public class DirectoryControllerTest {
     Directory directory;
 
     DirectoryController controller;
+
+    Account account;
+    Share ownerShare;
+    RSAPublicKey publicKey;
 
     @Before
     public void setUp() throws Exception {
@@ -57,6 +62,10 @@ public class DirectoryControllerTest {
 
             directory = backingStore.readDirectory().get();
             controller = new DirectoryController(directory, backingStore, keyService);
+
+            account = new Account("banana", "password");
+            publicKey = (RSAPublicKey) account.getKeyPair().getPublic();
+            ownerShare = new Share(-1L, account.getUsername(), true, publicKey, true);
         } catch (Exception e) {
             Files.deleteIfExists(backingStore.getContainer());
             throw e;
@@ -506,8 +515,8 @@ public class DirectoryControllerTest {
 
         DirectoryEntry entry1 = controller.getKeychains().get(0);
         DirectoryEntry entry2 = controller.getKeychains().get(1);
-        entry1.serverid = 1L;
-        entry2.serverid = 2L;
+        entry1.setServerid(1L);
+        entry2.setServerid(2L);
 
         List<String> names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -544,8 +553,8 @@ public class DirectoryControllerTest {
 
         DirectoryEntry entry1 = controller.getKeychains().get(0);
         DirectoryEntry entry2 = controller.getKeychains().get(1);
-        entry1.serverid = 1L;
-        entry2.serverid = 2L;
+        entry1.setServerid(1L);
+        entry2.setServerid(2L);
 
         List<String> names = controller.getKeychains().stream()
                 .map(entry -> entry.name)
@@ -597,12 +606,13 @@ public class DirectoryControllerTest {
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
-                backingStore
+                backingStore,
+                publicKey
         );
 
         entry1.setNonce(new byte[16]);
 
-        entry1.serverid = 5L;
+        entry1.setServerid(5L);
 
         SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
         Keychain keychain1 = new Keychain(entry1);
@@ -614,7 +624,7 @@ public class DirectoryControllerTest {
                 entry,
                 entry1.dump().build(),
                 keychain1.dump().build(),
-                Optional.empty()
+                ownerShare
         ), is(true));
 
         assertThat(controller.getKeychains().size(), is(1));
@@ -623,7 +633,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.serverid, is(5L));
+        assertThat(oldEntry.getServerid(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(2));
         for (Password password : oldKeychain.passwords) {
             assertThat(password.identifier, anyOf(is("json"), is("test")));
@@ -663,12 +673,13 @@ public class DirectoryControllerTest {
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
-                backingStore
+                backingStore,
+                publicKey
         );
 
         entry1.setNonce(new byte[16]);
 
-        entry1.serverid = 5L;
+        entry1.setServerid(5L);
 
         SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
         Keychain keychain1 = new Keychain(entry1);
@@ -680,7 +691,7 @@ public class DirectoryControllerTest {
                 entry,
                 entry1.dump().build(),
                 keychain1.dump().build(),
-                Optional.empty()
+                ownerShare
         ), is(true));
 
         reloadPersistent();
@@ -691,7 +702,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.serverid, is(5L));
+        assertThat(oldEntry.getServerid(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(2));
         for (Password password : oldKeychain.passwords) {
             assertThat(password.identifier, anyOf(is("json"), is("test")));
@@ -713,12 +724,13 @@ public class DirectoryControllerTest {
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
-                backingStore
+                backingStore,
+                publicKey
         );
 
         entry1.setNonce(new byte[16]);
 
-        entry1.serverid = 5L;
+        entry1.setServerid(5L);
 
         Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
@@ -731,7 +743,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.serverid, is(5L));
+        assertThat(oldEntry.getServerid(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(1));
         assertThat(oldKeychain.passwords.get(0).identifier, is("json"));
         assertThat(oldKeychain.passwords.get(0).getPasswordAsString(), is("json"));
@@ -743,12 +755,13 @@ public class DirectoryControllerTest {
                 "json",
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
-                backingStore
+                backingStore,
+                publicKey
         );
 
         entry1.setNonce(new byte[16]);
 
-        entry1.serverid = 5L;
+        entry1.setServerid(5L);
 
         Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
@@ -763,7 +776,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.serverid, is(5L));
+        assertThat(oldEntry.getServerid(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(1));
         assertThat(oldKeychain.passwords.get(0).identifier, is("json"));
         assertThat(oldKeychain.passwords.get(0).getPasswordAsString(), is("json"));
@@ -1064,7 +1077,7 @@ public class DirectoryControllerTest {
 
             assertThat(controller.setKeychainOnlineId(controller.getKeychains().get(0), 100), is(true));
 
-            assertThat(controller.getKeychains().get(0).serverid, is(100L));
+            assertThat(controller.getKeychains().get(0).getServerid(), is(100L));
     }
 
     @Test
@@ -1079,7 +1092,7 @@ public class DirectoryControllerTest {
 
         reloadPersistent();
 
-        assertThat(controller.getKeychains().get(0).serverid, is(100L));
+        assertThat(controller.getKeychains().get(0).getServerid(), is(100L));
     }
 
     @Test
