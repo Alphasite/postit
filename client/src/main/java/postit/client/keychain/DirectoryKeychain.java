@@ -1,7 +1,5 @@
 package postit.client.keychain;
 
-import postit.client.backend.BackingStore;
-import postit.server.model.ServerKeychain;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -9,10 +7,7 @@ import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import javax.swing.text.html.parser.Entity;
-import java.io.StringReader;
 import java.security.Key;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Base64;
 import java.util.Optional;
@@ -32,14 +27,17 @@ public class DirectoryKeychain {
         this.entry = entry;
     }
 
-    public static Optional<DirectoryKeychain> init(JsonObject object, PrivateKey privateKey) {
+    public static Optional<DirectoryKeychain> init(JsonObject object, Account account) {
         Base64.Decoder decoder = Base64.getDecoder();
 
         try {
             JsonObject parameters = object.getJsonObject("parameters");
             byte[] nonce = decoder.decode(parameters.getString("nonce"));
             byte[] data = decoder.decode(object.getString("data"));
-            Optional<Key> key = Crypto.unwrapKey(decoder.decode(parameters.getString("key")), privateKey);
+            Optional<Key> key = Crypto.unwrapKey(
+                    decoder.decode(parameters.getString(account.getUsername() + "-key")),
+                    account.getKeyPair().getPrivate()
+            );
 
             if (!key.isPresent()) {
                 LOGGER.severe("Could not decrypt parameters due to error unwrapping key.");
@@ -72,6 +70,23 @@ public class DirectoryKeychain {
                 .add("directory", entry)
                 .add("keychain", keychain);
 
+        Base64.Encoder encoder = Base64.getEncoder();
+
+        JsonObjectBuilder encryptedParameters = Json.createObjectBuilder()
+                .add("nonce", encoder.encodeToString(nonce));
+
+        for (Share share : entryObject.shares) {
+            Optional<byte[]> encryptedKey = Crypto.wrapKey(key, publicKey);
+
+            if (!encryptedKey.isPresent()) {
+                LOGGER.warning("Failed to encrypt dk due to failure to wrap key");
+                return Optional.empty();
+            }
+
+            encryptedParameters
+                    .add(share.username + "-key", encoder.encodeToString(encryptedKey.get()));
+        }
+
         Optional<byte[]> directoryKeychainData = Crypto.encryptJsonObject(key, nonce, directoryKeychain.build());
 
         if (!directoryKeychainData.isPresent()) {
@@ -79,18 +94,6 @@ public class DirectoryKeychain {
             return Optional.empty();
         }
 
-        Base64.Encoder encoder = Base64.getEncoder();
-
-        Optional<byte[]> encryptedKey = Crypto.wrapKey(key, publicKey);
-
-        if (!encryptedKey.isPresent()) {
-            LOGGER.warning("Failed to encrypt dk due to failure to wrap key");
-            return Optional.empty();
-        }
-
-        JsonObjectBuilder encryptedParameters = Json.createObjectBuilder()
-                .add("key", encoder.encodeToString(encryptedKey.get()))
-                .add("nonce", encoder.encodeToString(nonce));
 
         return Optional.of(
                 Json.createObjectBuilder()

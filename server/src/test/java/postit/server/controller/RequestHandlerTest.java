@@ -1,18 +1,10 @@
 package postit.server.controller;
 
-import org.junit.Before;
-import postit.client.controller.RequestMessenger;
-
-import org.junit.Test;
-
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.*;
-import static postit.shared.MessagePackager.typeToString;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import postit.client.controller.RequestMessenger;
 import postit.client.keychain.Account;
 import postit.server.database.TestH2;
 import postit.server.model.ServerKeychain;
@@ -20,8 +12,15 @@ import postit.shared.Crypto;
 import postit.shared.MessagePackager;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.io.StringReader;
+
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.*;
+import static postit.shared.MessagePackager.typeToString;
 
 public class RequestHandlerTest {
 	private RequestHandler rh;
@@ -90,7 +89,7 @@ public class RequestHandlerTest {
 		JSONObject js1 = new JSONObject(res);
 
 		assertThat(js1.getString("status").equals("success"), is(true));
-		long sharedid = js1.getJSONObject(typeToString(MessagePackager.Asset.SHARED_KEYCHAINS)).getLong("directoryEntryId");
+		long sharedid = js1.getJSONObject(typeToString(MessagePackager.Asset.SHARED_KEYCHAIN)).getLong("directoryEntryId");
 		System.out.println("Test sharing keychain was successful.");
 
 		req = RequestMessenger.createGetKeychainMessage(shared, sharedid);
@@ -130,6 +129,43 @@ public class RequestHandlerTest {
 		return sharedid;
 	}
 
+	public static void testGetSharedKeychains(RequestHandler rh, Account owner, Account shared1, Account shared2, long id) {
+		String req = RequestMessenger.createSharedKeychainMessage(owner, id, shared1.getUsername(), true);
+		String res = rh.handleRequest(req);
+		System.out.println(res);
+		JSONObject js1 = new JSONObject(res);
+
+		assertThat(js1.getString("status").equals("success"), is(true));
+		long sharedid1 = js1.getJSONObject(typeToString(MessagePackager.Asset.SHARED_KEYCHAIN)).getLong("directoryEntryId");
+		System.out.println("Test sharing keychain was successful.");
+
+		req = RequestMessenger.createSharedKeychainMessage(owner, id, shared2.getUsername(), true);
+		res = rh.handleRequest(req);
+		System.out.println(res);
+		JSONObject js2 = new JSONObject(res);
+
+		assertThat(js2.getString("status").equals("success"), is(true));
+		long sharedid2 = js2.getJSONObject(typeToString(MessagePackager.Asset.SHARED_KEYCHAIN)).getLong("directoryEntryId");
+		System.out.println("Test sharing keychain was successful.");
+
+		req = RequestMessenger.createGetKeychainInstancesMessage(owner, id);
+		res = rh.handleRequest(req);
+		JsonObject js3 = Json.createReader(new StringReader(res)).readObject();
+
+		System.out.println("Got response:" + res);
+
+		assertThat(js3.getString("status").equals("success"), is(true));
+		JsonArray keychains = js3.getJsonArray(typeToString(MessagePackager.Asset.SHARED_KEYCHAINS));
+
+		assertThat(keychains, notNullValue());
+		assertThat(keychains.size(), is(3));
+
+		for (int i = 0; i < keychains.size(); i++) {
+			ServerKeychain sharedKeychain = new ServerKeychain(keychains.getJsonObject(i));
+			assertThat(sharedKeychain.getDirectoryEntryId(), anyOf(is(id), is(sharedid1), is(sharedid2)));
+		}
+	}
+
 	@Before
 	public void setUp() throws Exception {
 		assertThat(Crypto.init(false), is(true));
@@ -164,13 +200,18 @@ public class RequestHandlerTest {
 
 		Account account1 = new Account("test1", "password");
 		Account account2 = new Account("test2", "password");
+		Account account3 = new Account("test3", "password");
 
 		testCreateAccount(rh, account1, "a@b.com");
 		testCreateAccount(rh, account2, "b@b.com");
 
-		long testkcId = testAddKeychain(rh, account1, "testkc", "1234", true);
+		long testkcId1 = testAddKeychain(rh, account1, "testkc", "1234", true);
 
-		testShareKeychain(rh, account1, account2, true, testkcId);
+		testShareKeychain(rh, account1, account2, true, testkcId1);
+
+		long testkcId2 = testAddKeychain(rh, account1, "testkc2", "12345", true);
+
+		testGetSharedKeychains(rh, account1, account2, account3, testkcId2);
 	}
 
 }

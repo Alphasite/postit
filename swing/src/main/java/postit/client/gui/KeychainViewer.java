@@ -19,15 +19,11 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -340,15 +336,14 @@ public class KeychainViewer {
                     String username = shareusername.getText();
                     Boolean readWrite = writepriv.isSelected();
                     //Try to read public key
-                    try{
+                    try {
                         byte[] keyBytes = Files.readAllBytes(file[0].toPath());
                         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
                         KeyFactory kf = KeyFactory.getInstance("RSA");
                         RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
-                        Share newshare = new Share(activeDE.serverid,username,readWrite, publicKey);
-                        directoryController.shareKeychain(activeDE,newshare);
-                    }catch (IOException | ClassCastException|
-                            InvalidKeySpecException |NoSuchAlgorithmException e1){
+                        Share newshare = new Share(activeDE.getServerid(), username, readWrite, publicKey, false);
+                        directoryController.shareKeychain(activeDE, newshare);
+                    } catch (IOException | ClassCastException | InvalidKeySpecException | NoSuchAlgorithmException e1){
                         JOptionPane.showMessageDialog(frame,"Unable to read public key file");
                     }
                 }

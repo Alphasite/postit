@@ -3,7 +3,6 @@ package postit.server.controller;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import postit.client.keychain.Account;
 import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.model.ServerKeychain;
@@ -11,6 +10,7 @@ import postit.shared.Crypto;
 
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -85,6 +85,26 @@ public class KeychainHandlerTest {
 
 		return sharedid;
 	}
+
+	public static void testGetSharedKeychains(KeychainHandler kh, String owner, String shared1, String shared2, long id) {
+		JSONObject js = kh.shareKeychain(owner, shared1, true, id);
+		assertThat(js.getString("status").equals("success"), is(true));
+		long sharedid1 = js.getLong("directoryEntryId");
+		System.out.println("Test sharing1 keychain was successful: " + shared1);
+
+		js = kh.shareKeychain(owner, shared2, true, id);
+		assertThat(js.getString("status").equals("success"), is(true));
+		long sharedid2 = js.getLong("directoryEntryId");
+		System.out.println("Test sharing2 keychain was successful: " + shared2);
+
+		List<ServerKeychain> sharedKeychains = kh.getSharedKeychains(owner, id);
+		assertThat(sharedKeychains, notNullValue());
+		assertThat(sharedKeychains.size(), is(3));
+
+		for (ServerKeychain sharedKeychain : sharedKeychains) {
+			assertThat(sharedKeychain.getDirectoryEntryId(), anyOf(is(id), is(sharedid1), is(sharedid2)));
+		}
+	}
 	
 	@Test
 	public void runTest(){
@@ -94,6 +114,7 @@ public class KeychainHandlerTest {
 
 		assertThat(ah.addAccount("test1", "cs5431", "test1@cornell.edu", "m", "c"), is(true));
 		assertThat(ah.addAccount("test2", "cs5431", "test2@cornell.edu", "m", "c"), is(true));
+		assertThat(ah.addAccount("test3", "cs5431", "test3@cornell.edu", "m", "c"), is(true));
 
 		int id1 = testAddKeychain(kh, username, "netflix", true);
 		testUpdateKeychain(kh, username, id1, null, "test1", true);
@@ -109,8 +130,11 @@ public class KeychainHandlerTest {
 		assertEquals(list.size(), 0);
 		System.out.println(kh.getKeychains(username));
 
-		int id = testAddKeychain(kh, "test1", "banana", true);
-		long sharedId = testShareKeychain(kh, "test1", "test2", true, id);
+		int id3 = testAddKeychain(kh, "test1", "banana", true);
+		testShareKeychain(kh, "test1", "test2", true, id3);
+
+		int id4 = testAddKeychain(kh, "test1", "banana", true);
+		testGetSharedKeychains(kh, "test1", "test2", "test3", id4);
 
 		db.removeAccount(username);
 	}

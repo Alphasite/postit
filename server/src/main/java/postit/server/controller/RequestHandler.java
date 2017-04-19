@@ -4,7 +4,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
-import postit.server.ServerMessagePackager;
 import postit.server.model.ServerAccount;
 import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager;
@@ -15,7 +14,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static postit.server.ServerMessagePackager.*;
+import static postit.server.ServerMessagePackager.createResponse;
 
 /**
  *
@@ -139,7 +138,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				} else {
 					return js.toString();
 				}
-			case SHARED_KEYCHAINS:
+			case SHARED_KEYCHAIN:
 				js = kh.shareKeychain(
 						username,
 						obj.getString("sharedUsername"),
@@ -200,8 +199,8 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				return createResponse(true, username, "", asset, list);
 
 			case OWNER_KEYCHAIN:
-				list = kh.getSharedKeychains(username, obj.getLong("directoryEntryId"));
-				return createResponse(true, username, "", asset, list);
+				ServerKeychain keychain1 = kh.getOwnersKeychain(username, obj.getLong("directoryEntryId"));
+				return createResponse(true, username, "", asset, keychain1);
 
 			default:
 				break;
@@ -229,7 +228,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					return createResponse(true, username, "", asset, null);
 				else
 					return createResponse(false, username, "Unable to remove keychain " + deId, asset, null);
-			case SHARED_KEYCHAINS:
+			case SHARED_KEYCHAIN:
 				// TODO
 			default:
 				break;
@@ -262,7 +261,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				else
 					return createResponse(false, username, "Unable to update keychain information of " + keychain.getName(), asset, null);
 
-			case SHARED_KEYCHAINS:
+			case SHARED_KEYCHAIN:
 				boolean applied = kh.setSharedKeychainWriteable(
 						username,
 						obj.getLong("ownerDirectoryEntryId"),
