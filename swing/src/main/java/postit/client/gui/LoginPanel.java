@@ -91,8 +91,9 @@ public class LoginPanel extends JPanel {
         r_last.setBounds(80, 50, 150, 30);
         r_account.setBounds(80, 90, 150, 30);
         r_email.setBounds(80, 130, 150, 30);
-        r_password1.setBounds(80, 170, 150, 30);
-        r_password2.setBounds(80, 210, 150, 30);
+        r_phone.setBounds(80, 170, 150, 30);
+        r_password1.setBounds(80, 210, 150, 30);
+        r_password2.setBounds(80, 250, 150, 30);
 
         r_firstfield.setBounds(200, 10, 200, 30);
         r_lastfield.setBounds(200, 50, 200, 30);
