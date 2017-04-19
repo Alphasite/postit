@@ -41,6 +41,8 @@ public class Crypto {
     private static int MEMORY_SCALING_FACTOR;
     private static int PARALLELISM_SCALING_FACTOR;
 
+    private static int RSA_KEY_LENGTH;
+
     private static final int KEY_LENGTH = 32;
 
     private static SecureRandom random;
@@ -72,11 +74,13 @@ public class Crypto {
                 CPU_SCALING_FACTOR = (int) Math.pow(2, 20);
                 MEMORY_SCALING_FACTOR = 8;
                 PARALLELISM_SCALING_FACTOR = 1;
+                RSA_KEY_LENGTH = 4096;
             } else {
                 random = new SecureRandom();
                 CPU_SCALING_FACTOR = 5;
                 MEMORY_SCALING_FACTOR = 5;
                 PARALLELISM_SCALING_FACTOR = 5;
+                RSA_KEY_LENGTH = 1024;
             }
         } catch (NoSuchAlgorithmException e) {
             LOGGER.log(Level.SEVERE, "Failed to initialise RNG.");
@@ -224,7 +228,7 @@ public class Crypto {
     public static Optional<KeyPair> generateRSAKeyPair() {
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(4096, random);
+            generator.initialize(RSA_KEY_LENGTH, random);
             KeyPair pair = generator.generateKeyPair();
             return Optional.of(pair);
         } catch (NoSuchAlgorithmException e) {
