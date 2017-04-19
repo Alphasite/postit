@@ -1,18 +1,13 @@
 package postit.shared;
 
-import org.bouncycastle.crypto.AsymmetricBlockCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
-import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.generators.SCrypt;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.CipherOutputStream;
 import org.bouncycastle.crypto.modes.AEADBlockCipher;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.util.PublicKeyFactory;
-import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Cipher;
@@ -29,8 +24,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
-import java.security.cert.*;
-import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +40,8 @@ public class Crypto {
     private static int CPU_SCALING_FACTOR;
     private static int MEMORY_SCALING_FACTOR;
     private static int PARALLELISM_SCALING_FACTOR;
+
+    private static int RSA_KEY_LENGTH;
 
     private static final int KEY_LENGTH = 32;
 
@@ -78,11 +74,13 @@ public class Crypto {
                 CPU_SCALING_FACTOR = (int) Math.pow(2, 20);
                 MEMORY_SCALING_FACTOR = 8;
                 PARALLELISM_SCALING_FACTOR = 1;
+                RSA_KEY_LENGTH = 4096;
             } else {
                 random = new SecureRandom();
                 CPU_SCALING_FACTOR = 5;
                 MEMORY_SCALING_FACTOR = 5;
                 PARALLELISM_SCALING_FACTOR = 5;
+                RSA_KEY_LENGTH = 1024;
             }
         } catch (NoSuchAlgorithmException e) {
             LOGGER.log(Level.SEVERE, "Failed to initialise RNG.");
@@ -230,7 +228,7 @@ public class Crypto {
     public static Optional<KeyPair> generateRSAKeyPair() {
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(4096, random);
+            generator.initialize(RSA_KEY_LENGTH, random);
             KeyPair pair = generator.generateKeyPair();
             return Optional.of(pair);
         } catch (NoSuchAlgorithmException e) {
@@ -263,7 +261,7 @@ public class Crypto {
         }
     }
 
-    public static String serialiseKeypair(KeyPair keyPair) {
+    public static <T> String serialiseObject(T keyPair) {
         String keypair;
         try (
                 ByteArrayOutputStream b = new ByteArrayOutputStream();
@@ -279,13 +277,13 @@ public class Crypto {
         return keypair;
     }
 
-    public static KeyPair deserialiseKeypair(String keypair) {
+    public static <T> T deserialiseObject(String keypair) {
         try {
             try (
                     ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(keypair));
                     ObjectInputStream oi = new ObjectInputStream(bais)
             ) {
-                return (KeyPair) oi.readObject();
+                return (T) oi.readObject();
             }
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             LOGGER.severe("HIT ERROR STATE FAILED TO DESERIALIZE key pair: " + e.getMessage());

@@ -95,7 +95,7 @@ public class ServerControllerTest {
         serverController = new ServerController(clientToServer);
         assertTrue(serverController.setDirectoryController(directoryController));
 
-        serverController.addUser(account, "test@test.com", "te", "st");
+        serverController.addUser(account, "test@test.com", "te", "st", "8000000000");
     }
 
     @After
@@ -111,7 +111,7 @@ public class ServerControllerTest {
 
     @Test
     public void runTestSeries() throws Exception {
-        addUser("testServerController", "password", "test@servercontroller.com", "test", "server");
+        addUser("testServerController", "password", "test@servercontroller.com", "test", "server", "8000000000");
         assertTrue(authenticate("testServerController", "password"));
         assertFalse(authenticate("NOTtestServerController", "password"));
         assertFalse(authenticate("testServerController", "NOTpassword"));
@@ -133,12 +133,12 @@ public class ServerControllerTest {
         deleteKeychain();
     }
 
-    public void addUser(String username, String password, String email, String firstname, String lastname) throws Exception {
+    public void addUser(String username, String password, String email, String firstname, String lastname, String phoneNumber) throws Exception {
         LOGGER.info("----addUser");
 
         Account testAccount = new Account(username, password);
-        assertTrue(serverController.addUser(testAccount, email, firstname, lastname));
-        assertFalse(serverController.addUser(testAccount, email, firstname, lastname));
+        assertTrue(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber));
+        assertFalse(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber));
     }
 
     public boolean authenticate(String username, String password) throws Exception {
@@ -168,7 +168,7 @@ public class ServerControllerTest {
         ArrayList<Long> serverKeychains = (ArrayList) serverController.getKeychains(account);
         ArrayList<Long> directoryKeychains = new ArrayList<Long>();
         for (int i = 0; i < directoryController.getKeychains().size(); i++) {
-            directoryKeychains.add(directoryController.getKeychains().get(i).serverid);
+            directoryKeychains.add(directoryController.getKeychains().get(i).getServerid());
         }
         assertEquals(directoryKeychains,serverKeychains);
 
@@ -176,6 +176,6 @@ public class ServerControllerTest {
 
     public void deleteKeychain() throws Exception {
         LOGGER.info("----deleteKeychain");
-        assertTrue(serverController.deleteKeychain(account, directoryController.getKeychains().get(0).serverid));
+        assertTrue(serverController.deleteKeychain(account, directoryController.getKeychains().get(0).getServerid()));
     }
 }

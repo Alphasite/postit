@@ -36,15 +36,15 @@ public class ServerAccountHandlerTest {
 	}
 	
 	public static void testAddAccount(AccountHandler ah, String username, String pwd, String email, 
-			String fName, String lName, boolean expected){
-		boolean res = ah.addAccount(username, pwd, email, fName, lName);
+			String fName, String lName, String phone, boolean expected){
+		boolean res = ah.addAccount(username, pwd, email, fName, lName, phone);
 		System.out.printf("Adding account %s with %s %s%n", username, pwd, res ? "successful" : "failed");
 		assertThat(res, is(expected));
 	}
 	
 	public static void testUpdateAccount(AccountHandler ah, String username, String pwd, String email, 
-			String fName, String lName, boolean expected){
-		boolean res = ah.updateAccount(username, pwd, email, fName, lName);
+			String fName, String lName, String phone, boolean expected){
+		boolean res = ah.updateAccount(username, pwd, email, fName, lName, phone);
 		System.out.printf("Updating account %s with %s %s%n", username, pwd, res ? "successful" : "failed");
 		assertThat(res, is(expected));
 	}
@@ -58,13 +58,13 @@ public class ServerAccountHandlerTest {
 	@Test
 	public void runTest(){
 		// authentication
-		testAuthentication(ah, "ning", "5431", true);
+		testAuthentication(ah, "ning", "5431", false);
 		testAuthentication(ah, "ning", "wrong!", false);
 		testAuthentication(ah, "mc", "cs5431", false);
 		
-		testUpdateAccount(ah, "mc", "cs5431", "mc@cornell.edu", "m", "c", false);
-		testAddAccount(ah, "mc", "lalala", "mc@cornell.edu", "m", "c", true);
-		testUpdateAccount(ah, "mc", "cs5431", "mc@cornell.edu", "m", "c", true);
+		testUpdateAccount(ah, "mc", "cs5431", "mc@cornell.edu", "m", "c", "8000000000", false);
+		testAddAccount(ah, "mc", "lalala", "mc@cornell.edu", "m", "c", "8000000000", true);
+		testUpdateAccount(ah, "mc", "cs5431", "mc@cornell.edu", "m", "c", "8000000000", true);
 		testAuthentication(ah, "mc", "cs5431", true);
 		testRemoveAccount(ah, "mc", "lalalal", false);
 		testRemoveAccount(ah, "mc", "cs5431", true);

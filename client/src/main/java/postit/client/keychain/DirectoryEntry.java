@@ -6,6 +6,7 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import javax.json.*;
 import java.security.InvalidKeyException;
+import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -20,7 +21,7 @@ public class DirectoryEntry {
     private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
     public String name;
-    public long serverid;
+    private Share ownerShare;
 
     private SecretKey encryptionKey;
     private byte[] nonce;
@@ -34,18 +35,16 @@ public class DirectoryEntry {
 
     public LocalDateTime lastModified;
 
-    public String owner;
-
-    public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, BackingStore backingStore) {
+    public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, BackingStore backingStore, RSAPublicKey publicKey) {
         this.name = name;
         this.setEncryptionKey(encryptionKey);
         this.directory = directory;
         this.keychain = null;
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
-        this.serverid = -1L;
+        this.ownerShare = new Share(-1, null, true, publicKey, true);
         this.shares = new ArrayList<>();
-        this.owner = null;
+        this.shares.add(this.ownerShare);
     }
 
     public DirectoryEntry(JsonObject object, Directory directory, BackingStore backingStore) {
@@ -61,21 +60,23 @@ public class DirectoryEntry {
         this.name = object.getString("name");
         this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
         this.setNonce(decoder.decode(object.getString("nonce")));
-        this.serverid = object.getJsonNumber("serverid").longValue();
         this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
-        this.owner = object.getString("owner", null);
 
         JsonArray shareArray = object.getJsonArray("shares");
-        if (shareArray!=null){
-            for (int i = 0; i < shareArray.size(); i++) {
-                try {
-                    this.shares.add(new Share(shareArray.getJsonObject(i)));
-                } catch (InvalidKeyException e) {
-                    LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
+        for (int i = 0; i < shareArray.size(); i++) {
+            try {
+                Share share = new Share(shareArray.getJsonObject(i));
+                this.shares.add(share);
+
+                if (share.isOwner) {
+                    this.ownerShare = share;
                 }
+            } catch (InvalidKeyException e) {
+                LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
             }
         }
 
+        this.setServerid(object.getJsonNumber("serverid").longValue());
     }
 
     public JsonObjectBuilder dump() {
@@ -85,15 +86,11 @@ public class DirectoryEntry {
         builder.add("name", name);
         builder.add("encryption-key", encoder.encodeToString(Crypto.secretKeyToBytes(getEncryptionKey())));
         builder.add("nonce", encoder.encodeToString(getNonce()));
-        builder.add("serverid", serverid);
+        builder.add("serverid", getServerid());
         builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
 
-        if (this.owner == null && this.directory.getAccount().isPresent()) {
-            this.owner = this.directory.getAccount().get().getUsername();
-        }
-
-        if (this.owner != null) {
-            builder.add("owner", this.owner);
+        if (this.getOwner() == null && this.directory.getAccount().isPresent()) {
+            this.setOwner(this.directory.getAccount().get().getUsername());
         }
 
         JsonArrayBuilder shareArray = Json.createArrayBuilder();
@@ -150,4 +147,20 @@ public class DirectoryEntry {
     }
 
     public void setName(String name){ this.name = name;}
+
+    public long getServerid() {
+        return this.ownerShare.serverid;
+    }
+
+    public void setServerid(long serverid) {
+        this.ownerShare.serverid = serverid;
+    }
+
+    public String getOwner() {
+        return this.ownerShare.username;
+    }
+
+    public void setOwner(String owner) {
+        this.ownerShare.username = owner;
+    }
 }
