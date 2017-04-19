@@ -346,7 +346,15 @@ public class KeychainViewer {
                         KeyFactory kf = KeyFactory.getInstance("RSA");
                         RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
                         Share newshare = new Share(activeDE.serverid,username,readWrite, publicKey);
-                        directoryController.shareKeychain(activeDE,newshare);
+                        boolean success = directoryController.shareKeychain(activeDE,newshare);
+                        if(success){
+                            JOptionPane.showMessageDialog(frame,
+                                    "Successfully shared " + activeDE.name+ " with "+ username);
+                        }
+                        else{
+                            JOptionPane.showMessageDialog(frame,
+                                    "Unable to share " + activeDE.name+ " with "+ username);
+                        }
                     }catch (IOException | ClassCastException|
                             InvalidKeySpecException |NoSuchAlgorithmException e1){
                         JOptionPane.showMessageDialog(frame,"Unable to read public key file");
