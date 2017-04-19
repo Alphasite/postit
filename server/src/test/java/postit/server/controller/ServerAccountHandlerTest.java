@@ -69,4 +69,10 @@ public class ServerAccountHandlerTest {
 		testRemoveAccount(ah, "mc", "lalalal", false);
 		testRemoveAccount(ah, "mc", "cs5431", true);
 	}
+	
+	public static void main(String[] args) throws Exception{
+		ServerAccountHandlerTest test = new ServerAccountHandlerTest();
+		test.setUp();
+		testAuthentication(test.ah, "ning", "5431", false);
+	}
 }

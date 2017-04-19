@@ -176,8 +176,9 @@ public class RequestHandlerTest {
 		DatabaseController controller = new DatabaseController(database);
 		AccountHandler accountHandler = new AccountHandler(controller, Crypto.getRandom());
 		KeychainHandler keychainHandler = new KeychainHandler(controller);
+		LogController logController = new LogController(controller);
 
-		rh = new RequestHandler(accountHandler, keychainHandler);
+		rh = new RequestHandler(accountHandler, keychainHandler, logController);
 	}
 
 	@Test

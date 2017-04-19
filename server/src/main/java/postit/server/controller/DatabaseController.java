@@ -1,10 +1,13 @@
 package postit.server.controller;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,12 +15,15 @@ import org.json.JSONObject;
 
 import postit.server.database.Database;
 import postit.server.model.*;
+import postit.shared.AuditLog;
+import postit.shared.AuditLog.LogEntry;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class DatabaseController {
 
     private static final String ACCOUNT = "account";
     private static final String DIRECTORY_ENTRY = "directory_entry";
+    private static final String LOGIN = "login";
 
     private Database database;
 
@@ -65,7 +71,9 @@ public class DatabaseController {
             = "DELETE FROM " + DIRECTORY_ENTRY + " "
             + "WHERE `directory_entry_id`=?;";
 
-
+    private static final String getLoginsSQL = "SELECT * FROM " + LOGIN + " WHERE `user_name`=? ORDER BY time;";
+    private static final String addLoginSQL = "INSERT INTO " + LOGIN + " (`time`, `user_name`, `status`, `message`) VALUES (?,?,?,?);";
+    
     public DatabaseController(Database database) {
         this.database = database;
     }
@@ -346,5 +354,44 @@ public class DatabaseController {
         }
 
         return modify == 1;
+    }
+    
+    public List<LogEntry> getLogins(String username) {
+        ResultSet resultSet;
+        LogEntry log = null;
+
+        List<LogEntry> list = new ArrayList<LogEntry>();
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getLoginsSQL)) {
+            statement.setString(1, username);
+            resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+            	log = new LogEntry(resultSet.getTimestamp("time").getTime(), AuditLog.EventType.AUTHENTICATE, resultSet.getString("username"), 
+            			resultSet.getBoolean("status"), resultSet.getString("message"));
+            	list.add(log);
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred in getLogins " + e.getMessage()); // should be contained in JSONObject returned to view
+        } catch (Exception e) {
+            System.out.println("An error occurred: " + e.getMessage()); // should be contained in JSONObject returned to view
+        }
+
+        return list;
+    }
+    
+    public boolean addLoginEntry(LogEntry log){
+        int add = 0;
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(addLoginSQL)) {
+        	statement.setTimestamp(1, new Timestamp(log.time));
+            statement.setString(2, log.username);
+            statement.setBoolean(3, log.status);
+            statement.setString(4, log.message);
+            add = statement.executeUpdate();
+        } catch (SQLException e) {
+        	e.printStackTrace();
+            System.out.println("An error occurred in addLog: " + e.getMessage()); 
+        }
+
+        return add == 1;
     }
 }
