@@ -44,6 +44,7 @@ public class DirectoryEntry {
         this.lastModified = LocalDateTime.now();
         this.ownerShare = new Share(-1, null, true, publicKey, true);
         this.shares = new ArrayList<>();
+        this.shares.add(this.ownerShare);
     }
 
     public DirectoryEntry(JsonObject object, Directory directory, BackingStore backingStore) {
@@ -59,21 +60,23 @@ public class DirectoryEntry {
         this.name = object.getString("name");
         this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
         this.setNonce(decoder.decode(object.getString("nonce")));
-        this.setServerid(object.getJsonNumber("serverid").longValue());
         this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
-        this.setOwner(object.getString("owner", null));
 
         JsonArray shareArray = object.getJsonArray("shares");
-        if (shareArray!=null){
-            for (int i = 0; i < shareArray.size(); i++) {
-                try {
-                    this.shares.add(new Share(shareArray.getJsonObject(i)));
-                } catch (InvalidKeyException e) {
-                    LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
+        for (int i = 0; i < shareArray.size(); i++) {
+            try {
+                Share share = new Share(shareArray.getJsonObject(i));
+                this.shares.add(share);
+
+                if (share.isOwner) {
+                    this.ownerShare = share;
                 }
+            } catch (InvalidKeyException e) {
+                LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
             }
         }
 
+        this.setServerid(object.getJsonNumber("serverid").longValue());
     }
 
     public JsonObjectBuilder dump() {
@@ -88,10 +91,6 @@ public class DirectoryEntry {
 
         if (this.getOwner() == null && this.directory.getAccount().isPresent()) {
             this.setOwner(this.directory.getAccount().get().getUsername());
-        }
-
-        if (this.getOwner() != null) {
-            builder.add("owner", this.getOwner());
         }
 
         JsonArrayBuilder shareArray = Json.createArrayBuilder();
@@ -154,7 +153,7 @@ public class DirectoryEntry {
     }
 
     public void setServerid(long serverid) {
-        this.ownerShare.serverid= serverid;
+        this.ownerShare.serverid = serverid;
     }
 
     public String getOwner() {
