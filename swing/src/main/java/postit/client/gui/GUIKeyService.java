@@ -194,7 +194,7 @@ public class GUIKeyService implements KeyService {
                     String pass1 = String.valueOf(lp.r_pass1field.getPassword());
                     String pass2 = String.valueOf(lp.r_pass2field.getPassword());
                     String email = lp.r_emailfield.getText();
-                    String phone = lp.r_phonenumber.getText().replaceAll("[-()]","");
+                    String phone = lp.r_phonefield.getText().replaceAll("[-()\\s]","");
 
                     Classify classify = new Classify();
                     if (pass1.equals(pass2)
@@ -202,7 +202,7 @@ public class GUIKeyService implements KeyService {
                             && LoginPanel.isValidEmailAddress(email)
                             && LoginPanel.isValidPhoneNumber(phone)) {
                         Account newAccount = new Account(username, pass1);
-                        if (sc.addUser(newAccount, email, first, last, null)) { //TODO add phone number
+                        if (sc.addUser(newAccount, email, first, last, phone)) {
                             if (backingStore.writeKeypair(newAccount.getKeyPair())) {
                                 JOptionPane.showMessageDialog(
                                     null,
