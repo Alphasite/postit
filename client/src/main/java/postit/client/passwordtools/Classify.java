@@ -2,8 +2,10 @@ package postit.client.passwordtools;
 
 import org.json.JSONObject;
 
-import java.io.*;
-import java.nio.file.Paths;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 
 /**
  * Created by Zhan on 3/23/2017.
@@ -48,10 +50,8 @@ public class Classify {
         ERROR
     }
 
-    File wordlist = Paths.get("").resolve("client").resolve("src").resolve("main").resolve("resources").
-            resolve("passwordStrength").resolve("password-2011.lst").toFile();
-    File wordlist2 = Paths.get("").resolve("client").resolve("src").resolve("main").resolve("resources").
-            resolve("passwordStrength").resolve("words.txt").toFile();
+    URL wordlist = Classify.class.getClassLoader().getResource("./passwordStrength/password-2011.lst");
+    URL wordlist2 = Classify.class.getClassLoader().getResource("./passwordStrength/words.txt");
 
     /**“Password must have at
      least 8 characters,
@@ -65,9 +65,9 @@ public class Classify {
      non-alphabetic characters and checked the remainder against
      a dictionary, ignoring case.**/
 
-    public static boolean checkDicWords (String target, File file) throws Exception{
+    public static boolean checkDicWords (String target, URL file) throws Exception{
         try {
-            BufferedReader in = new BufferedReader(new FileReader(file));
+            BufferedReader in = new BufferedReader(new InputStreamReader(file.openStream()));
             String str;
             while ((str = in.readLine()) != null) {
                 if (str.indexOf(target.toLowerCase()) != -1) {
@@ -87,7 +87,7 @@ public class Classify {
         return password.length() >= 16;
     }
 
-    public static boolean comprehensive8 (String password, File wordlist) throws Exception{
+    public static boolean comprehensive8 (String password, URL wordlist) throws Exception{
         String regex = "^(?=.*[A-Z])(?=.*[-!@#$&*])(?=.*[0-9])(?=.*[a-z]).{8,}$";
         boolean flag = password.matches(regex);
         if (flag) { // check if dictionary 8, i.e. contains a dictionary word
@@ -99,7 +99,7 @@ public class Classify {
         return false;
     }
 
-    public static boolean blacklistHard (String password, File wordlist) throws Exception{
+    public static boolean blacklistHard (String password, URL wordlist) throws Exception{
         return !checkDicWords(password, wordlist);
     }
 
