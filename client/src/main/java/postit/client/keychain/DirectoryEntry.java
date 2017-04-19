@@ -21,7 +21,7 @@ public class DirectoryEntry {
     private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
     public String name;
-    private Share ownerShare;
+    private Share share;
 
     private SecretKey encryptionKey;
     private byte[] nonce;
@@ -42,20 +42,20 @@ public class DirectoryEntry {
         this.keychain = null;
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
-        this.ownerShare = new Share(-1, null, true, publicKey, true);
+        this.share = new Share(-1, null, true, publicKey, true);
         this.shares = new ArrayList<>();
-        this.shares.add(this.ownerShare);
+        this.shares.add(this.share);
     }
 
-    public DirectoryEntry(JsonObject object, Directory directory, BackingStore backingStore) {
+    public DirectoryEntry(String username, JsonObject object, Directory directory, BackingStore backingStore) {
         this.directory = directory;
         this.keychain = null;
         this.backingStore = backingStore;
         this.shares = new ArrayList<>();
-        this.updateFrom(object);
+        this.updateFrom(username, object);
     }
 
-    public void updateFrom(JsonObject object) {
+    public void updateFrom(String targetUser, JsonObject object) {
         Base64.Decoder decoder = Base64.getDecoder();
         this.name = object.getString("name");
         this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
@@ -68,8 +68,8 @@ public class DirectoryEntry {
                 Share share = new Share(shareArray.getJsonObject(i));
                 this.shares.add(share);
 
-                if (share.isOwner) {
-                    this.ownerShare = share;
+                if (share.username.equals(targetUser)) {
+                    this.share = share;
                 }
             } catch (InvalidKeyException e) {
                 LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
@@ -149,18 +149,18 @@ public class DirectoryEntry {
     public void setName(String name){ this.name = name;}
 
     public long getServerid() {
-        return this.ownerShare.serverid;
+        return this.share.serverid;
     }
 
     public void setServerid(long serverid) {
-        this.ownerShare.serverid = serverid;
+        this.share.serverid = serverid;
     }
 
     public String getOwner() {
-        return this.ownerShare.username;
+        return this.share.username;
     }
 
     public void setOwner(String owner) {
-        this.ownerShare.username = owner;
+        this.share.username = owner;
     }
 }

@@ -37,7 +37,12 @@ public class Directory {
 
         JsonArray keychainArray = object.getJsonArray("keychains");
         for (int i = 0; i < keychainArray.size(); i++) {
-            keychains.add(new DirectoryEntry(keychainArray.getJsonObject(i), this, backingStore));
+            keychains.add(new DirectoryEntry(
+                    account.getUsername(),
+                    keychainArray.getJsonObject(i),
+                    this,
+                    backingStore
+            ));
         }
 
         JsonArray deletedKeychainsArray = object.getJsonArray("deleted");
@@ -90,7 +95,7 @@ public class Directory {
     }
 
     public DirectoryEntry createKeychain(JsonObject entryObject, JsonObject keychainObject) {
-        DirectoryEntry entry = new DirectoryEntry(entryObject, this, backingStore);
+        DirectoryEntry entry = new DirectoryEntry(account.getUsername(),  entryObject, this, backingStore);
         entry.keychain = new Keychain(keychainObject, entry);
         this.keychains.add(entry);
 

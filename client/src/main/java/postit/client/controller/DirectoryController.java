@@ -142,8 +142,7 @@ public class DirectoryController {
 
         boolean localIsOlder = entry.lastModified.isBefore(lastModified);
         if (localIsOlder) {
-            entry.updateFrom(entryObject);
-
+            entry.updateFrom(entryShare.username, entryObject);
         }
 
         Optional<Keychain> keychain = entry.readKeychain();
@@ -152,7 +151,7 @@ public class DirectoryController {
                     .map(share -> share.serverid)
                     .collect(Collectors.toSet());
 
-            DirectoryEntry newEntry = new DirectoryEntry(entryObject, null, null);
+            DirectoryEntry newEntry = new DirectoryEntry(entryShare.username, entryObject, null, null);
 
             for (Share share : newEntry.shares) {
                 if (!shareIdentifiers.contains(share.serverid) || localIsOlder) {
@@ -195,8 +194,9 @@ public class DirectoryController {
         return store.save();
     }
 
-    public boolean createKeychain(JsonObject directory, JsonObject keychain) {
-        this.directory.createKeychain(directory, keychain);
+    public boolean createKeychain(long serverId, JsonObject directory, JsonObject keychain) {
+        DirectoryEntry entry = this.directory.createKeychain(directory, keychain);
+
         return store.save();
     }
 
@@ -212,7 +212,7 @@ public class DirectoryController {
             return Optional.empty();
         }
 
-        return new DirectoryKeychain(keychain.get().dump().build(), entry.dump().build())
+        return new DirectoryKeychain(entry.getServerid(), keychain.get().dump().build(), entry.dump().build())
                 .dump(entry, account.getKeyPair().getPublic());
     }
 

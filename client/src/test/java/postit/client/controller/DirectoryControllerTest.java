@@ -735,7 +735,11 @@ public class DirectoryControllerTest {
         Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
 
-        assertThat(controller.createKeychain(entry1.dump().build(), keychain1.dump().build()), is(true));
+        assertThat(controller.createKeychain(
+                entry1.getServerid(),
+                entry1.dump().build(),
+                keychain1.dump().build()
+        ), is(true));
 
         assertThat(controller.getKeychains().size(), is(1));
         DirectoryEntry oldEntry = controller.getKeychains().get(0);
@@ -766,7 +770,11 @@ public class DirectoryControllerTest {
         Keychain keychain1 = new Keychain(entry1);
         keychain1.passwords.add(new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1));
 
-        assertThat(controller.createKeychain(entry1.dump().build(), keychain1.dump().build()), is(true));
+        assertThat(controller.createKeychain(
+                entry1.getServerid(),
+                entry1.dump().build(),
+                keychain1.dump().build()
+        ), is(true));
 
         reloadPersistent();
 

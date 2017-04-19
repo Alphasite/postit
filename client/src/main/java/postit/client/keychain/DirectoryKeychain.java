@@ -22,12 +22,15 @@ public class DirectoryKeychain {
     public final JsonObject keychain;
     public final JsonObject entry;
 
-    public DirectoryKeychain(JsonObject keychain, JsonObject entry) {
+    public final long serverid;
+
+    public DirectoryKeychain(long serverid, JsonObject keychain, JsonObject entry) {
         this.keychain = keychain;
         this.entry = entry;
+        this.serverid = serverid;
     }
 
-    public static Optional<DirectoryKeychain> init(JsonObject object, Account account) {
+    public static Optional<DirectoryKeychain> init(long serverid, JsonObject object, Account account) {
         Base64.Decoder decoder = Base64.getDecoder();
 
         try {
@@ -51,8 +54,8 @@ public class DirectoryKeychain {
                 return Optional.empty();
             }
 
-
             return Optional.of(new DirectoryKeychain(
+                    serverid,
                     directorKeychainObject.get().getJsonObject("keychain"),
                     directorKeychainObject.get().getJsonObject("directory")
             ));
@@ -104,6 +107,6 @@ public class DirectoryKeychain {
     }
 
     public long getServerid() {
-        return entry.getJsonNumber("serverid").longValue();
+        return serverid;
     }
 }

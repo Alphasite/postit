@@ -46,6 +46,7 @@ public class ServerController {
         this.syncThread = null;
     }
 
+    @SuppressWarnings("ConstantConditions")
     public boolean sync(Runnable callback) {
 
         Runnable sync = () -> {
@@ -137,6 +138,7 @@ public class ServerController {
 
                 if (directoryKeychain.isPresent()) {
                     if (!directoryController.createKeychain(
+                            directoryKeychain.get().serverid,
                             directoryKeychain.get().entry,
                             directoryKeychain.get().keychain
                     )) {
@@ -304,9 +306,13 @@ public class ServerController {
     private static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response) {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             try {
-                String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(response.get().getJsonObject("keychain").getString("data")));
+                JsonObject keychain = response.get().getJsonObject("keychain");
+                String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
                 JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
-                return DirectoryKeychain.init(object, account);
+                return DirectoryKeychain.init(
+                        keychain.getJsonNumber("directoryEntryId").longValue(),
+                        object,
+                        account);
             } catch (JsonException | IllegalStateException e) {
                 LOGGER.warning("Failed to parse server keychain response: " + e.getMessage());
                 return Optional.empty();
@@ -422,7 +428,11 @@ public class ServerController {
                 try {
                     String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
                     JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
-                    Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(object, account);
+                    Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(
+                            keychain.getJsonNumber("directoryEntryId").longValue(),
+                            object,
+                            account
+                    );
 
                     if (!directoryKeychain.isPresent()) {
                         LOGGER.warning("Failed to parse json object");
