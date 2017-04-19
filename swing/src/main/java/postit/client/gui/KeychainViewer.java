@@ -342,7 +342,7 @@ public class KeychainViewer {
                         KeyFactory kf = KeyFactory.getInstance("RSA");
                         RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
 
-                        Share newshare = new Share(activeDE.getServerid(),username,readWrite, publicKey, false);
+                        Share newshare = new Share(-1L,username,readWrite, publicKey, false);
 
                         boolean success = directoryController.shareKeychain(activeDE,newshare);
                         if(success){
