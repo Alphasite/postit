@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static postit.shared.MessagePackager.Asset.SHARED_KEYCHAIN;
 import static postit.shared.MessagePackager.Asset.SHARED_KEYCHAINS;
 import static postit.shared.MessagePackager.typeToString;
 
@@ -391,7 +392,7 @@ public class ServerController {
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             long id = response.get()
-                    .getJsonObject(typeToString(SHARED_KEYCHAINS))
+                    .getJsonObject(typeToString(SHARED_KEYCHAIN))
                     .getJsonNumber("directoryEntryId")
                     .longValue();
 

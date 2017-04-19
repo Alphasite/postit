@@ -26,14 +26,16 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 	private AccountHandler ah;
 	private KeychainHandler kh;
+	private LogController lc;
 
 	private boolean authenticated;
 
-	public RequestHandler(AccountHandler accountHandler, KeychainHandler keychainHandler) throws ExceptionInInitializerError {
+	public RequestHandler(AccountHandler accountHandler, KeychainHandler keychainHandler, LogController logController) throws ExceptionInInitializerError {
 		System.out.println("Initialised new Request Handler");
-		this.ah = accountHandler;
-		this.kh = keychainHandler;
-		this.authenticated = false;
+		ah = accountHandler;
+		kh = keychainHandler;
+		lc = logController;
+		authenticated = false;
 	}
 
 	@Override
@@ -81,6 +83,17 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			username = json.getString("username");
 			password = json.getString("password");
 			password = new String(Base64.getDecoder().decode(password));
+			
+			int numFails = lc.getLatestNumFailedLogins(username);
+			if (numFails > 4){
+				// disabled time is linear right now. may change to exponential
+				long diff = (numFails - 4) * 30 - (System.currentTimeMillis() - lc.getLastLoginTime(username)) / 1000;
+				if (diff > 0){
+					LOGGER.info("Sign in disabled");
+					return createResponse(false, username, String.format("Login is temporarily disabled. Try again in %d seconds.", diff), 
+							asset, null);
+				}
+			}
 
 			// TODO check this.
 			if (/*!authenticated &&*/ !ah.authenticate(username, password)) {

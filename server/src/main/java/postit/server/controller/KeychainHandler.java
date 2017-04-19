@@ -1,11 +1,10 @@
 package postit.server.controller;
 
+import org.json.JSONObject;
+import postit.server.model.ServerKeychain;
+
 import java.util.List;
 import java.util.Objects;
-
-import org.json.JSONObject;
-
-import postit.server.model.*;
 
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
@@ -69,6 +68,15 @@ public class KeychainHandler {
             JSONObject res = new JSONObject();
             res.put("status", "failure");
             return res;
+        }
+
+        for (ServerKeychain serverKeychain : getSharedKeychains(ownerUsername, id)) {
+            if (serverKeychain.getSharedUsername().equals(sharedUsername)) {
+                JSONObject res = new JSONObject();
+                res.put("status", "success");
+                res.put("directoryEntryId", serverKeychain.getDirectoryEntryId());
+                return res;
+            }
         }
 
         JSONObject response = db.addDirectoryEntry(

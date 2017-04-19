@@ -6,6 +6,7 @@ import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
 import postit.client.passwordtools.Classify;
+import postit.client.log.AuthenticationLog;
 import postit.shared.Crypto;
 import postit.shared.EFactorAuth;
 
@@ -27,10 +28,12 @@ public class GUIKeyService implements KeyService {
     private Instant retrieved;
 
     private ServerController sc;
+    private AuthenticationLog al;
     private BackingStore backingStore;
 
-    public GUIKeyService(ServerController sc) {
+    public GUIKeyService(ServerController sc, AuthenticationLog al) {
         this.sc = sc;
+        this.al = al;
     }
 
     public void setBackingStore(BackingStore backingStore) {
@@ -152,50 +155,66 @@ public class GUIKeyService implements KeyService {
             if (result == JOptionPane.OK_OPTION) {
                 if (lp.tabbedPane.getSelectedIndex() == 0) {
                     // LOGIN
-                    String username = lp.l_accountfield.getText();
-                    String password = String.valueOf(lp.l_passfield.getPassword());
+                	
+                	int numFails = al.getLatestNumFailedLogins();
+                	long diff;
+                	if (numFails > 4 && (diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
+                		// disabled time is linear right now. may change to exponential
+                		JOptionPane.showMessageDialog(
+                				null,
+                				String.format("Login is temporarily disabled. Try again in %d seconds.", diff)
+                				);
 
-                    Account newAccount = new Account(username, password);
-                    //authenticate via password
-                    if (sc.authenticate(newAccount)) {
-                        //authenticate via text
-                        //TODO send text
-                        String phoneNumber="6073794979";
-                        new EFactorAuth().sendMsg(phoneNumber);
-                        String pin = null;
-                        while (pin==null){
-                            pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
-                        }
-                        if(new EFactorAuth().verifyMsg(phoneNumber,pin)){
-                            JOptionPane.showConfirmDialog(
-                                    null,
-                                    "Please ensure your keypair is in the data directory. Select any option to proceed"
-                            );
+                	}
+                	else{
+                		String username = lp.l_accountfield.getText();
+                		String password = String.valueOf(lp.l_passfield.getPassword());
 
-                            Optional<KeyPair> keyPair = backingStore.readKeypair();
-                            if (keyPair.isPresent()) {
-                                newAccount.setKeyPair(keyPair.get());
-                                return newAccount;
-                            } else {
-                                JOptionPane.showMessageDialog(null, "Failed to load keypair.");
-                            }
-                        }else {
-                            JOptionPane.showMessageDialog(null, "Incorrect PIN");
-                        }
+                		Account newAccount = new Account(username, password);
+                		//authenticate via password
+                		if (sc.authenticate(newAccount)) {
+                			//authenticate via text
+                			//TODO send text
+                			String phoneNumber="6073794979";
+                			new EFactorAuth().sendMsg(phoneNumber);
+                			String pin = null;
+                			while (pin==null){
+                				pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
+                			}
+                			if(new EFactorAuth().verifyMsg(phoneNumber,pin)){
+                				JOptionPane.showConfirmDialog(
+                						null,
+                						"Please ensure your keypair is in the data directory. Select any option to proceed"
+                						);
+                				
+                				al.addAuthenticationLogEntry(username, true, "Login successful");
+                				Optional<KeyPair> keyPair = backingStore.readKeypair();
+                				if (keyPair.isPresent()) {
+                					newAccount.setKeyPair(keyPair.get());
+                					return newAccount;
+                				} else {
+                					JOptionPane.showMessageDialog(null, "Failed to load keypair.");
+                				}
+                			}else {
+                				JOptionPane.showMessageDialog(null, "Incorrect PIN");
+                			}
 
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Login credentials invalid");
-                    }
+                		} else {
+                			al.addAuthenticationLogEntry(username, false, "Login credentials are invalid");
+                			JOptionPane.showMessageDialog(null, "Login credentials invalid");
+                		}
+
+                	}
 
                 } else if (lp.tabbedPane.getSelectedIndex() == 1) {
-                    // REGISTRATION
-                    String first = lp.r_firstfield.getText();
-                    String last = lp.r_lastfield.getText();
-                    String username = lp.r_accountfield.getText();
-                    String pass1 = String.valueOf(lp.r_pass1field.getPassword());
-                    String pass2 = String.valueOf(lp.r_pass2field.getPassword());
-                    String email = lp.r_emailfield.getText();
-                    String phone = lp.r_phonefield.getText().replaceAll("[-()\\s]","");
+                	// REGISTRATION
+                	String first = lp.r_firstfield.getText();
+                	String last = lp.r_lastfield.getText();
+                	String username = lp.r_accountfield.getText();
+                	String pass1 = String.valueOf(lp.r_pass1field.getPassword());
+                	String pass2 = String.valueOf(lp.r_pass2field.getPassword());
+                	String email = lp.r_emailfield.getText();
+                	String phone = lp.r_phonefield.getText().replaceAll("[-()\\s]","");
 
                     Classify classify = new Classify();
                     JSONObject passresult =classify.strengthCheck(pass1);
@@ -219,6 +238,7 @@ public class GUIKeyService implements KeyService {
                                 JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
                             }
                         }
+
                     } else if (!pass1.equals(pass2)) {
                         JOptionPane.showMessageDialog(null, "Passwords do not match");
                     } else if (!LoginPanel.isValidEmailAddress(email)){
