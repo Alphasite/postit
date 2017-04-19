@@ -175,7 +175,7 @@ public class GUIKeyService implements KeyService {
                 		if (sc.authenticate(newAccount)) {
                 			//authenticate via text
                 			//TODO send text
-                			String phoneNumber="6073794979";
+                			String phoneNumber=sc.getPhoneNumber(newAccount);
                 			new EFactorAuth().sendMsg(phoneNumber);
                 			String pin = null;
                 			while (pin==null){
