@@ -57,6 +57,7 @@ public class KeychainViewer {
     private JMenuItem rnKey;
     private JMenuItem addKeyPerm;
     private JMenuItem rmKeyPerm;
+    private JMenuItem showKeyPerm;
 
     private PasswordGenerator passwordGenerator;
     private Classify classify;
@@ -111,34 +112,28 @@ public class KeychainViewer {
             JTextField newpassword = new JTextField();
 
             JButton generatePass = new JButton("Generate Password");
-            JButton evaluatePass = new JButton("Evaluate Password");
             JLabel passwordStrength = new JLabel("\n");
             newpassword.addFocusListener(new FocusListener() {
                 @Override
                 public void focusGained(FocusEvent e) {
-                    //TODO evaluate newpassword.getText() and set text
                     passwordStrength.setText("\n");
                 }
-
                 @Override
                 public void focusLost(FocusEvent e) {
+                    JSONObject result = classify.strengthCheck(newpassword.getText());
+                    String strength = (String) result.get("strength");
+                    String evaluation = (String) result.get("evaluation");
 
+                    passwordStrength.setText("Password Strength: "+strength + ", " + evaluation);
                 }
             });
             generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
-            evaluatePass.addActionListener(ee->{
-                JSONObject result = classify.strengthCheck(newpassword.getText());
-                String strength = (String) result.get("strength");
-                String evaluation = (String) result.get("evaluation");
 
-                passwordStrength.setText("Password Strength: "+strength + ", " + evaluation);
-            });
             Object[] message = {
                     "Title:", newtitle,
                     "Username", newusername,
                     "Password:", newpassword,
                     generatePass,
-                    evaluatePass,
                     passwordStrength
             };
 
@@ -395,6 +390,36 @@ public class KeychainViewer {
         });
         keychainMenu.add(rmKeyPerm);
 
+        showKeyPerm=new JMenuItem("Show key permissions");
+        showKeyPerm.addActionListener(e -> {
+            String[] columnNames = {"User", "Editor"};
+            DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
+            List<Share> shares = activeDE.shares;
+
+            String[][] data = new String[shares.size()][2];
+            for (int i = 0; i < shares.size(); i++) {
+                data[i][0] = shares.get(i).username;
+                if (shares.get(i).isOwner){
+                    data[i][0]+= (" (Owner)");
+                }
+                data[i][1] = (shares.get(i).canWrite? "Y":"");
+            }
+
+            JTable table= new JTable(data, columnNames) {
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+
+            JScrollPane scrollPane = new JScrollPane(table);
+            Panel panel = new Panel();
+            panel.add(scrollPane);
+
+            JOptionPane.showConfirmDialog(frame,panel,"Permissions: "+getActiveKeychain().getName(),
+                    JOptionPane.CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        });
+        keychainMenu.add(showKeyPerm);
 
         //SETTINGS Menu Item
         JMenu settingsMenu = new JMenu("Settings");
