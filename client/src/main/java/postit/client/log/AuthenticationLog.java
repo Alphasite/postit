@@ -19,7 +19,15 @@ public class AuthenticationLog {
 			logDir.mkdirs();
 		
 		//File authLog = new File(AUTH_LOG);
-		//System.out.println(authLog.getAbsolutePath());
+		File log = new File(AUTH_LOG);
+		if (! log.exists())
+			try {
+				log.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		//System.out.println(new File(AUTH_LOG).getAbsolutePath());
 	}
 	
 	public void addAuthenticationLogEntry(String username, boolean status, String message){

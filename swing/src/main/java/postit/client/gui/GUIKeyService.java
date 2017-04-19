@@ -185,7 +185,8 @@ public class GUIKeyService implements KeyService {
                 						null,
                 						"Please ensure your keypair is in the data directory. Select any option to proceed"
                 						);
-
+                				
+                				al.addAuthenticationLogEntry(username, true, "Login successful");
                 				Optional<KeyPair> keyPair = backingStore.readKeypair();
                 				if (keyPair.isPresent()) {
                 					newAccount.setKeyPair(keyPair.get());
@@ -198,6 +199,7 @@ public class GUIKeyService implements KeyService {
                 			}
 
                 		} else {
+                			al.addAuthenticationLogEntry(username, false, "Login credentials are invalid");
                 			JOptionPane.showMessageDialog(null, "Login credentials invalid");
                 		}
 
