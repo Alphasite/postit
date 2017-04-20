@@ -76,6 +76,6 @@ pipeline {
                 sh "docker image push nishadmathur.com/postit-server"
             }
         }
-    }
 */
+    }
 }
