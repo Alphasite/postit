@@ -8,7 +8,6 @@ import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.security.Key;
-import java.security.PublicKey;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -73,7 +72,7 @@ public class DirectoryKeychain {
         }
     }
 
-    public Optional<JsonObject> dump(DirectoryEntry entryObject, PublicKey publicKey) {
+    public Optional<JsonObject> dump(DirectoryEntry entryObject) {
         SecretKey key = Crypto.generateKey();
         byte[] nonce = Crypto.getNonce();
 
@@ -87,7 +86,7 @@ public class DirectoryKeychain {
                 .add("nonce", encoder.encodeToString(nonce));
 
         for (Share share : entryObject.shares) {
-            Optional<byte[]> encryptedKey = Crypto.wrapKey(key, publicKey);
+            Optional<byte[]> encryptedKey = Crypto.wrapKey(key, share.publicKey);
 
             if (!encryptedKey.isPresent()) {
                 LOGGER.warning("Failed to encrypt dk due to failure to wrap key");

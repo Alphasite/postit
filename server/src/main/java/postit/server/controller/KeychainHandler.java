@@ -111,7 +111,17 @@ public class KeychainHandler {
         boolean isOwner = entry.getOwnerUsername().equals(username);
         boolean isShared = Objects.equals(entry.getSharedUsername(), username);
 
-        if (isOwner || (isShared && entry.isSharedHasWritePermission())) {
+        if (isOwner) {
+            List<ServerKeychain> sharedKeychains = this.getSharedKeychains(username, directoryEntryId);
+            for (ServerKeychain sharedKeychain : sharedKeychains) {
+                if (!db.removeDirectoryEntry(sharedKeychain.getDirectoryEntryId())) {
+                    System.err.println("Failed to delete dependent keychain of parent. Aborting.");
+                    return false;
+                }
+            }
+        }
+
+        if (isOwner || isShared) {
             return db.removeDirectoryEntry(directoryEntryId);
         } else {
             return false;

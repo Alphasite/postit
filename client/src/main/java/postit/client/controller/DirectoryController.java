@@ -199,7 +199,8 @@ public class DirectoryController {
     }
 
     public boolean createKeychain(long serverId, JsonObject directory, JsonObject keychain) {
-        this.directory.createKeychain(directory, keychain);
+        DirectoryEntry entry = this.directory.createKeychain(directory, keychain);
+        entry.setServerid(serverId);
         return store.save();
     }
 
@@ -207,7 +208,7 @@ public class DirectoryController {
         return this.directory.getAccount();
     }
 
-    public Optional<JsonObject> buildKeychainEntryObject(Account account, DirectoryEntry entry) {
+    public Optional<JsonObject> buildKeychainEntryObject(DirectoryEntry entry) {
         Optional<Keychain> keychain = entry.readKeychain();
 
         if (!keychain.isPresent()) {
@@ -216,7 +217,7 @@ public class DirectoryController {
         }
 
         return new DirectoryKeychain(entry.getServerid(), keychain.get().dump().build(), entry.dump().build())
-                .dump(entry, account.getKeyPair().getPublic());
+                .dump(entry);
     }
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {

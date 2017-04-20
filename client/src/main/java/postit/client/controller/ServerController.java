@@ -142,7 +142,7 @@ public class ServerController {
 
                 if (directoryKeychain.isPresent()) {
                     if (!directoryController.createKeychain(
-                            directoryKeychain.get().serverid,
+                            serverid,
                             directoryKeychain.get().entry,
                             directoryKeychain.get().keychain
                     )) {
@@ -341,7 +341,7 @@ public class ServerController {
     }
 
     public boolean createKeychain(Account account, DirectoryEntry entry) {
-        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(account, entry);
+        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
 
         if (!keychainEntryObject.isPresent()) {
             return false;
@@ -375,7 +375,7 @@ public class ServerController {
     }
 
     public boolean setKeychain(Account account, DirectoryEntry entry) {
-        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(account, entry);
+        Optional<JsonObject> keychainEntryObject = directoryController.buildKeychainEntryObject(entry);
 
         if (!keychainEntryObject.isPresent()) {
             return false;
