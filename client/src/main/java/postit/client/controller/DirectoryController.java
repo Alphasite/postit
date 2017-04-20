@@ -232,15 +232,24 @@ public class DirectoryController {
     }
 
     public boolean shareKeychain(DirectoryEntry entry, Share share) {
-        entry.shares.add(share);
-        entry.markUpdated();
-        return store.save();
+        if (share.isOwner) {
+            return false;
+        } else {
+            entry.shares.add(share);
+            entry.markUpdated();
+            return store.save();
+        }
     }
 
     public boolean unshareKeychain(DirectoryEntry entry, Share share) {
-        entry.shares.remove(share);
-        entry.markUpdated();
-        return store.save();
+        if (share.isOwner) {
+            return false;
+        } else {
+            entry.shares.remove(share);
+            entry.markUpdated();
+            return store.save();
+        }
+
     }
 
     public boolean setKeychainOwner(DirectoryEntry entry, String username) {

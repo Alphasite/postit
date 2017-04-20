@@ -138,7 +138,7 @@ public class ServerController {
 
             // Download fresh keychains which the client has permission to access.
             for (Long serverid : keychainsToDownload) {
-                Optional<DirectoryKeychain> directoryKeychain = getDirectoryKeychainObject(account.get(), serverid);
+                Optional<DirectoryKeychain> directoryKeychain = getOwnerDirectoryKeychainObject(account.get(), serverid);
 
                 if (directoryKeychain.isPresent()) {
                     if (!directoryController.createKeychain(
@@ -206,14 +206,16 @@ public class ServerController {
                         }
 
                         for (Share share : new ArrayList<>(entry.shares)) {
-                            if (share.serverid != -1 && !sharedKeychainsOnServer.contains(share.serverid)) {
-                                directoryController.unshareKeychain(entry, share);
-                            }
-
-                            if (share.serverid == -1) {
-                                if (!this.shareKeychain(account.get(), entry, share)) {
-                                    LOGGER.warning("Filed to share keychain: " + entry.name + " user: " + share.username + " does nto exist. Deleting share.");
+                            if (!share.isOwner) {
+                                if (share.serverid != -1 && !sharedKeychainsOnServer.contains(share.serverid)) {
                                     directoryController.unshareKeychain(entry, share);
+                                }
+
+                                if (share.serverid == -1) {
+                                    if (!this.shareKeychain(account.get(), entry, share)) {
+                                        LOGGER.warning("Filed to share keychain: " + entry.name + " user: " + share.username + " does nto exist. Deleting share.");
+                                        directoryController.unshareKeychain(entry, share);
+                                    }
                                 }
                             }
                         }

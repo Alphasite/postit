@@ -19,9 +19,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
@@ -223,9 +223,7 @@ public class KeychainViewer {
                 X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
 
                 try {
-                    FileOutputStream fos = new FileOutputStream(path);
-                    fos.write(x509EncodedKeySpec.getEncoded());
-                    fos.close();
+                    Files.write(Paths.get(path), x509EncodedKeySpec.getEncoded());
                 } catch (IOException e1) {
                     JOptionPane.showConfirmDialog(frame, "Unable to write to location: "+path);
                 }
