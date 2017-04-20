@@ -66,8 +66,8 @@ public class Classify {
      a dictionary, ignoring case.**/
 
     public static boolean checkDicWords (String target, URL file) throws Exception{
+        BufferedReader in = new BufferedReader(new InputStreamReader(file.openStream()));
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(file.openStream()));
             String str;
             while ((str = in.readLine()) != null) {
                 if (str.indexOf(target.toLowerCase()) != -1) {
@@ -78,6 +78,9 @@ public class Classify {
         } catch (IOException e) {
             // debug use
             e.printStackTrace();
+        }
+        finally {
+            in.close();
         }
         return false;
     }
@@ -134,7 +137,7 @@ public class Classify {
 
     public boolean isWeak(String password){
         JSONObject result = strengthCheck(password);
-        return result.get("strength")==Level.LOW.name();
+        return result.get("strength").equals(Level.LOW.name());
     }
 
     public static void main (String[] args) {
