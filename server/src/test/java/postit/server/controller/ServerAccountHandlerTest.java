@@ -2,14 +2,13 @@ package postit.server.controller;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import postit.server.database.Database;
+import postit.server.database.TestH2;
 
 import java.security.SecureRandom;
 
-import postit.server.database.Database;
-import postit.server.database.TestH2;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * 
@@ -58,7 +57,7 @@ public class ServerAccountHandlerTest {
 	@Test
 	public void runTest(){
 		// authentication
-		testAuthentication(ah, "ning", "5431", false);
+		testAuthentication(ah, "ning", "5431", true);
 		testAuthentication(ah, "ning", "wrong!", false);
 		testAuthentication(ah, "mc", "cs5431", false);
 		
