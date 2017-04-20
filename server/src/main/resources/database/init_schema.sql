@@ -48,6 +48,31 @@ INSERT INTO `account` VALUES ('ning','opYQbweT2JlGwFuSQh0ldvxNy651BT/jUbr8CLhvwf
 UNLOCK TABLES;
 
 --
+-- Table structure for table `serverAccount`
+--
+
+DROP TABLE IF EXISTS `login`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account` (
+  `time` datetime(6) null,
+  `user_name` varchar(45) null,
+  `status` tinyint null,
+  `message` varchar(256) null
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `account`
+--
+
+LOCK TABLES `login` WRITE;
+/*!40000 ALTER TABLE `login` DISABLE KEYS */;
+# INSERT INTO `login` VALUES ();
+/*!40000 ALTER TABLE `login` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `directory_entry`
 --
 
