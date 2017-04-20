@@ -41,18 +41,18 @@ public class KeychainPermissionPanel extends JPanel {
         JLabel label_owner = new JLabel("Owner: ");
         this.add(label_owner);
 
-        String[] columnNames = {"Username", "Publickey"};
+        //String[] columnNames = {"Username", "Publickey"};
 
         //EDITORS
         JComponent tabpanel = new JPanel();
         tabbedPane.addTab("Editors", tabpanel);
-        String[][] data = new String[editors.size()][2];
+        //String[][] data = new String[editors.size()][2];
 
 
         //READERS
         tabpanel = new JPanel();
         tabbedPane.addTab("Editors", tabpanel);
-        data = new String[readers.size()][2];
+        //data = new String[readers.size()][2];
     }
 
 }

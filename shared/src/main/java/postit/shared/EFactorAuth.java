@@ -13,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
  */
 public class EFactorAuth {
     AuthyApiClient client;
-    private final String apiKey = "jnZu9K5nybYbjMbvRcvgsb2wJk7u4qOq";
+    private final static String apiKey = "jnZu9K5nybYbjMbvRcvgsb2wJk7u4qOq";
 
     public EFactorAuth () {
         client = new AuthyApiClient("jnZu9K5nybYbjMbvRcvgsb2wJk7u4qOq");

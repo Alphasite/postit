@@ -16,8 +16,7 @@ public class AuditLog {
 	public static final String LOG_DIR = SYSTEM_DIR + "/logs";
 	
 	private static String FORMAT = "MMM dd yyyy kk:mm:ss";
-	private static DateFormat DATE_FORMAT = new SimpleDateFormat(FORMAT);
-	
+
 	//TODO format to be decided
 	/**
 	 * Current format (update parseLogEntry() and LogEntry.toString() when this is changed:
@@ -46,6 +45,7 @@ public class AuditLog {
 	}
 	
 	public static LogEntry parseLogEntry(String entry){
+		DateFormat DATE_FORMAT = new SimpleDateFormat(FORMAT);
 		String t = entry.substring(0, FORMAT.length());
 		String rest = entry.substring(FORMAT.length() + 1);
 		int sep = rest.indexOf(':');
@@ -84,6 +84,7 @@ public class AuditLog {
 		}
 		
 		public String toString(){
+			DateFormat DATE_FORMAT = new SimpleDateFormat(FORMAT);
 			return String.format("%s %s %s %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), event, username, status ? "success" : "failure", message);
 		}
 		
