@@ -211,7 +211,10 @@ public class ServerController {
                             }
 
                             if (share.serverid == -1) {
-                                this.shareKeychain(account.get(), entry, share);
+                                if (!this.shareKeychain(account.get(), entry, share)) {
+                                    LOGGER.warning("Filed to share keychain: " + entry.name + " user: " + share.username + " does nto exist. Deleting share.");
+                                    directoryController.unshareKeychain(entry, share);
+                                }
                             }
                         }
                     } else {
@@ -304,19 +307,19 @@ public class ServerController {
         }
     }
 
-    private Optional<DirectoryKeychain> getDirectoryKeychainObject(Account account, long serverid) {
+    public Optional<DirectoryKeychain> getDirectoryKeychainObject(Account account, long serverid) {
         String req = RequestMessenger.createGetKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
         return parseDirectoryKeychainResponse(account, response, KEYCHAIN);
     }
 
-    private Optional<DirectoryKeychain> getOwnerDirectoryKeychainObject(Account account, long serverid) {
+    public Optional<DirectoryKeychain> getOwnerDirectoryKeychainObject(Account account, long serverid) {
         String req = RequestMessenger.createGetOwnerKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
         return parseDirectoryKeychainResponse(account, response, OWNER_KEYCHAIN);
     }
 
-    private static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response, MessagePackager.Asset asset) {
+    public static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response, MessagePackager.Asset asset) {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             try {
                 JsonObject keychain = response.get().getJsonObject(typeToString(asset));
@@ -405,7 +408,7 @@ public class ServerController {
         }
     }
 
-    private boolean shareKeychain(Account account, DirectoryEntry entry, Share share) {
+    public boolean shareKeychain(Account account, DirectoryEntry entry, Share share) {
         String req = RequestMessenger.createSharedKeychainMessage(account, entry.getServerid(), share.username, share.canWrite);
         Optional<JsonObject> response = clientToServer.send(req);
 
@@ -421,7 +424,7 @@ public class ServerController {
         }
     }
 
-    private Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry) {
+    public Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry) {
         String req = RequestMessenger.createGetKeychainInstancesMessage(account, entry.getServerid());
         Optional<JsonObject> response = clientToServer.send(req);
 

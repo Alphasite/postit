@@ -13,10 +13,7 @@ import org.junit.Test;
 import postit.client.backend.MockBackingStore;
 import postit.client.backend.MockKeyService;
 import postit.client.communication.Client;
-import postit.client.keychain.Account;
-import postit.client.keychain.Directory;
-import postit.client.keychain.DirectoryEntry;
-import postit.client.keychain.Keychain;
+import postit.client.keychain.*;
 import postit.server.database.Database;
 import postit.server.database.TestH2;
 import postit.server.netty.RequestInitializer;
@@ -24,12 +21,14 @@ import postit.shared.Crypto;
 
 import javax.net.ssl.SSLContext;
 import java.nio.file.Files;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 /**
@@ -112,39 +111,85 @@ public class ServerControllerTest {
 
     @Test
     public void runTestSeries() throws Exception {
-        addUser("testServerController", "password", "test@servercontroller.com", "test", "server", "8000000000");
+        Account user1 = addUser("testServerController", "password", "test@servercontroller.com", "test", "server", "8000000000");
+        Account user2 = addUser("testServerController2", "password", "test2@servercontroller.com", "test", "server", "8000000000");
         assertTrue(authenticate("testServerController", "password"));
         assertFalse(authenticate("NOTtestServerController", "password"));
         assertFalse(authenticate("testServerController", "NOTpassword"));
 
-        ServerControllerTest serverControllerTest = this;
-
-        TestDataContainer testDataContainer = new TestDataContainer();
 
         createKeychain();
         setKeychain();
-        synchronized (serverControllerTest) {
-            serverController.sync(() -> {
-                synchronized (serverControllerTest) {
-                    testDataContainer.success = true;
-                    serverControllerTest.notifyAll();
-                }
-            });
-
-            this.wait(10000);
-            assertThat(testDataContainer.success, is(true));
-        }
+        sync();
 
         getKeychains();
         deleteKeychain();
+
+        assertThat(directoryController.createKeychain("test7"), is(true));
+
+        sync();
+
+        List<DirectoryEntry> keychains = directoryController.getKeychains();
+        DirectoryEntry entry = keychains.stream().filter(e -> e.name.equals("test7")).findAny().get();
+
+        assertThat(directoryController.shareKeychain(entry, new Share(
+                -1,
+                user2.getUsername(),
+                true,
+                (RSAPublicKey) user2.getKeyPair().getPublic(),
+                false
+        )), is(true));
+
+        assertThat(directoryController.shareKeychain(entry, new Share(
+                -1,
+                "fake user",
+                true,
+                (RSAPublicKey) user2.getKeyPair().getPublic(),
+                false
+        )), is(true));
+
+        assertThat(entry.shares.size(), is(3));
+
+        sync();
+
+        assertThat(entry.shares.size(), is(2));
+        long serverid1 = entry.shares.get(0).serverid;
+        long serverid2 = entry.shares.get(1).serverid;
+        assertThat(serverid1, not(is(-1)));
+        assertThat(serverid2, not(is(-1)));
+        Optional<DirectoryKeychain> directoryKeychainObject1 = serverController.getDirectoryKeychainObject(account, serverid1);
+        Optional<DirectoryKeychain> directoryKeychainObject2 = serverController.getDirectoryKeychainObject(account, serverid2);
+        assertThat(directoryKeychainObject1.isPresent(), is(true));
+        assertThat(directoryKeychainObject2.isPresent(), is(true));
+        assertThat(directoryKeychainObject1.get().serverid, anyOf(is(serverid1), is(serverid2)));
+        assertThat(directoryKeychainObject2.get().serverid, anyOf(is(serverid1), is(serverid2)));
     }
 
-    public void addUser(String username, String password, String email, String firstname, String lastname, String phoneNumber) throws Exception {
+    private void sync() throws InterruptedException {
+        TestDataContainer testDataContainer = new TestDataContainer();
+
+        synchronized (testDataContainer) {
+            testDataContainer.success = false;
+
+            serverController.sync(() -> {
+                synchronized (testDataContainer) {
+                    testDataContainer.success = true;
+                    testDataContainer.notifyAll();
+                }
+            });
+
+            testDataContainer.wait(5000);
+            assertThat(testDataContainer.success, is(true));
+        }
+    }
+
+    public Account addUser(String username, String password, String email, String firstname, String lastname, String phoneNumber) throws Exception {
         LOGGER.info("----addUser");
 
         Account testAccount = new Account(username, password);
         assertTrue(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber));
         assertFalse(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber));
+        return testAccount;
     }
 
     public boolean authenticate(String username, String password) throws Exception {
