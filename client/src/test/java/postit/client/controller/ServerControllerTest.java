@@ -178,7 +178,7 @@ public class ServerControllerTest {
                 }
             });
 
-            testDataContainer.wait(5000);
+            testDataContainer.wait(10000);
             assertThat(testDataContainer.success, is(true));
         }
     }
