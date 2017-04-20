@@ -28,23 +28,23 @@ pipeline {
 
         stage('Test') {
             steps {
-                parallel([
+                parallel(
                     shared: { sh "./gradlew :shared:test jacocoTestReport" },
                     client: { sh "./gradlew :client:test jacocoTestReport" },
                     server: { sh "./gradlew :server:test jacocoTestReport" },
                     swing:  { sh "./gradlew :swing:test  jacocoTestReport" },
-                ])
+                )
             }
         }
 
         stage('Findbugs') {
             steps {
-                parallel([
+                parallel(
                     shared: { sh "./gradlew :shared:findbugsMain" },
                     client: { sh "./gradlew :client:findbugsMain" },
                     server: { sh "./gradlew :server:findbugsMain" },
                     swing:  { sh "./gradlew :swing:findbugsMain " },
-                ])
+                )
             }
         }
 
