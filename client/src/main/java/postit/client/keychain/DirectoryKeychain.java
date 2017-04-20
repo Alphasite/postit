@@ -37,8 +37,16 @@ public class DirectoryKeychain {
             JsonObject parameters = object.getJsonObject("parameters");
             byte[] nonce = decoder.decode(parameters.getString("nonce"));
             byte[] data = decoder.decode(object.getString("data"));
+
+            String encryptedEncryptionKey = parameters.getString(account.getUsername() + "-key", null);
+
+            if (encryptedEncryptionKey == null) {
+                LOGGER.info("Keychain doesnt have a decryption key for me; Skipping. Perhaps it is too new?");
+                return Optional.empty();
+            }
+
             Optional<Key> key = Crypto.unwrapKey(
-                    decoder.decode(parameters.getString(account.getUsername() + "-key")),
+                    decoder.decode(encryptedEncryptionKey),
                     account.getKeyPair().getPrivate()
             );
 

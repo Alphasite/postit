@@ -84,6 +84,8 @@ public class Directory {
                 (RSAPublicKey) account.getKeyPair().getPublic()
         );
 
+        entry.setOwner(account.getUsername());
+
         if (keychains.stream().map(k -> k.name).anyMatch(n -> n.equals(name))) {
             LOGGER.warning("Keychain " + name +  "is a duplicate, not adding.");
             return false;

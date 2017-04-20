@@ -99,10 +99,10 @@ public class KeychainHandlerTest {
 
 		List<ServerKeychain> sharedKeychains = kh.getSharedKeychains(owner, id);
 		assertThat(sharedKeychains, notNullValue());
-		assertThat(sharedKeychains.size(), is(3));
+		assertThat(sharedKeychains.size(), is(2));
 
 		for (ServerKeychain sharedKeychain : sharedKeychains) {
-			assertThat(sharedKeychain.getDirectoryEntryId(), anyOf(is(id), is(sharedid1), is(sharedid2)));
+			assertThat(sharedKeychain.getDirectoryEntryId(), anyOf(is(sharedid1), is(sharedid2)));
 		}
 	}
 	

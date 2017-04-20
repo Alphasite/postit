@@ -158,11 +158,11 @@ public class RequestHandlerTest {
 		JsonArray keychains = js3.getJsonArray(typeToString(MessagePackager.Asset.SHARED_KEYCHAINS));
 
 		assertThat(keychains, notNullValue());
-		assertThat(keychains.size(), is(3));
+		assertThat(keychains.size(), is(2));
 
 		for (int i = 0; i < keychains.size(); i++) {
 			ServerKeychain sharedKeychain = new ServerKeychain(keychains.getJsonObject(i));
-			assertThat(sharedKeychain.getDirectoryEntryId(), anyOf(is(id), is(sharedid1), is(sharedid2)));
+			assertThat(sharedKeychain.getDirectoryEntryId(), anyOf(is(sharedid1), is(sharedid2)));
 		}
 	}
 

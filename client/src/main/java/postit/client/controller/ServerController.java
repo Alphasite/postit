@@ -126,6 +126,10 @@ public class ServerController {
 
             // Upload newly created keychains
             for (DirectoryEntry entry : keychainsToUpload) {
+                if (entry.getOwner() == null) {
+                    entry.setOwner(account.get().getUsername());
+                }
+
                 if (!createKeychain(account.get(), entry)) {
                     LOGGER.warning("Failed to upload keychain (" + entry.name + ") to server.");
                     return;
@@ -161,6 +165,15 @@ public class ServerController {
 
                 if (keychainsToUpdate.contains(entry.getServerid())) {
 
+                    Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(account.get(), entry.getServerid());
+
+                    directoryController.updateLocalIfIsOlder(
+                            entry,
+                            ownerDirectoryKeychainObject.get().entry,
+                            ownerDirectoryKeychainObject.get().keychain,
+                            account.get().getUsername()
+                    );
+
                     if (Objects.equals(entry.getOwner(), account.get().getUsername())) {
                         Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry);
 
@@ -174,16 +187,21 @@ public class ServerController {
                                 .collect(Collectors.toSet());
 
                         for (DirectoryKeychain directoryKeychain : allInstancesOfKeychain.get()) {
-                            Share share = entry.shares.stream()
+                            Optional<Share> share = entry.shares.stream()
                                         .filter(s -> s.serverid == directoryKeychain.getServerid())
-                                        .findAny()
-                                        .get();
+                                        .findAny();
+
+                            if (!share.isPresent()) {
+                                // shouldnt be here, but is.
+                                LOGGER.severe("[Owner: Merging shared keychains] System has a shared keychain with no corresponding local data?");
+                                continue;
+                            }
 
                             directoryController.updateLocalIfIsOlder(
                                 entry,
                                 directoryKeychain.entry,
                                 directoryKeychain.keychain,
-                                share
+                                share.get().username
                             );
                         }
 
@@ -198,28 +216,23 @@ public class ServerController {
                         }
                     } else {
                         Optional<DirectoryKeychain> ownDirectoryKeychainObject = this.getDirectoryKeychainObject(account.get(), entry.getServerid());
-                        Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(account.get(), entry.getServerid());
 
-                        Share share = entry.shares.stream()
-                            .filter(s -> s.serverid == ownerDirectoryKeychainObject.get().getServerid())
-                            .findAny()
-                            .get();
+                        Optional<Share> share = entry.shares.stream()
+                            .filter(s -> s.isOwner)
+                            .findAny();
 
-                        if (share.canWrite) {
-                            directoryController.updateLocalIfIsOlder(
-                                    entry,
-                                    ownDirectoryKeychainObject.get().entry,
-                                    ownDirectoryKeychainObject.get().keychain,
-                                    share
-                            );
+                        if (share.isPresent()) {
+                            if (share.get().canWrite) {
+                                directoryController.updateLocalIfIsOlder(
+                                        entry,
+                                        ownDirectoryKeychainObject.get().entry,
+                                        ownDirectoryKeychainObject.get().keychain,
+                                        share.get().username
+                                );
+                            }
+                        } else {
+                            LOGGER.severe("[Shared: Merging own keychain] System has a shared keychain with no corresponding local data?");
                         }
-
-                        directoryController.updateLocalIfIsOlder(
-                                entry,
-                                ownerDirectoryKeychainObject.get().entry,
-                                ownerDirectoryKeychainObject.get().keychain,
-                                share
-                        );
                     }
 
                     if (!setKeychain(account.get(), entry)) {

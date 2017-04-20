@@ -1,22 +1,15 @@
 package postit.server.controller;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.json.JSONObject;
-
 import postit.server.database.Database;
-import postit.server.model.*;
+import postit.server.model.ServerAccount;
+import postit.server.model.ServerKeychain;
 import postit.shared.AuditLog;
 import postit.shared.AuditLog.LogEntry;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class DatabaseController {
@@ -59,9 +52,9 @@ public class DatabaseController {
             = "SELECT * FROM " + DIRECTORY_ENTRY + " "
             + "WHERE `directory_entry_id`=?;";
 
-    private static final String getDirectoryEntryForOwnerSQL
+    private static final String getSharedInstancesOfDirectoryEntryForOwnerSQL
             = "SELECT * FROM " + DIRECTORY_ENTRY + " "
-            + "WHERE `owner_user_name`=? AND (`owner_directory_entry_id`=? OR `directory_entry_id`=?);";
+            + "WHERE `owner_user_name`=? AND `owner_directory_entry_id`=?;";
 
     private static final String getDirectoryEntriesSQL
             = "SELECT * FROM " + DIRECTORY_ENTRY + " "
@@ -272,14 +265,13 @@ public class DatabaseController {
         }
     }
 
-    List<ServerKeychain> getAllInstancesOfDirectoryEntry(String ownerUsername, Long id) {
+    List<ServerKeychain> getSharedInstancesOfDirectoryEntry(String ownerUsername, Long id) {
         ResultSet resultSet;
         ArrayList<ServerKeychain> list = new ArrayList<>();
 
-        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getDirectoryEntryForOwnerSQL)) {
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getSharedInstancesOfDirectoryEntryForOwnerSQL)) {
             statement.setString(1, ownerUsername);
             statement.setLong(2, id);
-            statement.setLong(3, id);
             resultSet = statement.executeQuery();
 
             while (resultSet.next()) {

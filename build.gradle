@@ -22,7 +22,6 @@ idea {
 subprojects {subproject ->
     if (!subproject.name.startsWith("android")) {
         apply plugin: 'java'
-
         apply plugin: "info.solidsoft.pitest"
 
         sourceCompatibility = 1.8
@@ -43,6 +42,7 @@ subprojects {subproject ->
             testCompile 'commons-io:commons-io:2.5'
 
             testCompile project(':testUtilities')
+            testRuntime project(':testUtilities')
         }
     }
 

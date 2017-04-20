@@ -63,7 +63,7 @@ public class DirectoryControllerTest {
             directory = backingStore.readDirectory().get();
             controller = new DirectoryController(directory, backingStore, keyService);
 
-            account = new Account("banana", "password");
+            account = keyService.getAccount();
             publicKey = (RSAPublicKey) account.getKeyPair().getPublic();
             ownerShare = new Share(-1L, account.getUsername(), true, publicKey, true);
         } catch (Exception e) {
@@ -611,7 +611,7 @@ public class DirectoryControllerTest {
         );
 
         entry1.setNonce(new byte[16]);
-
+        entry1.setOwner(ownerShare.username);
         entry1.setServerid(5L);
 
         SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
@@ -624,7 +624,7 @@ public class DirectoryControllerTest {
                 entry,
                 entry1.dump().build(),
                 keychain1.dump().build(),
-                ownerShare
+                ownerShare.username
         ), is(true));
 
         assertThat(controller.getKeychains().size(), is(1));
@@ -678,7 +678,7 @@ public class DirectoryControllerTest {
         );
 
         entry1.setNonce(new byte[16]);
-
+        entry1.setOwner(ownerShare.username);
         entry1.setServerid(5L);
 
         SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
@@ -691,7 +691,7 @@ public class DirectoryControllerTest {
                 entry,
                 entry1.dump().build(),
                 keychain1.dump().build(),
-                ownerShare
+                ownerShare.username
         ), is(true));
 
         reloadPersistent();
@@ -729,7 +729,7 @@ public class DirectoryControllerTest {
         );
 
         entry1.setNonce(new byte[16]);
-
+        entry1.setOwner(ownerShare.username);
         entry1.setServerid(5L);
 
         Keychain keychain1 = new Keychain(entry1);
@@ -764,7 +764,7 @@ public class DirectoryControllerTest {
         );
 
         entry1.setNonce(new byte[16]);
-
+        entry1.setOwner(ownerShare.username);
         entry1.setServerid(5L);
 
         Keychain keychain1 = new Keychain(entry1);

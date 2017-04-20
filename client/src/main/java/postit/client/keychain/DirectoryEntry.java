@@ -89,10 +89,6 @@ public class DirectoryEntry {
         builder.add("serverid", getServerid());
         builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
 
-        if (this.getOwner() == null && this.directory.getAccount().isPresent()) {
-            this.setOwner(this.directory.getAccount().get().getUsername());
-        }
-
         JsonArrayBuilder shareArray = Json.createArrayBuilder();
         for (Share share: shares) {
             shareArray.add(share.dump());

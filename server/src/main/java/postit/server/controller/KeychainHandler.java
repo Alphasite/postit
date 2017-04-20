@@ -136,17 +136,22 @@ public class KeychainHandler {
     }
 
     public List<ServerKeychain> getSharedKeychains(String username, Long id) {
-        return db.getAllInstancesOfDirectoryEntry(username, id);
+        return db.getSharedInstancesOfDirectoryEntry(username, id);
     }
 
-    public ServerKeychain getOwnersKeychain(String ussername, Long id) {
-        ServerKeychain ownKeychain = this.getKeychain(ussername, id);
+    public ServerKeychain getOwnersKeychain(String username, Long id) {
+        ServerKeychain ownKeychain = this.getKeychain(username, id);
 
         if (ownKeychain == null) {
             return null;
         }
 
-        return this.getKeychain(ownKeychain.getOwnerUsername(), ownKeychain.getOwnerDirectoryEntryId());
+        if (Objects.equals(ownKeychain.getOwnerUsername(), username)) {
+            return ownKeychain;
+        } else {
+            return this.getKeychain(ownKeychain.getOwnerUsername(), ownKeychain.getOwnerDirectoryEntryId());
+        }
+
     }
 
     public boolean setSharedKeychainWriteable(String username, long id, String sharedUsername, boolean writeable) {
