@@ -27,21 +27,25 @@ pipeline {
         }
 
         stage('Test') {
-           parallel([
-               shared: { sh "./gradlew :shared:test jacocoTestReport" },
-               client: { sh "./gradlew :client:test jacocoTestReport" },
-               server: { sh "./gradlew :server:test jacocoTestReport" },
-               swing:  { sh "./gradlew :swing:test  jacocoTestReport" },
-           ])
+            steps {
+                parallel([
+                    shared: { sh "./gradlew :shared:test jacocoTestReport" },
+                    client: { sh "./gradlew :client:test jacocoTestReport" },
+                    server: { sh "./gradlew :server:test jacocoTestReport" },
+                    swing:  { sh "./gradlew :swing:test  jacocoTestReport" },
+                ])
+            }
         }
 
         stage('Findbugs') {
-            parallel([
-                shared: { sh "./gradlew :shared:findbugsMain" },
-                client: { sh "./gradlew :client:findbugsMain" },
-                server: { sh "./gradlew :server:findbugsMain" },
-                swing:  { sh "./gradlew :swing:findbugsMain " },
-            ])
+            steps {
+                parallel([
+                    shared: { sh "./gradlew :shared:findbugsMain" },
+                    client: { sh "./gradlew :client:findbugsMain" },
+                    server: { sh "./gradlew :server:findbugsMain" },
+                    swing:  { sh "./gradlew :swing:findbugsMain " },
+                ])
+            }
         }
 
         stage('Results') {
