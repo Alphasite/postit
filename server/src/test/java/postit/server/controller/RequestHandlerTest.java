@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.*;
+import static postit.shared.MessagePackager.Asset.OWNER_KEYCHAIN;
 import static postit.shared.MessagePackager.typeToString;
 
 public class RequestHandlerTest {
@@ -166,6 +167,39 @@ public class RequestHandlerTest {
 		}
 	}
 
+	public static void testGetOwnerKeychain(RequestHandler rh, Account owner, Account shared, long id) {
+		String req = RequestMessenger.createSharedKeychainMessage(owner, id, shared.getUsername(), true);
+		String res = rh.handleRequest(req);
+		System.out.println(res);
+		JSONObject js1 = new JSONObject(res);
+
+		assertThat(js1.getString("status").equals("success"), is(true));
+		long sharedid = js1.getJSONObject(typeToString(MessagePackager.Asset.SHARED_KEYCHAIN)).getLong("directoryEntryId");
+		System.out.println("Test sharing keychain was successful.");
+
+		req = RequestMessenger.createGetOwnerKeychainMessage(shared, sharedid);
+		res = rh.handleRequest(req);
+		JsonObject js2 = Json.createReader(new StringReader(res)).readObject();
+
+		assertThat(js2.getString("status").equals("success"), is(true));
+		assertThat(js2.getJsonObject(typeToString(OWNER_KEYCHAIN)), notNullValue());
+		ServerKeychain sharedView = new ServerKeychain(js2.getJsonObject(typeToString(OWNER_KEYCHAIN)));
+		assertThat(sharedView.getOwnerUsername(), is(owner.getUsername()));
+		assertThat(sharedView.getDirectoryEntryId(), is(id));
+		System.out.println("Test getting owner keychain as shared was successful");
+
+		req = RequestMessenger.createGetOwnerKeychainMessage(owner, id);
+		res = rh.handleRequest(req);
+		JsonObject js3 = Json.createReader(new StringReader(res)).readObject();
+
+		assertThat(js3.getString("status").equals("success"), is(true));
+		assertThat(js3.getJsonObject(typeToString(OWNER_KEYCHAIN)), notNullValue());
+		ServerKeychain ownerView = new ServerKeychain(js2.getJsonObject(typeToString(OWNER_KEYCHAIN)));
+		assertThat(sharedView.getOwnerUsername(), is(owner.getUsername()));
+		assertThat(sharedView.getDirectoryEntryId(), is(id));
+		System.out.println("Test getting owner keychain as shared was successful");
+	}
+
 	@Before
 	public void setUp() throws Exception {
 		assertThat(Crypto.init(false), is(true));
@@ -213,6 +247,11 @@ public class RequestHandlerTest {
 		long testkcId2 = testAddKeychain(rh, account1, "testkc2", "12345", true);
 
 		testGetSharedKeychains(rh, account1, account2, account3, testkcId2);
+
+		long testkcId3 = testAddKeychain(rh, account1, "testkc3", "12345", true);
+
+		testGetOwnerKeychain(rh, account1, account2, testkcId3);
+
 	}
 
 }

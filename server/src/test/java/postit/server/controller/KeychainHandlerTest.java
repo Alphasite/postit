@@ -105,6 +105,21 @@ public class KeychainHandlerTest {
 			assertThat(sharedKeychain.getDirectoryEntryId(), anyOf(is(sharedid1), is(sharedid2)));
 		}
 	}
+
+	public static void testGetOwnerKeychain(KeychainHandler kh, String owner, String shared, long id) {
+		JSONObject js = kh.shareKeychain(owner, shared, true, id);
+		assertThat(js.getString("status").equals("success"), is(true));
+		long sharedid = js.getLong("directoryEntryId");
+		System.out.println("Test sharing keychain was successful: " + shared);
+
+		ServerKeychain sharedKeychain = kh.getOwnersKeychain(shared, sharedid);
+		assertThat(sharedKeychain, notNullValue());
+		assertThat(sharedKeychain.getDirectoryEntryId(), is(id));
+
+		sharedKeychain = kh.getOwnersKeychain(owner, id);
+		assertThat(sharedKeychain, notNullValue());
+		assertThat(sharedKeychain.getDirectoryEntryId(), is(id));
+	}
 	
 	@Test
 	public void runTest(){
@@ -135,6 +150,9 @@ public class KeychainHandlerTest {
 
 		int id4 = testAddKeychain(kh, "test1", "banana", true);
 		testGetSharedKeychains(kh, "test1", "test2", "test3", id4);
+
+		int id5 = testAddKeychain(kh, "test1", "banana12", true);
+		testGetOwnerKeychain(kh, "test1", "test2", id5);
 
 		db.removeAccount(username);
 	}

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.*;
 
@@ -118,17 +119,22 @@ public class ServerControllerTest {
 
         ServerControllerTest serverControllerTest = this;
 
+        TestDataContainer testDataContainer = new TestDataContainer();
+
         createKeychain();
         setKeychain();
         synchronized (serverControllerTest) {
             serverController.sync(() -> {
                 synchronized (serverControllerTest) {
+                    testDataContainer.success = true;
                     serverControllerTest.notifyAll();
                 }
             });
 
             this.wait(10000);
+            assertThat(testDataContainer.success, is(true));
         }
+
         getKeychains();
         deleteKeychain();
     }
@@ -177,5 +183,9 @@ public class ServerControllerTest {
     public void deleteKeychain() throws Exception {
         LOGGER.info("----deleteKeychain");
         assertTrue(serverController.deleteKeychain(account, directoryController.getKeychains().get(0).getServerid()));
+    }
+
+    private class TestDataContainer {
+        public boolean success = false;
     }
 }

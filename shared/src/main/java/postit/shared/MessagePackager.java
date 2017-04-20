@@ -56,6 +56,8 @@ public class MessagePackager {
 			return "shared keychain";
 		case SHARED_KEYCHAINS:
 			return "shared keychains";
+		case OWNER_KEYCHAIN:
+			return "owner keychain";
 		default:
 			return null;
 		}

@@ -6,6 +6,7 @@ import postit.client.keychain.DirectoryEntry;
 import postit.client.keychain.DirectoryKeychain;
 import postit.client.keychain.Share;
 import postit.server.model.ServerKeychain;
+import postit.shared.MessagePackager;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -17,8 +18,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static postit.shared.MessagePackager.Asset.SHARED_KEYCHAIN;
-import static postit.shared.MessagePackager.Asset.SHARED_KEYCHAINS;
+import static postit.shared.MessagePackager.Asset.*;
 import static postit.shared.MessagePackager.typeToString;
 
 /**
@@ -307,19 +307,19 @@ public class ServerController {
     private Optional<DirectoryKeychain> getDirectoryKeychainObject(Account account, long serverid) {
         String req = RequestMessenger.createGetKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
-        return parseDirectoryKeychainResponse(account, response);
+        return parseDirectoryKeychainResponse(account, response, KEYCHAIN);
     }
 
     private Optional<DirectoryKeychain> getOwnerDirectoryKeychainObject(Account account, long serverid) {
         String req = RequestMessenger.createGetOwnerKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
-        return parseDirectoryKeychainResponse(account, response);
+        return parseDirectoryKeychainResponse(account, response, OWNER_KEYCHAIN);
     }
 
-    private static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response) {
+    private static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response, MessagePackager.Asset asset) {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             try {
-                JsonObject keychain = response.get().getJsonObject("keychain");
+                JsonObject keychain = response.get().getJsonObject(typeToString(asset));
                 String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
                 JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
                 return DirectoryKeychain.init(
