@@ -27,44 +27,55 @@ pipeline {
         }
 
         stage('Test') {
-            steps {
-                sh "./gradlew test jacocoTestReport"
-            }
+           parallel (
+               shared: { sh "./gradlew :shared:test jacocoTestReport" },
+               client: { sh "./gradlew :client:test jacocoTestReport" },
+               server: { sh "./gradlew :server:test jacocoTestReport" },
+               swing:  { sh "./gradlew :swing:test  jacocoTestReport" },
+           )
         }
 
+        /*
         stage('Mutation Test') {
-            steps {
-                sh "./gradlew pitest"
-            }
+           parallel (
+               shared: { sh "./gradlew :shared:pitest" },
+               client: { sh "./gradlew :client:pitest" },
+               server: { sh "./gradlew :server:pitest" },
+               swing:  { sh "./gradlew :swing:pitest " },
+           )
         }
+        */
 
         stage('Findbugs') {
-            steps {
-                sh "./gradlew findbugsMain"
-            }
+            parallel (
+                shared: { sh "./gradlew :shared:findbugsMain" },
+                client: { sh "./gradlew :client:findbugsMain" },
+                server: { sh "./gradlew :server:findbugsMain" },
+                swing:  { sh "./gradlew :swing:findbugsMain " },
+            )
         }
 
         stage('Results') {
             steps {
                 junit '**/test-results/test/TEST-*.xml'
-                // step([$class: 'PitPublisher', mutationStatsFile: 'build/pit-reports/**/mutations.xml', minimumKillRatio: 50.00, killRatioMustImprove: false])
-                archive 'target/*.jar'
                 setBuildStatus("Build complete", "SUCCESS");
 
-                archiveArtifacts artifacts: 'build/distributions/*.zip'
+                archiveArtifacts artifacts: '*/build/distributions/*.zip'
 
-                zip zipFile: 'pit-test.zip', dir: 'build/reports/pit', archive: true
-                zip zipFile: 'coverage.zip', dir: 'build/reports/jacoco/', archive: true
+                zip zipFile: 'coverage.zip', glob: '*/build/reports/jacoco/', archive: true
 
-                sh "rm -rf build/reports/"
+                sh "rm -rf */build/reports/"
             }
         }
 
-        //stage('Docker') {
-        //    steps {
-        //        sh "docker build --tag=postit-server docker/Dockerfile.server"
-        //        sh "docker image push nishadmathur.com/postit-server"
-        //    }
-        //}
+/*
+        stage('Docker') {
+            steps {
+                sh "docker build --tag=postit-server docker/Dockerfile.server ."
+                sh "docker tag postit-server nishadmathur.com/postit-server"
+                sh "docker image push nishadmathur.com/postit-server"
+            }
+        }
     }
+*/
 }

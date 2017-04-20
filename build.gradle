@@ -22,7 +22,7 @@ idea {
 subprojects {subproject ->
     if (!subproject.name.startsWith("android")) {
         apply plugin: 'java'
-        apply plugin: "info.solidsoft.pitest"
+        apply plugin: 'info.solidsoft.pitest'
 
         sourceCompatibility = 1.8
 
@@ -47,7 +47,7 @@ subprojects {subproject ->
     }
 
     apply plugin: "jacoco"
-    //apply plugin: 'findbugs'
+    apply plugin: 'findbugs'
 
     // In this section you declare where to find the dependencies of your project
     repositories {
@@ -57,14 +57,14 @@ subprojects {subproject ->
         mavenCentral()
     }
 
-    /*findbugsMain {
+    findbugsMain {
         ignoreFailures = true
 
         reports {
             xml.enabled = false
             html.enabled = true
         }
-    }*/
+    }
 }
 
 task clean(type: Delete) {
