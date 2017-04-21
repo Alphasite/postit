@@ -2,15 +2,23 @@
 
 CS 5431 Post It Project
 
-To run:
+To build:
 ```
 postit          > ./gradlew clean
 postit          > ./gradlew build
-postit          > cd build/distributions
-distributions   > unzip postit.zip
-distributions   > cd postit
+```
+To run client:
+```
+postit          > cd swing/build/distributions
+distributions   > unzip swing.zip
+distributions   > cd swing
 postit          > java -cp 'lib/*:bin' postit.client.GuiApp
-#in a new terminal window
+```
+To run server:
+```
+postit          > cd swing/build/distributions
+distributions   > unzip server.zip
+distributions   > cd server
 postit          > java -cp 'lib/*:bin' postit.server.ServerApp
 
 If this is your first time running the system in that directory, you will be required to either register or login.
