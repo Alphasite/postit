@@ -624,7 +624,8 @@ public class DirectoryControllerTest {
                 entry,
                 entry1.dump().build(),
                 keychain1.dump().build(),
-                ownerShare.username
+                ownerShare.username,
+                true
         ), is(true));
 
         assertThat(controller.getKeychains().size(), is(1));
@@ -691,7 +692,8 @@ public class DirectoryControllerTest {
                 entry,
                 entry1.dump().build(),
                 keychain1.dump().build(),
-                ownerShare.username
+                ownerShare.username,
+                true
         ), is(true));
 
         reloadPersistent();

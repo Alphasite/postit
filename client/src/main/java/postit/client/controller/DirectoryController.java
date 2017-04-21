@@ -131,7 +131,7 @@ public class DirectoryController {
         return directory.deletedKeychains;
     }
 
-    public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject, String entryOwnerUsername) {
+    public boolean updateLocalIfIsOlder(DirectoryEntry entry, JsonObject entryObject, JsonObject keychainObject, String entryOwnerUsername, boolean isOwnersEntry) {
         LocalDateTime lastModified = LocalDateTime.parse(entryObject.getString("lastModified"));
 
         // TODO make better (e.g. handle simultaneous edits)
@@ -139,7 +139,7 @@ public class DirectoryController {
 
         boolean localIsOlder = entry.lastModified.isBefore(lastModified);
         if (localIsOlder) {
-            entry.updateFrom(entryOwnerUsername, entryObject);
+            entry.updateFrom(entryObject);
         }
 
         Optional<Keychain> keychain = entry.readKeychain();
@@ -157,14 +157,16 @@ public class DirectoryController {
                 return false;
             }
 
-            for (Share share : newEntry.shares) {
-                if (!shareIdentifiers.contains(share.serverid) || localIsOlder) {
-                    Optional<Share> localShare = entry.shares.stream()
-                            .filter(s -> s.serverid == share.serverid)
-                            .findAny();
+            if (isOwnersEntry) {
+                for (Share share : newEntry.shares) {
+                    if (!shareIdentifiers.contains(share.serverid) || localIsOlder) {
+                        Optional<Share> localShare = entry.shares.stream()
+                                .filter(s -> s.serverid == share.serverid)
+                                .findAny();
 
-                    localShare.ifPresent(share1 -> entry.shares.remove(share1));
-                    entry.shares.add(share);
+                        localShare.ifPresent(share1 -> entry.shares.remove(share1));
+                        entry.shares.add(share);
+                    }
                 }
             }
 

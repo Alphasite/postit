@@ -52,15 +52,7 @@ public class DirectoryEntry {
         this.keychain = null;
         this.backingStore = backingStore;
         this.shares = new ArrayList<>();
-        this.updateFrom(username, object);
-    }
-
-    public void updateFrom(String targetUser, JsonObject object) {
-        Base64.Decoder decoder = Base64.getDecoder();
-        this.name = object.getString("name");
-        this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
-        this.setNonce(decoder.decode(object.getString("nonce")));
-        this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
+        this.updateFrom(object);
 
         JsonArray shareArray = object.getJsonArray("shares");
         for (int i = 0; i < shareArray.size(); i++) {
@@ -68,15 +60,21 @@ public class DirectoryEntry {
                 Share share = new Share(shareArray.getJsonObject(i));
                 this.shares.add(share);
 
-                if (share.username.equals(targetUser)) {
+                if (share.username.equals(username)) {
                     this.share = share;
                 }
             } catch (InvalidKeyException e) {
                 LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
             }
         }
+    }
 
-        this.setServerid(object.getJsonNumber("serverid").longValue());
+    public void updateFrom(JsonObject object) {
+        Base64.Decoder decoder = Base64.getDecoder();
+        this.name = object.getString("name");
+        this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
+        this.setNonce(decoder.decode(object.getString("nonce")));
+        this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
     }
 
     public JsonObjectBuilder dump() {

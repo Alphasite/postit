@@ -171,10 +171,16 @@ public class ServerController {
                             entry,
                             ownerDirectoryKeychainObject.get().entry,
                             ownerDirectoryKeychainObject.get().keychain,
-                            account.get().getUsername()
+                            account.get().getUsername(),
+                            true
                     );
 
-                    if (Objects.equals(entry.getOwner(), account.get().getUsername())) {
+                    Share ownerShare = entry.shares.stream()
+                            .filter(s -> s.isOwner)
+                            .findAny()
+                            .get();
+
+                    if (ownerShare.serverid == entry.getServerid()) {
                         Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry);
 
                         if (!allInstancesOfKeychain.isPresent()) {
@@ -201,7 +207,8 @@ public class ServerController {
                                 entry,
                                 directoryKeychain.entry,
                                 directoryKeychain.keychain,
-                                share.get().username
+                                share.get().username,
+                                false
                             );
                         }
 
@@ -226,13 +233,14 @@ public class ServerController {
                             .filter(s -> s.isOwner)
                             .findAny();
 
-                        if (share.isPresent()) {
+                        if (share.isPresent() && ownDirectoryKeychainObject.isPresent()) {
                             if (share.get().canWrite) {
                                 directoryController.updateLocalIfIsOlder(
                                         entry,
                                         ownDirectoryKeychainObject.get().entry,
                                         ownDirectoryKeychainObject.get().keychain,
-                                        share.get().username
+                                        share.get().username,
+                                        false
                                 );
                             }
                         } else {
@@ -247,6 +255,7 @@ public class ServerController {
                 }
             }
 
+            System.out.println("Server ID: " + this.directoryController.getKeychains().get(0).getServerid());
             callback.run();
             LOGGER.info("Sync complete.");
         };
