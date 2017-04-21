@@ -218,7 +218,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 			case OWNER_KEYCHAIN:
 				ServerKeychain keychain1 = kh.getOwnersKeychain(username, obj.getLong("directoryEntryId"));
-				return createResponse(true, username, "", asset, keychain1);
+				return createResponse(true, username, "got owners keychain", asset, keychain1);
 
 			default:
 				break;

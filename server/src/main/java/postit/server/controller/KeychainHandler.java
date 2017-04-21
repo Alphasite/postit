@@ -138,7 +138,7 @@ public class KeychainHandler {
         boolean isOwner = entry.getOwnerUsername().equals(username);
         boolean isShared = Objects.equals(entry.getSharedUsername(), username);
 
-        if (isOwner || (isShared && entry.isSharedHasWritePermission())) {
+        if (isOwner || isShared) {
             return entry;
         } else {
             return null;

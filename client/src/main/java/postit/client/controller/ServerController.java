@@ -228,6 +228,20 @@ public class ServerController {
                                 }
                             }
                         }
+
+                        sharedKeychainsOnServer = allInstancesOfKeychain.get().stream()
+                                .map(DirectoryKeychain::getServerid)
+                                .collect(Collectors.toSet());
+
+                        Set<Long> sharedKeychainsTheClientKnowsOf = entry.shares.stream()
+                                .map(e -> e.serverid)
+                                .collect(Collectors.toSet());
+
+                        sharedKeychainsOnServer.removeAll(sharedKeychainsTheClientKnowsOf);
+
+                        for (Long serverid : sharedKeychainsOnServer) {
+                            deleteKeychain(account.get(), serverid);
+                        }
                     } else {
                         Optional<DirectoryKeychain> ownDirectoryKeychainObject = this.getDirectoryKeychainObject(account.get(), entry.getServerid());
 
