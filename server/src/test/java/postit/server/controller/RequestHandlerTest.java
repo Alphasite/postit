@@ -239,6 +239,7 @@ public class RequestHandlerTest {
 
 		testCreateAccount(rh, account1, "a@b.com");
 		testCreateAccount(rh, account2, "b@b.com");
+		testCreateAccount(rh, account3, "c@b.com");
 
 		long testkcId1 = testAddKeychain(rh, account1, "testkc", "1234", true);
 

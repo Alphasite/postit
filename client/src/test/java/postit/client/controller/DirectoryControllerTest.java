@@ -634,7 +634,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.getServerid(), is(5L));
+        assertThat(oldEntry.getServerid(), is(-1L));
         assertThat(oldKeychain.passwords.size(), is(2));
         for (Password password : oldKeychain.passwords) {
             assertThat(password.identifier, anyOf(is("json"), is("test")));
