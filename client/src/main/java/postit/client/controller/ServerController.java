@@ -222,6 +222,8 @@ public class ServerController {
                                     if (!this.shareKeychain(account.get(), entry, share)) {
                                         LOGGER.warning("Filed to share keychain: " + entry.name + " user: " + share.username + " does nto exist. Deleting share.");
                                         directoryController.unshareKeychain(entry, share);
+                                    } else {
+                                        LOGGER.info("Succeed to share keychain: " + entry.name + " user: " + share.username + " id: " + share.serverid);
                                     }
                                 }
                             }
@@ -255,7 +257,8 @@ public class ServerController {
                 }
             }
 
-            System.out.println("Server ID: " + this.directoryController.getKeychains().get(0).getServerid());
+            directoryController.save();
+
             callback.run();
             LOGGER.info("Sync complete.");
         };

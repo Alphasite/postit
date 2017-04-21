@@ -153,6 +153,10 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 					return js.toString();
 				}
 			case SHARED_KEYCHAIN:
+				if (ah.getAccount(obj.getString("sharedUsername")) == null) {
+					return createResponse(false, "", "Shared user does not exist.", asset, null);
+				}
+
 				js = kh.shareKeychain(
 						username,
 						obj.getString("sharedUsername"),

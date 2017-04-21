@@ -260,4 +260,8 @@ public class DirectoryController {
         entry.markUpdated();
         return store.save();
     }
+
+    public boolean save() {
+        return store.save();
+    }
 }
