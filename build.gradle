@@ -2,10 +2,11 @@
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
     }
 
     dependencies {
-//        classpath 'com.android.tools.build:gradle:2.4.0-alpha6'
+//        classpath 'com.android.tools.build:gradle:2.4.0-alpha7'
         classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
     }
 }
@@ -23,6 +24,7 @@ subprojects {subproject ->
     if (!subproject.name.startsWith("android")) {
         apply plugin: 'java'
         apply plugin: 'info.solidsoft.pitest'
+        apply plugin: 'findbugs'
 
         sourceCompatibility = 1.8
 
@@ -36,6 +38,15 @@ subprojects {subproject ->
             avoidCallsTo = ['postit.server.*']
         }
 
+        findbugsMain {
+            ignoreFailures = true
+
+            reports {
+                xml.enabled = false
+                html.enabled = true
+            }
+        }
+
         dependencies {
             // Use JUnit test framework
             testCompile 'junit:junit:4.12'
@@ -47,7 +58,6 @@ subprojects {subproject ->
     }
 
     apply plugin: "jacoco"
-    apply plugin: 'findbugs'
 
     // In this section you declare where to find the dependencies of your project
     repositories {
@@ -55,15 +65,6 @@ subprojects {subproject ->
         // You can declare any Maven/Ivy/file repository here.
         jcenter()
         mavenCentral()
-    }
-
-    findbugsMain {
-        ignoreFailures = true
-
-        reports {
-            xml.enabled = false
-            html.enabled = true
-        }
     }
 }
 

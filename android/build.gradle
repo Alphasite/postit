@@ -1,3 +1,15 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.4.0-alpha7'
+    }
+}
+
+
 apply plugin: 'com.android.application'
 
 android {
@@ -10,16 +22,16 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
-        multiDexEnabled true
+//        multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
+//    buildTypes {
+//        release {
+//            minifyEnabled true
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//        }
+//    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -35,6 +47,13 @@ android {
         exclude 'META-INF/license.txt'
         exclude 'META-INF/INDEX.LIST'
     }
+
+    configurations {
+        all*.exclude group: 'ch.vorburger.mariaDB4j'
+        all*.exclude group: 'mysql'
+        all*.exclude group: 'javax.json'
+        all*.exclude group: 'org.json'
+    }
 }
 
 dependencies {
@@ -45,8 +64,10 @@ dependencies {
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 
-    compile project(':shared')
-    compile project(':client')
+    compile(project(':shared'))
+    compile(project(':client')) {
+        exclude group: 'ch.vorburger.mariaDB4j'
+    }
 
     testCompile 'junit:junit:4.12'
 
