@@ -172,7 +172,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password)) {
+        if (TextUtils.isEmpty(password)) {
             mPasswordView.setError(getString(R.string.error_field_required));
             focusView = mPasswordView;
             cancel = true;
@@ -333,23 +333,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
 
             return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-                finish();
-                Intent keychainIntent = new Intent(LoginActivity.this,KeychainActivity.class);
-                LoginActivity.this.startActivity(keychainIntent);
-            } else {
-                mUsernameView.setError(getString(R.string.error_incorrect_login));
-                mUsernameView.requestFocus();
-                mPasswordView.setError(getString(R.string.error_incorrect_login));
-                mPasswordView.requestFocus();
-            }
         }
 
         @Override

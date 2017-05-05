@@ -473,12 +473,14 @@ public class KeychainViewer {
             rnKey.setEnabled(false);
             addKeyPerm.setEnabled(false);
             rmKeyPerm.setEnabled(false);
+            showKeyPerm.setEnabled(false);
         } else {
             addPass.setEnabled(true);
             delKey.setEnabled(true);
             rnKey.setEnabled(true);
             addKeyPerm.setEnabled(true);
             rmKeyPerm.setEnabled(true);
+            showKeyPerm.setEnabled(true);
         }
         if(activeKeychainidx>-1 && activeKeychainidx<tabbedPane.getTabCount()){
             tabbedPane.setSelectedIndex(activeKeychainidx);

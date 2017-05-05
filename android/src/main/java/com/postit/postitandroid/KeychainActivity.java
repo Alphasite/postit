@@ -1,5 +1,6 @@
 package com.postit.postitandroid;
 
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -60,8 +62,22 @@ public class KeychainActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        Button mAddPassword = (Button) findViewById(R.id.bAddPassword);
+        mAddPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent passwordIntent = new Intent(KeychainActivity.this,PasswordActivity.class);
+                passwordIntent.putExtra("title","mytitle");
+                passwordIntent.putExtra("username","myusername");
+                passwordIntent.putExtra("password","mypassword");
+                passwordIntent.putExtra("comments","mycomments");
+
+                KeychainActivity.this.startActivity(passwordIntent);
+            }
+        });
+
+        Button mAddKeychain = (Button) findViewById(R.id.bAddKeychain);
+        mAddKeychain.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
@@ -168,7 +184,7 @@ public class KeychainActivity extends AppCompatActivity {
         public int getCount() {
             // TODO: return size of keychain list
             // Show 3 total pages.
-            return 4;
+            return 2;
         }
 
         @Override
