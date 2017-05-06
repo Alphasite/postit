@@ -359,7 +359,7 @@ public class DatabaseController {
 
             if (resultSet.next()) {
             	log = new LogEntry(resultSet.getTimestamp("time").getTime(), AuditLog.EventType.AUTHENTICATE, resultSet.getString("username"), 
-            			resultSet.getBoolean("status"), resultSet.getString("message"));
+            			null, resultSet.getBoolean("status"), resultSet.getString("message"));
             	list.add(log);
             }
         } catch (SQLException e) {
