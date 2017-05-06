@@ -8,6 +8,7 @@ import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
 import postit.client.controller.ServerController;
 import postit.client.keychain.*;
+import postit.client.log.KeychainLog;
 import postit.client.passwordtools.Classify;
 import postit.client.passwordtools.PasswordGenerator;
 import postit.shared.Crypto;
@@ -63,8 +64,9 @@ public class KeychainViewer {
     private Classify classify;
     private KeyService keyService;
 
+    private KeychainLog keyLog;
 
-    public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService) {
+    public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService, KeychainLog keyLog) {
 
         this.serverController = serverController;
 
@@ -85,6 +87,8 @@ public class KeychainViewer {
         passwordGenerator = new PasswordGenerator();
         classify = new Classify();
         this.keyService = keyService;
+        
+        this.keyLog = keyLog;
     }
 
     /**
@@ -143,7 +147,15 @@ public class KeychainViewer {
                     boolean success = directoryController.createPassword(getActiveKeychain(),
                             newtitle.getText(), newusername.getText(),
                             Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
-                    if (!success){
+                    if (success){
+                    	Keychain key = getActiveKeychain();
+                    	Optional<Account> act = directoryController.getAccount();
+                    	if (act.isPresent()){
+                    		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+                    				String.format("Password %s added to keychain <%s>", newtitle.getText(), key.getName()));
+                    	}
+                    }
+                    else{
                         JOptionPane.showMessageDialog(frame,"Unable to add " + newtitle.getText() +" password",
                                 "Warning!",JOptionPane.WARNING_MESSAGE);
                     }
@@ -172,16 +184,32 @@ public class KeychainViewer {
                 String identifier = selectedPassword.identifier;
                 String username = selectedPassword.metadata.get("username");
                 SecretKey password =  selectedPassword.password;
-                directoryController.deletePassword(selectedPassword);
+                boolean success = directoryController.deletePassword(selectedPassword);
                 Optional<String> comments = Optional.ofNullable((selectedPassword.metadata.get("comments")));
-
+                
+                if (success){
+                	Keychain key = selectedPassword.keychain;
+                	Optional<Account> act = directoryController.getAccount();
+                	if (act.isPresent()){
+                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+                				String.format("Password %s removed from keychain <%s>", selectedPassword.identifier, key.getName()));
+                	}
+                }
+                
                 Keychain newDestination = this.keychains.get(choicesList.indexOf(input)).readKeychain().get();
-                directoryController.createPassword(newDestination,
-                        identifier, username, password);
+                success = directoryController.createPassword(newDestination, identifier, username, password);
 
                 Password addedPassword = newDestination.passwords.get(newDestination.passwords.size()-1);
                 if(comments.isPresent())
                     directoryController.updateMetadataEntry(addedPassword,"comments",comments.get());
+                
+                if (success){
+                	Optional<Account> act = directoryController.getAccount();
+                	if (act.isPresent()){
+                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, newDestination.getName(), 
+                				String.format("Password %s added to keychain <%s>", selectedPassword.identifier, newDestination.getName()));
+                	}
+                }
 
                 refreshTabbedPanes();
             }
@@ -195,7 +223,14 @@ public class KeychainViewer {
             int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
                     "Delete Password", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (deletePassword == JOptionPane.YES_OPTION) {
-                directoryController.deletePassword(selectedPassword);
+            	if (directoryController.deletePassword(selectedPassword)){
+            		Keychain key = selectedPassword.keychain;
+            		Optional<Account> act = directoryController.getAccount();
+            		if (act.isPresent()){
+            			keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+            					String.format("Password %s removed from keychain <%s>", selectedPassword.identifier, key.getName()));
+            		}
+            	}
                 refreshTabbedPanes();
             }
         });
@@ -263,7 +298,12 @@ public class KeychainViewer {
                     "");
 
             if ((k != null) && (k.length() > 0)) {
-                directoryController.createKeychain(k);
+                if (directoryController.createKeychain(k)){
+                	Optional<Account> act = directoryController.getAccount();
+                	if (act.isPresent()){
+                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, k, String.format("Keychain <%s> created.", k));
+                	}
+                }
             }
             refreshTabbedPanes();
         });
@@ -276,6 +316,8 @@ public class KeychainViewer {
             String newName = JOptionPane.showInputDialog(frame,"New keychain name:","Update name",JOptionPane.PLAIN_MESSAGE);
             if (newName!=null){
                 directoryController.renameKeychain(getActiveKeychain(),newName);
+                
+                //TODO add key log for this... don't use name as identifier...
                 refreshTabbedPanes();
             }
         });
@@ -286,7 +328,14 @@ public class KeychainViewer {
             int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
                     "Delete keychain", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (deleteKeychain == JOptionPane.YES_OPTION) {
-                directoryController.deleteKeychain(getActiveKeychain());
+            	Keychain key = getActiveKeychain();
+                if (directoryController.deleteKeychain(key)){
+                	Optional<Account> act = directoryController.getAccount();
+                	if (act.isPresent()){
+                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+                				String.format("Keychain <%s> deleted.", key.getName()));
+                	}
+                }
                 refreshTabbedPanes();
             }
         });
