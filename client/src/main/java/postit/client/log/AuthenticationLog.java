@@ -39,7 +39,7 @@ public class AuthenticationLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.AUTHENTICATE, username, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.AUTHENTICATE, username, null, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}
@@ -104,41 +104,5 @@ public class AuthenticationLog {
 	public long getLastLoginTime(){
 		return getLastLoginTime(null);
 	}
-	
-	public static void main(String[] args){
 
-//		AuthenticationLog log = new AuthenticationLog();
-//		log.addAuthenticationLogEntry("ning", true, "hihi"); 
-//		System.out.println(log.getLatestNumFailedLogins("ning"));
-//		log.addAuthenticationLogEntry("ning", false, ":(");
-//		System.out.println(log.getLatestNumFailedLogins("ning"));
-		
-
-
-		JOptionPane MsgBox = new JOptionPane("Login is diabled", JOptionPane.INFORMATION_MESSAGE);
-		JDialog dlg = MsgBox.createDialog("Select Yes or No");
-		dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dlg.addComponentListener(new ComponentAdapter() {
-			@Override
-			// =====================
-			public void componentShown(ComponentEvent e) {
-				// =====================
-				super.componentShown(e);
-				Timer t; t = new Timer(5000, new ActionListener() {
-					@Override
-					// =====================
-					public void actionPerformed(ActionEvent e) {
-						System.out.println("timer off");
-					}
-				});
-				t.setRepeats(false);
-				t.start();
-			}
-		});
-		dlg.setVisible(true);
-		Object n = MsgBox.getValue();
-		System.out.println(n);
-		System.out.println("Finished");
-		dlg.dispose();
-	} 
 }

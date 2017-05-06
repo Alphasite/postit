@@ -36,6 +36,10 @@ public class AuditLog {
 	 *  		- Also encrypted using master key
 	 *  		- Only runs when user has logged in
 	 *  		- synced to server
+	 *  	- Keychain events
+	 *  		- keychain creation
+	 *  		- keychain removal
+	 *  		- keychain change
 	 *  - ServerLog keeps track of events for each Account and Keychain
 	 *  	- Authentication log: same as client side but stored in DB
 	 */
@@ -61,31 +65,56 @@ public class AuditLog {
 		} catch (ParseException e) {
 			throw new RuntimeException("Log entry has incorrect time format");
 		}
-		return new LogEntry(time, EventType.valueOf(parts[0]), parts[1], parts[2].equals("success") ? true : false, msg);
+		
+		EventType type = EventType.valueOf(parts[0]);
+		if (type == EventType.AUTHENTICATE){
+			if (parts.length != 3)
+				throw new RuntimeException("Authentication log entry's format is incorrect");
+			return new LogEntry(time, EventType.valueOf(parts[0]), parts[1], null, parts[2].equals("success") ? true : false, msg);
+		}
+		else{
+			if (parts.length != 4)
+				throw new RuntimeException("Keychain log entry's format is incorect");
+			String keychain = parts[2];
+			if (keychain.startsWith("<") && keychain.endsWith(">"))
+				keychain = keychain.substring(1, keychain.length()-1);
+			else
+				throw new RuntimeException("Keychain log entry's format is incorrect: keychain name not in brackets <>");
+			return new LogEntry(time, EventType.valueOf(parts[0]), parts[1], keychain, parts[3].equals("success") ? true : false, msg);
+		}
 	}
 	
 	public enum EventType{
-		AUTHENTICATE
+		AUTHENTICATE,
+		KEYCHAIN_CREATE,
+		KEYCHAIN_UPDATE,
+		KEYCHAIN_REMOVE,
+		SHARE_ADD,
+		SHARE_REMOVE,
+		SHARE_UPDATE
 	}
 	
 	public static class LogEntry{
 		public long time;
 		public EventType event;
 		public String username;
+		public String keychainName;
 		public boolean status;
 		public String message;
 		
-		public LogEntry(long time, EventType event, String username, boolean status, String message){
+		public LogEntry(long time, EventType event, String username, String keychainName, boolean status, String message){
 			this.time = time;
 			this.event = event;
 			this.username = username;
+			this.keychainName = keychainName;
 			this.status = status;
 			this.message = message;
 		}
 		
 		public String toString(){
 			DateFormat DATE_FORMAT = new SimpleDateFormat(FORMAT);
-			return String.format("%s %s %s %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), event, username, status ? "success" : "failure", message);
+			return String.format("%s %s %s <%s> %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), 
+					event, username, keychainName, status ? "success" : "failure", message);
 		}
 		
 	}
