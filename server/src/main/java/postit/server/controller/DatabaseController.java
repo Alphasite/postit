@@ -25,10 +25,14 @@ public class DatabaseController {
             + "WHERE `user_name`=?;";
 
     private static final String addAccountSQL
-            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `phone_number`, `salt`) VALUES (?,?,?,?,?,?,?);";
+            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `phone_number`, `salt`, `keypair`) VALUES (?,?,?,?,?,?,?,?);";
 
     private static final String updateAccountSQL
             = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=?, `phone_number`=? "
+            + "WHERE `user_name`=?;";
+
+    private static final String updateAccountKeyPairSQL
+            = "UPDATE "+ACCOUNT + " SET `keypair`=? "
             + "WHERE `user_name`=?;";
 
     private static final String removeAccountSQL
@@ -92,6 +96,25 @@ public class DatabaseController {
         return serverAccount;
     }
 
+    String getKeyPair(String username) {
+        ResultSet resultSet;
+
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
+            statement.setString(1, username);
+            resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getString("key_pair");
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred in getKeyPair"); // should be contained in JSONObject returned to view
+        } catch (Exception e) {
+            System.out.println("An error occurred"); // should be contained in JSONObject returned to view
+        }
+
+        return null;
+    }
+
     String getSalt(String username){
         ResultSet resultSet;
 
@@ -141,6 +164,7 @@ public class DatabaseController {
             statement.setString(5, serverAccount.getLastname());
             statement.setString(6, serverAccount.getPhoneNumber());
             statement.setString(7, serverAccount.getSalt());
+            statement.setString(8, serverAccount.getKeypair());
             add = statement.executeUpdate();
         } catch (SQLException e) {
         	e.printStackTrace();
@@ -164,11 +188,31 @@ public class DatabaseController {
             statement.setString(7, serverAccount.getUsername());
 
             modify = statement.executeUpdate();
+
+            if (serverAccount.getKeypair() != null) {
+                modify = updateAccountKeyPair(serverAccount);
+            }
+
         } catch (SQLException e) {
             System.out.println("ServerAccount does not exist");
         }
 
         return modify == 1;
+    }
+
+    int updateAccountKeyPair(ServerAccount serverAccount) {
+        int modify = 0;
+
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(updateAccountKeyPairSQL)) {
+
+            statement.setString(1, serverAccount.getUsername());
+
+            modify = statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("ServerAccount does not exist");
+        }
+
+        return modify;
     }
 
     boolean removeAccount(String username) {
