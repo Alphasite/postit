@@ -54,7 +54,19 @@ public class GUIKeyService implements KeyService {
                 JOptionPane.showMessageDialog(null,"Master password is too weak");
                 key=null;
             }
-        }while (!strong);
+            
+        	int numFails = al.getLatestNumFailedLogins();
+        	long diff;
+        	if (numFails > 4 && (diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
+        		// disabled time is linear right now. may change to exponential
+        		JOptionPane.showMessageDialog(
+        				null,
+        				String.format("Login is temporarily disabled. Try again in %d seconds.", diff)
+        				);
+        		key=null;
+        	}
+            
+        }while (key == null);
         return key.getBytes();
     }
 

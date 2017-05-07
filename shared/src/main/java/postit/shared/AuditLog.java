@@ -113,8 +113,12 @@ public class AuditLog {
 		
 		public String toString(){
 			DateFormat DATE_FORMAT = new SimpleDateFormat(FORMAT);
-			return String.format("%s %s %s <%s> %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), 
-					event, username, keychainName, status ? "success" : "failure", message);
+			if (event == EventType.AUTHENTICATE)
+				return String.format("%s %s %s %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), 
+						event, username, status ? "success" : "failure", message);
+			else
+				return String.format("%s %s %s <%s> %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), 
+						event, username, keychainName, status ? "success" : "failure", message);
 		}
 		
 	}
