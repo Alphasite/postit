@@ -315,9 +315,15 @@ public class KeychainViewer {
         rnKey.addActionListener(e -> {
             String newName = JOptionPane.showInputDialog(frame,"New keychain name:","Update name",JOptionPane.PLAIN_MESSAGE);
             if (newName!=null){
-                directoryController.renameKeychain(getActiveKeychain(),newName);
-                
-                //TODO add key log for this... don't use name as identifier...
+            	String oldName = getActiveKeychain().getName();
+            	
+                if (directoryController.renameKeychain(getActiveKeychain(),newName)){
+                	Optional<Account> act = directoryController.getAccount();
+                	if (act.isPresent()){
+                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, oldName, 
+                				String.format("Keychain <%s> changed name to <%s>.", oldName, newName));
+                	}
+                }
                 refreshTabbedPanes();
             }
         });
@@ -389,6 +395,13 @@ public class KeychainViewer {
                         if(success){
                             JOptionPane.showMessageDialog(frame,
                                     "Successfully shared " + activeDE.name+ " with "+ username);
+                            
+                            Optional<Account> act = directoryController.getAccount();
+                            String user = null;
+                            if (act.isPresent())
+                            	user = act.get().getUsername();
+                            keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getName(), 
+                            		String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username));
                         }
                         else{
                             JOptionPane.showMessageDialog(frame,
@@ -429,7 +442,16 @@ public class KeychainViewer {
                             "Unshare error",JOptionPane.PLAIN_MESSAGE);
                 }
                 else {
-                    directoryController.unshareKeychain(activeDE, unshare);
+                	if (directoryController.unshareKeychain(activeDE, unshare)){
+
+                		Optional<Account> act = directoryController.getAccount();
+                		String user = null;
+                		if (act.isPresent())
+                			user = act.get().getUsername();
+                		
+                		keyLog.addRemoveShareLogEntry(user, true, getActiveKeychain().getName(), 
+                				String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), unshareUser));
+                	}
                 }
             }
 
@@ -571,7 +593,7 @@ public class KeychainViewer {
                     selectedPassword = getActivePassword(passwords, e);
                 } else if (e.getClickCount() == 2) {
                     Password activePassword = getActivePassword(passwords, e);
-                    PasswordViewer pv = new PasswordViewer(kv, directoryController, getActiveKeychain(), activePassword);
+                    PasswordViewer pv = new PasswordViewer(kv, directoryController, keyLog, getActiveKeychain(), activePassword);
                 }
             }
         });
