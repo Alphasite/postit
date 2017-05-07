@@ -56,31 +56,23 @@ public class DirectoryController {
     }
 
     public boolean createPassword(Keychain keychain, String identifier, String username, SecretKey key) {
-        if (keychain.passwords.stream().noneMatch(p -> p.identifier.equals(identifier))) {
-            Password password = new Password(identifier, key, keychain);
-            password.metadata.put("username", username);
-            password.markUpdated();
-            return keychain.passwords.add(password) && store.save();
-        } else {
-            return false;
-        }
+        Password password = new Password(UUID.randomUUID().toString(), key, keychain);
+        password.metadata.put("username", username);
+        password.metadata.put("identifier", identifier);
+        password.markUpdated();
+        return keychain.passwords.add(password) && store.save();
     }
 
     public boolean updatePassword(Password pass, SecretKey key) {
         pass.password = key;
         pass.markUpdated();
-        System.out.println("edited pass to: " + pass.dump().build());
         return store.save();
     }
 
     public boolean updatePasswordTitle(Password pass, String title) {
-        if (pass.keychain.passwords.stream().noneMatch(p -> p.identifier.equals(title))) {
-            pass.identifier = title;
-            pass.markUpdated();
-            return store.save();
-        } else {
-            return false;
-        }
+        pass.metadata.put("identifier", title);
+        pass.markUpdated();
+        return store.save();
     }
 
     public boolean updateMetadataEntry(Password password, String name, String entry) {
@@ -177,16 +169,16 @@ public class DirectoryController {
 
             // Gather all local copies of passwords
             for (Password password : keychain.get().passwords) {
-                List<Password> passwordList = allPasswords.getOrDefault(password.identifier, new ArrayList<>());
+                List<Password> passwordList = allPasswords.getOrDefault(password.uuid, new ArrayList<>());
                 passwordList.add(password);
-                allPasswords.put(password.identifier, passwordList);
+                allPasswords.put(password.uuid, passwordList);
             }
 
             // Gather all remote copies of passwords
             for (int i = 0; i < passwordArray.size(); i++) {
                 JsonObject jsonPassword = passwordArray.getJsonObject(i);
                 Password password = new Password(jsonPassword, keychain.get());
-                List<Password> passwordList = allPasswords.getOrDefault(password.identifier, new ArrayList<>());
+                List<Password> passwordList = allPasswords.getOrDefault(password.uuid, new ArrayList<>());
                 passwordList.add(password);
             }
 

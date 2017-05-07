@@ -136,7 +136,7 @@ public class ServerControllerTest {
                 -1,
                 user2.getUsername(),
                 true,
-                (RSAPublicKey) user2.getKeyPair().getPublic(),
+                (RSAPublicKey) user2.getEncryptionKeypair().getPublic(),
                 false
         )), is(true));
 
@@ -144,7 +144,7 @@ public class ServerControllerTest {
                 -1,
                 "fake user",
                 true,
-                (RSAPublicKey) user2.getKeyPair().getPublic(),
+                (RSAPublicKey) user2.getEncryptionKeypair().getPublic(),
                 false
         )), is(true));
 

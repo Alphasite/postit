@@ -162,14 +162,14 @@ public class KeychainViewer {
             }
             String[] choices = choicesList.toArray(new String[choicesList.size()]);
             String input =(String) JOptionPane.showInputDialog(null,
-                    "Move "+ selectedPassword.identifier +" to...",
+                    "Move "+ selectedPassword.getIdentifier() +" to...",
                     "Move to...", JOptionPane.PLAIN_MESSAGE, null,
                     choices, // Array of choices
                     choices[tabbedPane.getSelectedIndex()]); // Initial choice
 
             if (input != null) {
                 DirectoryEntry keychainDestination = keychains.get(choicesList.indexOf(input));
-                String identifier = selectedPassword.identifier;
+                String identifier = selectedPassword.getIdentifier();
                 String username = selectedPassword.metadata.get("username");
                 SecretKey password =  selectedPassword.password;
                 directoryController.deletePassword(selectedPassword);
@@ -219,7 +219,7 @@ public class KeychainViewer {
                 // save to file
                 String path = file.getPath();
 
-                RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getKeyPair().getPublic();
+                RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getEncryptionKeypair().getPublic();
                 X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
 
                 try {
@@ -499,7 +499,7 @@ public class KeychainViewer {
 
         String[][] data = new String[passwords.size()][2];
         for (int i = 0; i < passwords.size(); i++) {
-            data[i][0] = passwords.get(i).identifier;
+            data[i][0] = passwords.get(i).getIdentifier();
             Map<String, String> metadata = passwords.get(i).metadata;
             if (metadata.containsKey("username"))
                 data[i][1] = metadata.get("username");
