@@ -161,8 +161,11 @@ public class KeychainViewer {
                 choicesList.add(de.name);
             }
             String[] choices = choicesList.toArray(new String[choicesList.size()]);
+            String passwordTitle = selectedPassword.metadata.get("title");
+            if (passwordTitle==null)
+                passwordTitle="";
             String input =(String) JOptionPane.showInputDialog(null,
-                    "Move "+ selectedPassword.identifier +" to...",
+                    "Move "+ passwordTitle +" to...",
                     "Move to...", JOptionPane.PLAIN_MESSAGE, null,
                     choices, // Array of choices
                     choices[tabbedPane.getSelectedIndex()]); // Initial choice
@@ -419,8 +422,66 @@ public class KeychainViewer {
         keychainMenu.add(showKeyPerm);
 
         //SETTINGS Menu Item
+
         JMenu settingsMenu = new JMenu("Settings");
         menuBar.add(settingsMenu);
+
+
+        menuItem = new JMenuItem("Account Settings");
+        menuItem.addActionListener(e -> {
+
+            JTextField username = new JTextField(directoryController.getAccount().get().getUsername());
+            username.setEnabled(false);
+            JTextField firstName = new JTextField();
+            JTextField lastName = new JTextField();
+            JTextField email = new JTextField();
+            JTextField phoneNumber = new JTextField();
+            JPasswordField password = new JPasswordField();
+
+            Object[] message = {
+                    "Username:", username,
+                    "First name:", firstName,
+                    "Last name:", lastName,
+                    "Email:", email,
+                    "Phone number:", phoneNumber,
+                    "Password:", password
+            };
+
+            int option = JOptionPane.showConfirmDialog(frame, message, "Edit Account Settings",
+                    JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
+            if (option == JOptionPane.OK_OPTION) {
+                if(firstName.getText().length()>0||
+                        lastName.getText().length()>0 || email.getText().length()>0 ||
+                        phoneNumber.getText().length()>0 || password.getPassword().length>0){
+                    String key = null;
+                    key = JOptionPane.showInputDialog(null, "Enter password", "", JOptionPane.PLAIN_MESSAGE);
+                    if (key!=null && serverController.authenticate(new Account(username.getText(),key))){
+                        if(username.getText().length()>0){
+                            //update username
+                        }
+                        if (firstName.getText().length()>0){
+                            //update first name
+                        }
+                        if (lastName.getText().length()>0){
+                            //update last name
+                        }
+                        if(email.getText().length()>0){
+                            //update email
+                        }
+                        if(phoneNumber.getText().length()>0){
+                            //update phone number
+                        }
+                        if(password.getPassword().length>0){
+                            //update password
+                        }
+                    }
+                    else{ //wrong password
+                        JOptionPane.showMessageDialog(null, "Password is invalid. No updates were made");
+                    }
+                }
+            }
+        });
+        settingsMenu.add(menuItem);
 
         menuItem = new JMenuItem("Pwd Gen Settings");
         menuItem.addActionListener( e -> {passwordGenerator.editSettings(frame);});
@@ -499,8 +560,12 @@ public class KeychainViewer {
 
         String[][] data = new String[passwords.size()][2];
         for (int i = 0; i < passwords.size(); i++) {
-            data[i][0] = passwords.get(i).identifier;
             Map<String, String> metadata = passwords.get(i).metadata;
+            if (metadata.containsKey("title"))
+                data[i][0] = metadata.get("title");
+            else
+                data[i][0] = "";
+
             if (metadata.containsKey("username"))
                 data[i][1] = metadata.get("username");
             else
