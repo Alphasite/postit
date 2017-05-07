@@ -14,7 +14,7 @@ import java.util.Map;
  * Created by nishadmathur on 23/2/17.
  */
 public class Password {
-    public String identifier;
+    public String uuid;
     public SecretKey password;
     public Map<String, String> metadata;
     public LocalDateTime lastModified;
@@ -22,7 +22,7 @@ public class Password {
     public Keychain keychain;
 
     public Password(String identifier, SecretKey password, Keychain keychain) {
-        this.identifier = identifier;
+        this.uuid = identifier;
         this.password = password;
         this.metadata = new HashMap<>();
         this.keychain = keychain;
@@ -32,7 +32,7 @@ public class Password {
     public Password(JsonObject object, Keychain keychain) {
         this.keychain = keychain;
 
-        this.identifier = object.getString("identifier");
+        this.uuid = object.getString("uuid");
         this.password = Crypto.secretKeyFromBytes(object.getString("password").getBytes());
         this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
         this.metadata = new HashMap<>();
@@ -56,7 +56,7 @@ public class Password {
         }
 
         return Json.createObjectBuilder()
-                .add("identifier", identifier)
+                .add("uuid", uuid)
                 .add("password", new String(Crypto.secretKeyToBytes(password)))
                 .add("lastModified", lastModified.toString())
                 .add("metadata", metadataObject);
@@ -70,6 +70,10 @@ public class Password {
         this.password = Crypto.secretKeyFromBytes(password.getBytes());
     }
 
+    public String getIdentifier() {
+        return metadata.get("identifier");
+    }
+
     public boolean delete() {
         this.keychain.passwords.remove(this);
         return true;
@@ -78,7 +82,7 @@ public class Password {
     @Override
     public String toString() {
         return "Password{" +
-                "identifier='" + identifier + '\'' +
+                "uuid='" + uuid + '\'' +
                 ", password=" + password +
                 ", metadata=" + metadata +
                 ", lastModified=" + lastModified +

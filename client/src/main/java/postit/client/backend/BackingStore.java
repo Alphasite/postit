@@ -1,9 +1,6 @@
 package postit.client.backend;
 
-import postit.client.keychain.Container;
-import postit.client.keychain.Directory;
-import postit.client.keychain.DirectoryEntry;
-import postit.client.keychain.Keychain;
+import postit.client.keychain.*;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -118,12 +115,14 @@ public class BackingStore {
         }
     }
 
-    public Optional<KeyPair> readKeypair() {
-        try {
-            return Optional.of(Crypto.deserialiseObject(new String(Files.readAllBytes(getKeyPairPath()))));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return Optional.empty();
+    public boolean readKeypair(Account account) {
+        Optional<JsonObject> object = Crypto.readJsonObjectFromFile(getKeyPairPath());
+
+        if (object.isPresent()) {
+            account.deserialiseKeypairs(object.get());
+            return true;
+        } else {
+            return false;
         }
     }
 

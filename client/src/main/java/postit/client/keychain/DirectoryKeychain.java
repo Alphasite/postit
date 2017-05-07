@@ -46,7 +46,7 @@ public class DirectoryKeychain {
 
             Optional<Key> key = Crypto.unwrapKey(
                     decoder.decode(encryptedEncryptionKey),
-                    account.getKeyPair().getPrivate()
+                    account.getEncryptionKeypair().getPrivate()
             );
 
             if (!key.isPresent()) {
