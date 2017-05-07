@@ -166,13 +166,14 @@ public class KeychainViewer {
                 passwordTitle="";
             String input =(String) JOptionPane.showInputDialog(null,
                     "Move "+ passwordTitle +" to...",
+
                     "Move to...", JOptionPane.PLAIN_MESSAGE, null,
                     choices, // Array of choices
                     choices[tabbedPane.getSelectedIndex()]); // Initial choice
 
             if (input != null) {
                 DirectoryEntry keychainDestination = keychains.get(choicesList.indexOf(input));
-                String identifier = selectedPassword.identifier;
+                String identifier = selectedPassword.getIdentifier();
                 String username = selectedPassword.metadata.get("username");
                 SecretKey password =  selectedPassword.password;
                 directoryController.deletePassword(selectedPassword);
@@ -222,7 +223,7 @@ public class KeychainViewer {
                 // save to file
                 String path = file.getPath();
 
-                RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getKeyPair().getPublic();
+                RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getEncryptionKeypair().getPublic();
                 X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
 
                 try {

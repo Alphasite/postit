@@ -49,10 +49,10 @@ public class AccountHandler {
 	 * @param lastname
 	 * @return
 	 */
-	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname, String phoneNumber){
-		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber));
+	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname, String keypair, String phoneNumber) {
+		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber, keypair));
 	}
-	
+
 	public boolean addAccount(ServerAccount serverAccount){
 		if (db.getAccount(serverAccount.getUsername()) == null){
 			ServerAccount a = new ServerAccount(serverAccount);
@@ -90,6 +90,8 @@ public class AccountHandler {
 	public ServerAccount getAccount(String username){
 		return db.getAccount(username);
 	}
+
+	public String getKeyPair(String username) {return db.getKeyPair(username); }
 	
 	public JsonObject getAccounts(){
 		// Change return type to List<ServerAccount> or List<JsonObject> with just info to be displayed

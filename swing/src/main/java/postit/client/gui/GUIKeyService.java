@@ -5,18 +5,16 @@ import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.controller.ServerController;
 import postit.client.keychain.Account;
-import postit.client.passwordtools.Classify;
 import postit.client.log.AuthenticationLog;
+import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
 import postit.shared.EFactorAuth;
 
 import javax.crypto.SecretKey;
 import javax.security.auth.DestroyFailedException;
 import javax.swing.*;
-import java.security.KeyPair;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 
 /**
  * Created by nishadmathur on 27/2/17.
@@ -178,24 +176,24 @@ public class GUIKeyService implements KeyService {
                 			String phoneNumber=sc.getPhoneNumber(newAccount);
                 			new EFactorAuth().sendMsg(phoneNumber);
                 			String pin = null;
-                			while (pin==null){
+                			while (pin == null){
                 				pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
                 			}
-                			if(new EFactorAuth().verifyMsg(phoneNumber,pin)){
+
+                			if (new EFactorAuth().verifyMsg(phoneNumber,pin)) {
                 				JOptionPane.showConfirmDialog(
                 						null,
                 						"Please ensure your keypair is in the data directory. Select any option to proceed"
-                						);
+                                );
                 				
                 				al.addAuthenticationLogEntry(username, true, "Login successful");
-                				Optional<KeyPair> keyPair = backingStore.readKeypair();
-                				if (keyPair.isPresent()) {
-                					newAccount.setKeyPair(keyPair.get());
+
+                				if (backingStore.readKeypair(newAccount)) {
                 					return newAccount;
                 				} else {
                 					JOptionPane.showMessageDialog(null, "Failed to load keypair.");
                 				}
-                			}else {
+                			} else {
                 				JOptionPane.showMessageDialog(null, "Incorrect PIN");
                 			}
 
@@ -225,7 +223,7 @@ public class GUIKeyService implements KeyService {
                             && LoginPanel.isValidPhoneNumber(phone)) {
                         Account newAccount = new Account(username, pass1);
                         if (sc.addUser(newAccount, email, first, last, phone)) {
-                            if (backingStore.writeKeypair(newAccount.getKeyPair())) {
+                            if (backingStore.writeKeypair(newAccount.getEncryptionKeypair())) {
                                 JOptionPane.showMessageDialog(
                                     null,
                                     "Generated a new keypair and saved it to the disk. Please transfer this " +
