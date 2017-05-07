@@ -3,12 +3,12 @@ package postit.client.keychain;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by nishadmathur on 23/2/17.
@@ -17,6 +17,7 @@ public class Password {
     public String identifier;
     public SecretKey password;
     public Map<String, String> metadata;
+    public LocalDateTime lastModified;
 
     public Keychain keychain;
 
@@ -25,6 +26,7 @@ public class Password {
         this.password = password;
         this.metadata = new HashMap<>();
         this.keychain = keychain;
+        this.lastModified = LocalDateTime.now();
     }
 
     public Password(JsonObject object, Keychain keychain) {
@@ -32,6 +34,7 @@ public class Password {
 
         this.identifier = object.getString("identifier");
         this.password = Crypto.secretKeyFromBytes(object.getString("password").getBytes());
+        this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
         this.metadata = new HashMap<>();
 
         JsonObject metadataObject = object.getJsonObject("metadata");
@@ -41,6 +44,7 @@ public class Password {
     }
 
     public void markUpdated() {
+        this.lastModified = LocalDateTime.now();
         this.keychain.markUpdated();
     }
 
@@ -54,6 +58,7 @@ public class Password {
         return Json.createObjectBuilder()
                 .add("identifier", identifier)
                 .add("password", new String(Crypto.secretKeyToBytes(password)))
+                .add("lastModified", lastModified.toString())
                 .add("metadata", metadataObject);
     }
 
@@ -74,7 +79,10 @@ public class Password {
     public String toString() {
         return "Password{" +
                 "identifier='" + identifier + '\'' +
-                ", password=" + getPasswordAsString() +
+                ", password=" + password +
+                ", metadata=" + metadata +
+                ", lastModified=" + lastModified +
+                ", keychain=" + keychain +
                 '}';
     }
 }

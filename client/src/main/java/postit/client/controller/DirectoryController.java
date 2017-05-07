@@ -172,26 +172,41 @@ public class DirectoryController {
 
             // TODO replace this later
             JsonArray passwordArray = keychainObject.getJsonArray("passwords");
-            Map<String, Password> passwords = new HashMap<>();
-            Set<String> passwordIdentifiers = keychain.get().passwords.stream()
-                    .map(password -> password.identifier)
-                    .collect(Collectors.toSet());
 
+            HashMap<String, List<Password>> allPasswords = new HashMap<>();
+
+            // Gather all local copies of passwords
+            for (Password password : keychain.get().passwords) {
+                List<Password> passwordList = allPasswords.getOrDefault(password.identifier, new ArrayList<>());
+                passwordList.add(password);
+                allPasswords.put(password.identifier, passwordList);
+            }
+
+            // Gather all remote copies of passwords
             for (int i = 0; i < passwordArray.size(); i++) {
                 JsonObject jsonPassword = passwordArray.getJsonObject(i);
                 Password password = new Password(jsonPassword, keychain.get());
-                if (!passwordIdentifiers.contains(password.identifier) || localIsOlder) {
-                        passwords.put(password.identifier, password);
+                List<Password> passwordList = allPasswords.getOrDefault(password.identifier, new ArrayList<>());
+                passwordList.add(password);
+            }
+
+            // Select the newest version and use that.
+            ArrayList<Password> passwords = new ArrayList<>();
+            for (List<Password> passwordList : allPasswords.values()) {
+                if (passwordList.size() == 1) {
+                    passwords.add(passwordList.get(0));
+                } else {
+                    Password password1 = passwordList.get(0);
+                    Password password2 = passwordList.get(1);
+                    if (password1.lastModified.isBefore(password2.lastModified)) {
+                        passwords.add(password2);
+                    } else {
+                        passwords.add(password1);
+                    }
                 }
             }
 
-            for (Password password : keychain.get().passwords) {
-                if (!passwords.containsKey(password.identifier)) {
-                    passwords.put(password.identifier, password);
-                }
-            }
-
-            keychain.get().initFrom(new ArrayList<>(passwords.values()));
+            keychain.get().initFrom(passwords);
         } else {
             LOGGER.warning("Failed to update entry " + entry.name + "from object (couldn't load keychain).");
             return false;
