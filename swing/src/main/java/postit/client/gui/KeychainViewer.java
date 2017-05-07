@@ -9,6 +9,7 @@ import postit.client.controller.DirectoryController;
 import postit.client.controller.ServerController;
 import postit.client.keychain.*;
 import postit.client.log.KeychainLog;
+import postit.client.log.AuthenticationLog;
 import postit.client.passwordtools.Classify;
 import postit.client.passwordtools.PasswordGenerator;
 import postit.shared.Crypto;
@@ -65,8 +66,9 @@ public class KeychainViewer {
     private KeyService keyService;
 
     private KeychainLog keyLog;
+    private AuthenticationLog authLog;
 
-    public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService, KeychainLog keyLog) {
+    public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService, KeychainLog keyLog, AuthenticationLog authLog) {
 
         this.serverController = serverController;
 
@@ -76,12 +78,19 @@ public class KeychainViewer {
         if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
+            
+            authLog.addAuthenticationLogEntry("N/A", false, "Login credentials are invalid");
         } else {
             directoryController = new DirectoryController(directory.get(), backingStore, keyService);
             this.keychains = directoryController.getKeychains();
 
             serverController.setDirectoryController(directoryController);
             createUIComponents();
+            
+            Optional<Account> act = directoryController.getAccount();
+            if (act.isPresent()){
+            	authLog.addAuthenticationLogEntry(act.get().getUsername(), true, "Login successful");
+            }
         }
 
         passwordGenerator = new PasswordGenerator();
@@ -89,6 +98,7 @@ public class KeychainViewer {
         this.keyService = keyService;
         
         this.keyLog = keyLog;
+        this.authLog = authLog;
     }
 
     /**

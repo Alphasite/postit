@@ -129,6 +129,7 @@ public class GUIKeyService implements KeyService {
 
             while (key == null) {
                 key = Crypto.secretKeyFromBytes(getKey("Please enter master password: "));
+                
             }
         }
 
