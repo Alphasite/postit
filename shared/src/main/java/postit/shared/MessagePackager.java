@@ -39,7 +39,8 @@ public class MessagePackager {
 		KEYCHAINS,
 		SHARED_KEYCHAIN,
 		SHARED_KEYCHAINS,
-		OWNER_KEYCHAIN
+		OWNER_KEYCHAIN,
+		KEYPAIR
 	}
 	
 	public static String typeToString(Asset asset){
@@ -58,6 +59,8 @@ public class MessagePackager {
 			return "shared keychains";
 		case OWNER_KEYCHAIN:
 			return "owner keychain";
+		case KEYPAIR:
+			return "keypair";
 		default:
 			return null;
 		}

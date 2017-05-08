@@ -29,8 +29,14 @@ public class ClientMessagePackager {
 			request.put("password", Base64.getEncoder().encodeToString(account.getSecretKey().getEncoded()));
 		}
 
-		if (bean != null)
-			request.put(typeToString(asset), new JSONObject(bean));
+		if (bean != null) {
+			if (bean instanceof String) {
+				request.put(typeToString(asset), bean);
+			} else {
+				request.put(typeToString(asset), new JSONObject(bean));
+			}
+		}
+
 		return request.toString();
 	}
 	

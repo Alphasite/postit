@@ -187,6 +187,16 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			switch(asset){
 			case ACCOUNT:
 				return createResponse(true, username, "", asset, null);
+			case KEYPAIR:
+				// TODO fill this in Zhan.
+				// check otp.
+				boolean otpSuccessfullyAuthenticated = true;
+				if (otpSuccessfullyAuthenticated) {
+					String keypair = ah.getAccount(username).getKeypair();
+					return createResponse(true, username, "", asset, keypair);
+				} else {
+					return createResponse(false, username, "otp wrong or expired.", asset, null);
+				}
 			default:
 				break;
 			}
@@ -219,6 +229,11 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			case OWNER_KEYCHAIN:
 				ServerKeychain keychain1 = kh.getOwnersKeychain(username, obj.getLong("directoryEntryId"));
 				return createResponse(true, username, "got owners keychain", asset, keychain1);
+
+			case KEYPAIR:
+				// TODO fill this in Zhan.
+				// send otp.
+				return createResponse(true, username, "Please send otp.", asset, null);
 
 			default:
 				break;

@@ -281,8 +281,8 @@ public class ServerController {
         }
     }
 
-    public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber) {
-        String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber);
+    public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber, String keypair) {
+        String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber, keypair);
         return sendAndCheckIfSuccess(req);
     }
 
@@ -499,5 +499,21 @@ public class ServerController {
             share.username,
             share.canWrite
         ));
+    }
+
+    public boolean sendGetKeypairRequest(Account account) {
+        return sendAndCheckIfSuccess(RequestMessenger.createGetKeypairMessage(account));
+    }
+
+    public boolean sendKeypairOtpResponse(Account account, String otp) {
+        String req = RequestMessenger.sendOtpMessage(account, otp);
+        Optional<JsonObject> response = clientToServer.send(req);
+
+        if (response.isPresent() && response.get().getString("status").equals("success")) {
+            JsonObject jsonObject = response.get().getJsonObject(typeToString(SHARED_KEYCHAIN));
+            return account.deserialiseKeypairs(jsonObject);
+        } else {
+            return false;
+        }
     }
 }

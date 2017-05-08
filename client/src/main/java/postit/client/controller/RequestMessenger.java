@@ -17,7 +17,7 @@ public class RequestMessenger {
 		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.ACCOUNT, serverAccount);
 	}
 	
-	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber){
+	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber, String keypair){
 		ServerAccount serverAccount = new ServerAccount();
 		serverAccount.setUsername(clientAccount.getUsername());
 		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
@@ -25,6 +25,7 @@ public class RequestMessenger {
 		serverAccount.setFirstname(firstname);
 		serverAccount.setLastname(lastname);
 		serverAccount.setPhoneNumber(phoneNumber);
+		serverAccount.setKeypair(keypair);
 		return createRequest(Action.ADD, null, Asset.ACCOUNT, serverAccount);
 	}
 	
@@ -33,6 +34,20 @@ public class RequestMessenger {
 		account.setUsername(clientAccount.getUsername());
 		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
 		return createRequest(Action.REMOVE, clientAccount, Asset.ACCOUNT, account);
+	}
+
+	public static String createGetKeypairMessage(Account clientAccount) {
+		ServerAccount account = new ServerAccount();
+		account.setUsername(clientAccount.getUsername());
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		return createRequest(Action.GET, clientAccount, Asset.KEYPAIR, null);
+	}
+
+	public static String sendOtpMessage(Account clientAccount, String otp) {
+		ServerAccount account = new ServerAccount();
+		account.setUsername(clientAccount.getUsername());
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.KEYPAIR, otp);
 	}
 
 	public static String createGetUserMessage(Account clientAccount){
