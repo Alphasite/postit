@@ -51,6 +51,8 @@ public class KeychainViewer {
     private List<JTable> tables = new ArrayList<>();
 
     private Password selectedPassword;
+    private List<JMenuItem> passwordMenuItems= new List<JMenuItem>();
+    private List<JMenuItem> keychainMenuItems= new List<JMenuItem>();
     private JMenuItem addPass;
     private JMenuItem delPass;
     private JMenuItem movePass;
@@ -59,6 +61,7 @@ public class KeychainViewer {
     private JMenuItem addKeyPerm;
     private JMenuItem rmKeyPerm;
     private JMenuItem showKeyPerm;
+    private JMenuItem showKeyLogs;
 
     private PasswordGenerator passwordGenerator;
     private Classify classify;
@@ -110,6 +113,7 @@ public class KeychainViewer {
         menuBar.add(fileMenu);
 
         addPass = new JMenuItem("New Password");
+        passwordMenuItems.add(addPass);
         addPass.addActionListener(e -> {
             JTextField newtitle = new JTextField();
             JTextField newusername = new JTextField();
@@ -167,6 +171,7 @@ public class KeychainViewer {
         fileMenu.add(addPass);
 
         movePass = new JMenuItem("Move Password");
+        passwordMenuItems.add(movePass);
         movePass.addActionListener(e -> {
             ArrayList<String> choicesList = new ArrayList<String>();
             for(DirectoryEntry de : keychains){
@@ -219,6 +224,7 @@ public class KeychainViewer {
 
 
         delPass = new JMenuItem("Delete Password");
+        passwordMenuItems.add(delPass);
         delPass.addActionListener(e -> {
             int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
                     "Delete Password", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
@@ -312,6 +318,7 @@ public class KeychainViewer {
         keychainMenu.addSeparator();
 
         rnKey = new JMenuItem("Rename Keychain");
+        keychainMenuItems.add(rnKey)
         rnKey.addActionListener(e -> {
             String newName = JOptionPane.showInputDialog(frame,"New keychain name:","Update name",JOptionPane.PLAIN_MESSAGE);
             if (newName!=null){
@@ -330,6 +337,7 @@ public class KeychainViewer {
         keychainMenu.add(rnKey);
 
         delKey = new JMenuItem("Delete Keychain");
+        keychainMenuItems.add(delKey);
         delKey.addActionListener(e -> {
             int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
                     "Delete keychain", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
@@ -349,6 +357,7 @@ public class KeychainViewer {
 
 
         addKeyPerm = new JMenuItem("Add Keychain Permissions");
+        keychainMenuItems.add(addKeyPerm);
         addKeyPerm.addActionListener(e ->{
 
             JFileChooser fc = new JFileChooser();
@@ -489,6 +498,16 @@ public class KeychainViewer {
         });
         keychainMenu.add(showKeyPerm);
 
+        showKeyLogs = new JMenuItem("Keychain logs");
+        showKeyLogs.addActionListener(e->{
+            String keyname = getActiveKeychain().getName();
+            List logEntries = keyLog.getKeychainLogEntries(keyname);
+
+            JOptionPane.showConfirmDialog(frame,logEntries,keyname+" Log",
+                    JOptionPane.CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
+        });
+        keychainMenu.add(showKeyLogs);
+
         //SETTINGS Menu Item
         JMenu settingsMenu = new JMenu("Settings");
         menuBar.add(settingsMenu);
@@ -545,6 +564,7 @@ public class KeychainViewer {
             addKeyPerm.setEnabled(false);
             rmKeyPerm.setEnabled(false);
             showKeyPerm.setEnabled(false);
+            showKeyLogs.setEnabled(false);
         } else {
             addPass.setEnabled(true);
             delKey.setEnabled(true);
@@ -552,6 +572,7 @@ public class KeychainViewer {
             addKeyPerm.setEnabled(true);
             rmKeyPerm.setEnabled(true);
             showKeyPerm.setEnabled(true);
+            showKeyLogs.setEnabled(true);
         }
         if(activeKeychainidx>-1 && activeKeychainidx<tabbedPane.getTabCount()){
             tabbedPane.setSelectedIndex(activeKeychainidx);
