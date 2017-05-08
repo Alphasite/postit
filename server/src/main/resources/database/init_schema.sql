@@ -30,6 +30,8 @@ CREATE TABLE `account` (
   `last_name` varchar(45) NOT NULL,
   `phone_number` varchar(15) NOT NULL,
   `salt` VARCHAR(64) NOT NULL,
+  `key_pair` MEDIUMTEXT,
+  `public_key` MEDIUMTEXT,
   PRIMARY KEY (`user_name`),
   UNIQUE KEY `user_name_UNIQUE` (`user_name`),
   UNIQUE KEY `pwd_key_UNIQUE` (`pwd_key`),
