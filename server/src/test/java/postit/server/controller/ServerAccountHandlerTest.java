@@ -38,6 +38,7 @@ public class ServerAccountHandlerTest {
 			String fName, String lName, String phone, boolean expected){
 
 		boolean res = ah.addAccount(username, pwd, email, fName, lName, "keypair", phone);
+
 		System.out.printf("Adding account %s with %s %s%n", username, pwd, res ? "successful" : "failed");
 		assertThat(res, is(expected));
 	}

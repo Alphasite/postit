@@ -8,10 +8,7 @@ import javax.json.*;
 import java.security.InvalidKeyException;
 import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -22,6 +19,8 @@ public class DirectoryEntry {
 
     public String name;
     private Share share;
+
+    public String uuid;
 
     private SecretKey encryptionKey;
     private byte[] nonce;
@@ -42,6 +41,7 @@ public class DirectoryEntry {
         this.keychain = null;
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
+        this.uuid = UUID.randomUUID().toString();
         this.share = new Share(-1, null, true, publicKey, true);
         this.shares = new ArrayList<>();
         this.shares.add(this.share);
@@ -75,6 +75,7 @@ public class DirectoryEntry {
         this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
         this.setNonce(decoder.decode(object.getString("nonce")));
         this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
+        this.uuid = object.getString("uuid");
     }
 
     public JsonObjectBuilder dump() {
@@ -86,6 +87,7 @@ public class DirectoryEntry {
         builder.add("nonce", encoder.encodeToString(getNonce()));
         builder.add("serverid", getServerid());
         builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
+        builder.add("uuid", uuid);
 
         JsonArrayBuilder shareArray = Json.createArrayBuilder();
         for (Share share: shares) {
