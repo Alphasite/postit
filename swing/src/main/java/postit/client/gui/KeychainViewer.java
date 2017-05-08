@@ -12,12 +12,15 @@ import postit.client.log.KeychainLog;
 import postit.client.log.AuthenticationLog;
 import postit.client.passwordtools.Classify;
 import postit.client.passwordtools.PasswordGenerator;
+import postit.shared.AuditLog;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -29,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +56,6 @@ public class KeychainViewer {
     private List<JTable> tables = new ArrayList<>();
 
     private Password selectedPassword;
-    private List<JMenuItem> passwordMenuItems= new List<JMenuItem>();
-    private List<JMenuItem> keychainMenuItems= new List<JMenuItem>();
     private JMenuItem addPass;
     private JMenuItem delPass;
     private JMenuItem movePass;
@@ -115,7 +117,6 @@ public class KeychainViewer {
         JFrame frame = new JFrame("Keychain");
         frame.setLayout(new GridLayout());
         frame.setMinimumSize(new Dimension(520, 485));
-        frame.setMaximumSize(new Dimension(520, 485));
         menuBar = new JMenuBar();
 
         //FILE Menu Items
@@ -123,7 +124,6 @@ public class KeychainViewer {
         menuBar.add(fileMenu);
 
         addPass = new JMenuItem("New Password");
-        passwordMenuItems.add(addPass);
         addPass.addActionListener(e -> {
             JTextField newtitle = new JTextField();
             JTextField newusername = new JTextField();
@@ -181,7 +181,6 @@ public class KeychainViewer {
         fileMenu.add(addPass);
 
         movePass = new JMenuItem("Move Password");
-        passwordMenuItems.add(movePass);
         movePass.addActionListener(e -> {
             ArrayList<String> choicesList = new ArrayList<String>();
             for(DirectoryEntry de : keychains){
@@ -234,7 +233,6 @@ public class KeychainViewer {
 
 
         delPass = new JMenuItem("Delete Password");
-        passwordMenuItems.add(delPass);
         delPass.addActionListener(e -> {
             int deletePassword = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this password?",
                     "Delete Password", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
@@ -328,7 +326,6 @@ public class KeychainViewer {
         keychainMenu.addSeparator();
 
         rnKey = new JMenuItem("Rename Keychain");
-        keychainMenuItems.add(rnKey)
         rnKey.addActionListener(e -> {
             String newName = JOptionPane.showInputDialog(frame,"New keychain name:","Update name",JOptionPane.PLAIN_MESSAGE);
             if (newName!=null){
@@ -347,7 +344,6 @@ public class KeychainViewer {
         keychainMenu.add(rnKey);
 
         delKey = new JMenuItem("Delete Keychain");
-        keychainMenuItems.add(delKey);
         delKey.addActionListener(e -> {
             int deleteKeychain = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete this keychain?",
                     "Delete keychain", JOptionPane.YES_NO_OPTION,JOptionPane.PLAIN_MESSAGE);
@@ -367,7 +363,6 @@ public class KeychainViewer {
 
 
         addKeyPerm = new JMenuItem("Add Keychain Permissions");
-        keychainMenuItems.add(addKeyPerm);
         addKeyPerm.addActionListener(e ->{
 
             JFileChooser fc = new JFileChooser();
@@ -511,9 +506,58 @@ public class KeychainViewer {
         showKeyLogs = new JMenuItem("Keychain logs");
         showKeyLogs.addActionListener(e->{
             String keyname = getActiveKeychain().getName();
-            List logEntries = keyLog.getKeychainLogEntries(keyname);
 
-            JOptionPane.showConfirmDialog(frame,logEntries,keyname+" Log",
+            String[] columnNames = {"Time","Event","Username","Keychain Name","Status","Message"};
+            List<AuditLog.LogEntry> logEntries = keyLog.getKeychainLogEntries(keyname);
+            String[][] data = new String[logEntries.size()][6];
+
+            for (int i = 0; i < logEntries.size(); i++) {
+                data[i][0] = String.valueOf(new Timestamp(logEntries.get(i).time));
+                data[i][1] = String.valueOf(logEntries.get(i).event);
+                data[i][2] = String.valueOf(logEntries.get(i).username);
+                data[i][3] = String.valueOf(logEntries.get(i).keychainName);
+                data[i][4] = String.valueOf(logEntries.get(i).status);
+                data[i][5] = String.valueOf(logEntries.get(i).message);
+            }
+
+            JTable table= new JTable(data, columnNames) {
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+
+
+            for (int column = 0; column < table.getColumnCount(); column++)
+            {
+                TableColumn tableColumn = table.getColumnModel().getColumn(column);
+                int preferredWidth = tableColumn.getMinWidth();
+                int maxWidth = tableColumn.getMaxWidth();
+
+                for (int row = 0; row < table.getRowCount(); row++)
+                {
+                    TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
+                    Component c = table.prepareRenderer(cellRenderer, row, column);
+                    int width = c.getPreferredSize().width + table.getIntercellSpacing().width;
+                    preferredWidth = Math.max(preferredWidth, width);
+
+                    //  We've exceeded the maximum width, no need to check other rows
+
+                    if (preferredWidth >= maxWidth)
+                    {
+                        preferredWidth = maxWidth;
+                        break;
+                    }
+                }
+
+                tableColumn.setPreferredWidth( preferredWidth );
+            }
+
+            JScrollPane scrollPane = new JScrollPane(table);
+            scrollPane.setPreferredSize(new Dimension(1000,300));
+            Panel panel = new Panel();
+            panel.add(scrollPane);
+
+            JOptionPane.showConfirmDialog(frame,panel,keyname+" Log",
                     JOptionPane.CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
         });
         keychainMenu.add(showKeyLogs);
