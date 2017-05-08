@@ -173,7 +173,7 @@ public class KeychainViewer {
 
             if (input != null) {
                 DirectoryEntry keychainDestination = keychains.get(choicesList.indexOf(input));
-                String identifier = selectedPassword.getIdentifier();
+                String title = selectedPassword.getTitle();
                 String username = selectedPassword.metadata.get("username");
                 SecretKey password =  selectedPassword.password;
                 directoryController.deletePassword(selectedPassword);
@@ -181,7 +181,7 @@ public class KeychainViewer {
 
                 Keychain newDestination = this.keychains.get(choicesList.indexOf(input)).readKeychain().get();
                 directoryController.createPassword(newDestination,
-                        identifier, username, password);
+                        title, username, password);
 
                 Password addedPassword = newDestination.passwords.get(newDestination.passwords.size()-1);
                 if(comments.isPresent())
@@ -303,6 +303,9 @@ public class KeychainViewer {
             JFileChooser fc = new JFileChooser();
             JTextField shareusername = new JTextField();
             JCheckBox writepriv = new JCheckBox();
+//            String[] privs = {"Read","Write","Execute"};
+//            JComboBox writepriv = new JComboBox();
+
 
             final File[] file = new File[1];
             JTextField filename = new JTextField();
@@ -331,6 +334,7 @@ public class KeychainViewer {
                     DirectoryEntry activeDE = directoryController.getKeychains().get(tabbedPane.getSelectedIndex());
                     String username = shareusername.getText();
                     Boolean readWrite = writepriv.isSelected();
+//                    String readWrite = (String)priv.getSelectedItem();
                     //Try to read public key
                     try {
                         byte[] keyBytes = Files.readAllBytes(file[0].toPath());
@@ -421,6 +425,7 @@ public class KeychainViewer {
 
         });
         keychainMenu.add(showKeyPerm);
+        
 
         //SETTINGS Menu Item
 

@@ -70,8 +70,8 @@ public class Password {
         this.password = Crypto.secretKeyFromBytes(password.getBytes());
     }
 
-    public String getIdentifier() {
-        return metadata.get("identifier");
+    public String getTitle() {
+        return metadata.get("title");
     }
 
     public boolean delete() {
