@@ -35,7 +35,7 @@ public class GuiApp {
 
         invokeLater(() -> {
         	KeychainLog keyLog = new KeychainLog();
-            KeychainViewer kv = new KeychainViewer(serverController, backingStore, keyService, keyLog);
+            KeychainViewer kv = new KeychainViewer(serverController, backingStore, keyService, keyLog, authLog);
         });
     }
 }
