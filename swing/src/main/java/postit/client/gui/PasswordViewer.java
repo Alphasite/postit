@@ -55,13 +55,14 @@ public class PasswordViewer {
         	}
         	
         	String oldTitle = p.identifier;
+        	long keyId = k.getServerId();
         	String keyName = k.getName();
         	
             String newTitle = String.valueOf(titleField.getText());
             boolean success = c.updatePasswordTitle(p, newTitle);
             
             if (success && username != null && !newTitle.equals(oldTitle)){
-            	kl.addUpdateKeychainLogEntry(username, true, keyName, 
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
             			String.format("Password %s changed name to %s in keychain <%s>", oldTitle, newTitle, keyName));
             }
 
@@ -70,7 +71,7 @@ public class PasswordViewer {
             success = c.updateMetadataEntry(p,"username",newUser);
             
             if (success && username != null && oldUser != null && !newUser.equals(oldUser)){
-            	kl.addUpdateKeychainLogEntry(username, true, keyName, 
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
             			String.format("Password %s changed username in keychain <%s>", p.identifier, keyName));
             }
             
@@ -79,7 +80,7 @@ public class PasswordViewer {
             success = c.updateMetadataEntry(p,"comments",newComments);
             
             if (success && username != null && !newComments.equals(oldComments)){
-            	kl.addUpdateKeychainLogEntry(username, true, keyName, 
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
             			String.format("Password %s changed comments in keychain <%s>", p.identifier, keyName));
             }
 
@@ -88,7 +89,7 @@ public class PasswordViewer {
             success = c.updatePassword(p, Crypto.secretKeyFromBytes(newKey.getBytes()));
             
             if (success && username != null && !Arrays.areEqual(oldKey, newKey.getBytes())){
-            	kl.addUpdateKeychainLogEntry(username, true, keyName, 
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
             			String.format("Password %s changed password value in keychain <%s>", p.identifier, keyName));
             }
 

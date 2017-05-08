@@ -39,7 +39,7 @@ public class AuthenticationLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.AUTHENTICATE, username, null, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.AUTHENTICATE, username, -1, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}

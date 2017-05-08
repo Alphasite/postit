@@ -70,17 +70,17 @@ public class AuditLog {
 		if (type == EventType.AUTHENTICATE){
 			if (parts.length != 3)
 				throw new RuntimeException("Authentication log entry's format is incorrect");
-			return new LogEntry(time, EventType.valueOf(parts[0]), parts[1], null, parts[2].equals("success") ? true : false, msg);
+			return new LogEntry(time, EventType.valueOf(parts[0]), parts[1], -1, parts[2].equals("success") ? true : false, msg);
 		}
 		else{
 			if (parts.length != 4)
 				throw new RuntimeException("Keychain log entry's format is incorect");
-			String keychain = parts[2];
-			if (keychain.startsWith("<") && keychain.endsWith(">"))
-				keychain = keychain.substring(1, keychain.length()-1);
-			else
-				throw new RuntimeException("Keychain log entry's format is incorrect: keychain name not in brackets <>");
-			return new LogEntry(time, EventType.valueOf(parts[0]), parts[1], keychain, parts[3].equals("success") ? true : false, msg);
+//			String keychain = parts[2];
+//			if (keychain.startsWith("<") && keychain.endsWith(">"))
+//				keychain = keychain.substring(1, keychain.length()-1);
+//			else
+//				throw new RuntimeException("Keychain log entry's format is incorrect: keychain name not in brackets <>");
+			return new LogEntry(time, EventType.valueOf(parts[0]), parts[1], Long.parseLong(parts[2]), parts[3].equals("success") ? true : false, msg);
 		}
 	}
 	
@@ -98,15 +98,15 @@ public class AuditLog {
 		public long time;
 		public EventType event;
 		public String username;
-		public String keychainName;
+		public long keychainId;
 		public boolean status;
 		public String message;
 		
-		public LogEntry(long time, EventType event, String username, String keychainName, boolean status, String message){
+		public LogEntry(long time, EventType event, String username, long keychainId, boolean status, String message){
 			this.time = time;
 			this.event = event;
 			this.username = username;
-			this.keychainName = keychainName;
+			this.keychainId = keychainId;
 			this.status = status;
 			this.message = message;
 		}
@@ -117,8 +117,8 @@ public class AuditLog {
 				return String.format("%s %s %s %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), 
 						event, username, status ? "success" : "failure", message);
 			else
-				return String.format("%s %s %s <%s> %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), 
-						event, username, keychainName, status ? "success" : "failure", message);
+				return String.format("%s %s %s %d %s: %s", DATE_FORMAT.format(new Date(System.currentTimeMillis())), 
+						event, username, keychainId, status ? "success" : "failure", message);
 		}
 		
 	}

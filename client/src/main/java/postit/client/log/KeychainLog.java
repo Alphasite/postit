@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import postit.shared.AuditLog;
@@ -36,7 +35,7 @@ public class KeychainLog {
 		System.out.println(log.getAbsolutePath());
 	}
 	
-	public void addCreateKeychainLogEntry(String username, boolean status, String keychainName, String message){
+	public void addCreateKeychainLogEntry(String username, boolean status, long keychainId, String message){
 		if (! status) return; // do not care about failed creations
 		
 		// Appends new log to file
@@ -47,13 +46,13 @@ public class KeychainLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_CREATE, username, keychainName, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_CREATE, username, keychainId, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}
 	}
 	
-	public void addUpdateKeychainLogEntry(String username, boolean status, String keychainName, String message){
+	public void addUpdateKeychainLogEntry(String username, boolean status, long keychainId, String message){
 		if (! status) return;
 		
 		// Appends new log to file
@@ -64,13 +63,13 @@ public class KeychainLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_UPDATE, username, keychainName, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_UPDATE, username, keychainId, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}
 	}
 	
-	public void addRemoveKeychainLogEntry(String username, boolean status, String keychainName, String message){
+	public void addRemoveKeychainLogEntry(String username, boolean status, long keychainId, String message){
 		if (! status) return;
 		
 		// Appends new log to file
@@ -81,13 +80,13 @@ public class KeychainLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_REMOVE, username, keychainName, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_REMOVE, username, keychainId, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}
 	}
 	
-	public void addCreateShareLogEntry(String username, boolean status, String keychainName, String message){
+	public void addCreateShareLogEntry(String username, boolean status, long keychainId, String message){
 		if (! status) return;
 		
 		// Appends new log to file
@@ -98,13 +97,13 @@ public class KeychainLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_ADD, username, keychainName, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_ADD, username, keychainId, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}
 	}
 	
-	public void addRemoveShareLogEntry(String username, boolean status, String keychainName, String message){
+	public void addRemoveShareLogEntry(String username, boolean status, long keychainId, String message){
 		if (! status) return;
 		
 		// Appends new log to file
@@ -115,13 +114,13 @@ public class KeychainLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_REMOVE, username, keychainName, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_REMOVE, username, keychainId, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}
 	}
 	
-	public void addUpdateShareLogEntry(String username, boolean status, String keychainName, String message){
+	public void addUpdateShareLogEntry(String username, boolean status, long keychainId, String message){
 		if (! status) return;
 		
 		// Appends new log to file
@@ -132,20 +131,20 @@ public class KeychainLog {
 			e.printStackTrace();
 		}
 		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_UPDATE, username, keychainName, status, message);
+			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_UPDATE, username, keychainId, status, message);
 			writer.println(entry.toString());
 			writer.close();
 		}
 	}
 	
-	public List<LogEntry> getKeychainLogEntries(String keychainName){
+	public List<LogEntry> getKeychainLogEntries(long keychainId){
 		List<LogEntry> entries = new ArrayList<LogEntry>();
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(new File(KEYCHAIN_LOG)));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);
-				if (keychainName == null || entry.keychainName.equals(keychainName)){
+				if (keychainId == -1 || entry.keychainId == keychainId){
 					entries.add(entry);
 				}
 				line = reader.readLine();
@@ -168,11 +167,11 @@ public class KeychainLog {
 	
 	public static void main(String[] args){
 		KeychainLog kl = new KeychainLog();
-		kl.addCreateKeychainLogEntry("ning", true, "keychain1", "added keychain keychain1");
-		kl.addCreateKeychainLogEntry("ning", false, "keychain2", "added keychain2");
-		kl.addCreateKeychainLogEntry("ning", true, "keychain3", "added keychain3");
-		kl.addUpdateKeychainLogEntry("ning", true, "keychain1", "updated keychain1");
-		kl.printLog(kl.getKeychainLogEntries("keychain1"));
+		kl.addCreateKeychainLogEntry("ning", true, 1, "added keychain keychain1");
+		kl.addCreateKeychainLogEntry("ning", false, 2, "added keychain2");
+		kl.addCreateKeychainLogEntry("ning", true, 3, "added keychain3");
+		kl.addUpdateKeychainLogEntry("ning", true, 1, "updated keychain1");
+		kl.printLog(kl.getKeychainLogEntries(1));
 	}
 	
 }

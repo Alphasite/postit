@@ -165,7 +165,7 @@ public class KeychainViewer {
                     	Keychain key = getActiveKeychain();
                     	Optional<Account> act = directoryController.getAccount();
                     	if (act.isPresent()){
-                    		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+                    		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
                     				String.format("Password %s added to keychain <%s>", newtitle.getText(), key.getName()));
                     	}
                     }
@@ -205,7 +205,7 @@ public class KeychainViewer {
                 	Keychain key = selectedPassword.keychain;
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
                 				String.format("Password %s removed from keychain <%s>", selectedPassword.identifier, key.getName()));
                 	}
                 }
@@ -220,7 +220,7 @@ public class KeychainViewer {
                 if (success){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, newDestination.getName(), 
+                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, newDestination.getServerId(), 
                 				String.format("Password %s added to keychain <%s>", selectedPassword.identifier, newDestination.getName()));
                 	}
                 }
@@ -241,7 +241,7 @@ public class KeychainViewer {
             		Keychain key = selectedPassword.keychain;
             		Optional<Account> act = directoryController.getAccount();
             		if (act.isPresent()){
-            			keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+            			keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
             					String.format("Password %s removed from keychain <%s>", selectedPassword.identifier, key.getName()));
             		}
             	}
@@ -315,7 +315,8 @@ public class KeychainViewer {
                 if (directoryController.createKeychain(k)){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, k, String.format("Keychain <%s> created.", k));
+                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, getActiveKeychain().getServerId(), 
+                				String.format("Keychain <%s> created.", k));
                 	}
                 }
             }
@@ -334,7 +335,7 @@ public class KeychainViewer {
                 if (directoryController.renameKeychain(getActiveKeychain(),newName)){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, oldName, 
+                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, getActiveKeychain().getServerId(), 
                 				String.format("Keychain <%s> changed name to <%s>.", oldName, newName));
                 	}
                 }
@@ -352,7 +353,7 @@ public class KeychainViewer {
                 if (directoryController.deleteKeychain(key)){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, key.getName(), 
+                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
                 				String.format("Keychain <%s> deleted.", key.getName()));
                 	}
                 }
@@ -414,7 +415,7 @@ public class KeychainViewer {
                             String user = null;
                             if (act.isPresent())
                             	user = act.get().getUsername();
-                            keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getName(), 
+                            keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getServerId(), 
                             		String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username));
                         }
                         else{
@@ -463,7 +464,7 @@ public class KeychainViewer {
                 		if (act.isPresent())
                 			user = act.get().getUsername();
                 		
-                		keyLog.addRemoveShareLogEntry(user, true, getActiveKeychain().getName(), 
+                		keyLog.addRemoveShareLogEntry(user, true, getActiveKeychain().getServerId(), 
                 				String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), unshareUser));
                 	}
                 }
@@ -505,17 +506,17 @@ public class KeychainViewer {
 
         showKeyLogs = new JMenuItem("Keychain logs");
         showKeyLogs.addActionListener(e->{
-            String keyname = getActiveKeychain().getName();
+            long keyId = getActiveKeychain().getServerId();
 
             String[] columnNames = {"Time","Event","Username","Keychain Name","Status","Message"};
-            List<AuditLog.LogEntry> logEntries = keyLog.getKeychainLogEntries(keyname);
+            List<AuditLog.LogEntry> logEntries = keyLog.getKeychainLogEntries(keyId);
             String[][] data = new String[logEntries.size()][6];
 
             for (int i = 0; i < logEntries.size(); i++) {
                 data[i][0] = String.valueOf(new Timestamp(logEntries.get(i).time));
                 data[i][1] = String.valueOf(logEntries.get(i).event);
                 data[i][2] = String.valueOf(logEntries.get(i).username);
-                data[i][3] = String.valueOf(logEntries.get(i).keychainName);
+                data[i][3] = String.valueOf(logEntries.get(i).keychainId);
                 data[i][4] = String.valueOf(logEntries.get(i).status);
                 data[i][5] = String.valueOf(logEntries.get(i).message);
             }
@@ -557,7 +558,7 @@ public class KeychainViewer {
             Panel panel = new Panel();
             panel.add(scrollPane);
 
-            JOptionPane.showConfirmDialog(frame,panel,keyname+" Log",
+            JOptionPane.showConfirmDialog(frame,panel,keyId+" Log",
                     JOptionPane.CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
         });
         keychainMenu.add(showKeyLogs);

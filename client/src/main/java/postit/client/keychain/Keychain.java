@@ -56,4 +56,9 @@ public class Keychain {
     public boolean delete() {
         return this.directoryEntry.delete();
     }
+    
+    public long getServerId(){
+    	System.out.println("keyid " + directoryEntry.getServerid());
+    	return directoryEntry.getServerid();
+    }
 }
