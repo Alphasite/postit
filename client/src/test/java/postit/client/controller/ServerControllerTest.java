@@ -95,7 +95,7 @@ public class ServerControllerTest {
         serverController = new ServerController(clientToServer);
         assertTrue(serverController.setDirectoryController(directoryController));
 
-        serverController.addUser(account, "test@test.com", "te", "st", "8000000000");
+        serverController.addUser(account, "test@test.com", "te", "st", "8000000000", "");
     }
 
     @After
@@ -187,8 +187,8 @@ public class ServerControllerTest {
         LOGGER.info("----addUser");
 
         Account testAccount = new Account(username, password);
-        assertTrue(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber));
-        assertFalse(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber));
+        assertTrue(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber, ""));
+        assertFalse(serverController.addUser(testAccount, email, firstname, lastname, phoneNumber, ""));
         return testAccount;
     }
 

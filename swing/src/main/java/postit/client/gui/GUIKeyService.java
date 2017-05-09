@@ -11,10 +11,12 @@ import postit.shared.Crypto;
 import postit.shared.EFactorAuth;
 
 import javax.crypto.SecretKey;
+import javax.json.JsonObjectBuilder;
 import javax.security.auth.DestroyFailedException;
 import javax.swing.*;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Created by nishadmathur on 27/2/17.
@@ -175,12 +177,14 @@ public class GUIKeyService implements KeyService {
                 			//TODO send text
                 			String phoneNumber=sc.getPhoneNumber(newAccount);
                 			new EFactorAuth().sendMsg(phoneNumber);
-                			String pin = null;
-                			while (pin == null){
-                				pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
-                			}
+                            String pin = null;
+                			if (sc.sendGetKeypairRequest(newAccount)) {
+                                while (pin == null){
+                                    pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
+                                }
+                            }
 
-                			if (new EFactorAuth().verifyMsg(phoneNumber,pin)) {
+                			if (new EFactorAuth().verifyMsg(phoneNumber, pin)) {
                 				JOptionPane.showConfirmDialog(
                 						null,
                 						"Please ensure your keypair is in the data directory. Select any option to proceed"
@@ -222,7 +226,9 @@ public class GUIKeyService implements KeyService {
                             && LoginPanel.isValidEmailAddress(email)
                             && LoginPanel.isValidPhoneNumber(phone)) {
                         Account newAccount = new Account(username, pass1);
-                        if (sc.addUser(newAccount, email, first, last, phone)) {
+                        Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs();
+
+                        if (sc.addUser(newAccount, email, first, last, phone, keypair.get().build().toString())) {
                             if (backingStore.writeKeypair(newAccount.getEncryptionKeypair())) {
                                 JOptionPane.showMessageDialog(
                                     null,
