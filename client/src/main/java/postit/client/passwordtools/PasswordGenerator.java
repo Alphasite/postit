@@ -28,7 +28,7 @@ public class PasswordGenerator{
     private String SYMBOLS = "!@#$%^&*_=+-/.?<>)";
 
 
-    public PasswordGenerator(){
+    public PasswordGenerator() {
         passwordlength=8;
         useUpper=true;
         useLower=true;
@@ -36,7 +36,7 @@ public class PasswordGenerator{
         useSymbols=true;
     }
 
-    public PasswordGenerator(JsonObject object) {
+    public void initFrom(JsonObject object) {
         passwordlength = object.getInt("length");
         useUpper = object.getBoolean("use-upper");
         useLower = object.getBoolean("use-lower");
