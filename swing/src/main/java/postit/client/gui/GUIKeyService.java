@@ -241,7 +241,16 @@ public class GUIKeyService implements KeyService {
                         Account newAccount = new Account(username, pass1);
                         Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs();
 
-                        if (sc.addUser(newAccount, email, first, last, phone, keypair.get().build().toString())) {
+                        if (sc.addUser(
+                            newAccount,
+                            email,
+                            first,
+                            last,
+                            phone,
+                            keypair.get().build().toString(),
+                            Crypto.serialiseObject(newAccount.getSigningKeypair().getPublic()))
+                        ) {
+
                             if (backingStore.writeKeypair(newAccount.getEncryptionKeypair())) {
                                 JOptionPane.showMessageDialog(
                                     null,
