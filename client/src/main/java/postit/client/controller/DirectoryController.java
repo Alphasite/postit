@@ -55,10 +55,10 @@ public class DirectoryController {
         return directory.createKeychain(keyService.getMasterKey(), keychainName) && store.save();
     }
 
-    public boolean createPassword(Keychain keychain, String identifier, String username, SecretKey key) {
+    public boolean createPassword(Keychain keychain, String title, String username, SecretKey key) {
         Password password = new Password(UUID.randomUUID().toString(), key, keychain);
         password.metadata.put("username", username);
-        password.metadata.put("identifier", identifier);
+        password.metadata.put("title", title);
         password.markUpdated();
         return keychain.passwords.add(password) && store.save();
     }
@@ -70,7 +70,7 @@ public class DirectoryController {
     }
 
     public boolean updatePasswordTitle(Password pass, String title) {
-        pass.metadata.put("identifier", title);
+        pass.metadata.put("title", title);
         pass.markUpdated();
         return store.save();
     }

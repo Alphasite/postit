@@ -20,7 +20,7 @@ public class LogController {
 	}
 
 	public void addAuthenticationLogEntry(String username, boolean status, String message){
-		db.addLoginEntry(new LogEntry(System.currentTimeMillis(), EventType.AUTHENTICATE, username, status, message));
+		db.addLoginEntry(new LogEntry(System.currentTimeMillis(), EventType.AUTHENTICATE, username, -1, status, message));
 	}
 	
 	public int getLatestNumFailedLogins(String username){

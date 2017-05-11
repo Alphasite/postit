@@ -5,6 +5,7 @@ import postit.client.controller.ServerController;
 import postit.client.gui.GUIKeyService;
 import postit.client.gui.KeychainViewer;
 import postit.client.log.AuthenticationLog;
+import postit.client.log.KeychainLog;
 import postit.shared.Crypto;
 import postit.client.communication.Client;
 
@@ -33,7 +34,8 @@ public class GuiApp {
         }
 
         invokeLater(() -> {
-            KeychainViewer kv = new KeychainViewer(serverController, backingStore, keyService);
+        	KeychainLog keyLog = new KeychainLog();
+            KeychainViewer kv = new KeychainViewer(serverController, backingStore, keyService, keyLog, authLog);
         });
     }
 }

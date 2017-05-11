@@ -127,9 +127,11 @@ public class KeychainHandlerTest {
 		
 		String username = "mc";
 
-		assertThat(ah.addAccount("test1", "cs5431", "test1@cornell.edu", "m", "c", "", "8000000000"), is(true));
-		assertThat(ah.addAccount("test2", "cs5431", "test2@cornell.edu", "m", "c", "", "8000000000"), is(true));
-		assertThat(ah.addAccount("test3", "cs5431", "test3@cornell.edu", "m", "c", "", "8000000000"), is(true));
+
+		assertThat(ah.addAccount("test1", "cs5431", "test1@cornell.edu", "m", "c","keypair", "8000000000"), is(true));
+		assertThat(ah.addAccount("test2", "cs5431", "test2@cornell.edu", "m", "c","keypair", "8000000000"), is(true));
+		assertThat(ah.addAccount("test3", "cs5431", "test3@cornell.edu", "m", "c","keypair", "8000000000"), is(true));
+
 
 		int id1 = testAddKeychain(kh, username, "netflix", true);
 		testUpdateKeychain(kh, username, id1, null, "test1", true);

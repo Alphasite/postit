@@ -154,7 +154,7 @@ public class DirectoryControllerTest {
 
         List<Password> passwords = controller.getPasswords(keychain);
         List<String> passwordNames = passwords.stream()
-                .map(password -> password.getIdentifier())
+                .map(password -> password.getTitle())
                 .collect(Collectors.toList());
 
         assertThat(passwords.size(), is(2));
@@ -276,7 +276,7 @@ public class DirectoryControllerTest {
 
         List<Password> passwords = controller.getPasswords(keychain);
         List<String> passwordNames = passwords.stream()
-                .map(password -> password.getIdentifier())
+                .map(password -> password.getTitle())
                 .collect(Collectors.toList());
 
         assertThat(passwords.size(), is(2));
@@ -284,7 +284,7 @@ public class DirectoryControllerTest {
         assertThat(passwordNames, hasItem("password6"));
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
     }
@@ -301,12 +301,12 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.updatePassword(
                     password,
                     Crypto.secretKeyFromBytes(("secret" + (number + 2)).getBytes())
@@ -314,7 +314,7 @@ public class DirectoryControllerTest {
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number + 2));
         }
     }
@@ -331,12 +331,12 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.updatePassword(
                     password,
                     Crypto.secretKeyFromBytes(("secret" + (number + 2)).getBytes())
@@ -347,7 +347,7 @@ public class DirectoryControllerTest {
         passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number + 2));
         }
     }
@@ -433,12 +433,12 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(3));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         Password password11 = passwords.stream()
-                .filter(password -> password.getIdentifier().equals("password11"))
+                .filter(password -> password.getTitle().equals("password11"))
                 .findAny()
                 .get();
 
@@ -448,12 +448,12 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(2));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         List<String> names = passwords.stream()
-                .map(password -> password.getIdentifier())
+                .map(password -> password.getTitle())
                 .collect(Collectors.toList());
 
         assertThat(names.size(), is(2));
@@ -475,12 +475,12 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(3));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         Password password11 = passwords.stream()
-                .filter(password -> password.getIdentifier().equals("password11"))
+                .filter(password -> password.getTitle().equals("password11"))
                 .findAny()
                 .get();
 
@@ -491,12 +491,12 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(2));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         List<String> names = passwords.stream()
-                .map(Password::getIdentifier)
+                .map(Password::getTitle)
                 .collect(Collectors.toList());
 
         assertThat(names.size(), is(2));
@@ -604,7 +604,7 @@ public class DirectoryControllerTest {
 
         Password password1 = controller.getPasswords(controller.getKeychain("old").get())
                 .stream()
-                .filter(password -> password.getIdentifier().equals("json"))
+                .filter(password -> password.getTitle().equals("json"))
                 .findAny()
                 .get();
 
@@ -623,7 +623,7 @@ public class DirectoryControllerTest {
         SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
         Keychain keychain1 = new Keychain(entry1);
         Password passwordToMerge = new Password(password1.uuid, expectedPasswordForJson, keychain1);
-        passwordToMerge.metadata.put("identifier", "json");
+        passwordToMerge.metadata.put("title", "json");
         keychain1.passwords.add(passwordToMerge);
 
         DirectoryEntry entry = controller.getKeychains().get(0);
@@ -645,8 +645,8 @@ public class DirectoryControllerTest {
         assertThat(oldEntry.getServerid(), is(-1L));
         assertThat(oldKeychain.passwords.size(), is(2));
         for (Password password : oldKeychain.passwords) {
-            assertThat(password.getIdentifier(), anyOf(is("json"), is("test")));
-            switch (password.getIdentifier()) {
+            assertThat(password.getTitle(), anyOf(is("json"), is("test")));
+            switch (password.getTitle()) {
                 case "json":
                     assertThat(password.getPasswordAsString(), equalTo(new String(Crypto.secretKeyToBytes(expectedPasswordForJson))));
                     break;
@@ -680,7 +680,7 @@ public class DirectoryControllerTest {
 
         Password password1 = controller.getPasswords(controller.getKeychain("old").get())
                 .stream()
-                .filter(password -> password.getIdentifier().equals("json"))
+                .filter(password -> password.getTitle().equals("json"))
                 .findAny()
                 .get();
 
@@ -699,7 +699,7 @@ public class DirectoryControllerTest {
         SecretKey expectedPasswordForJson = Crypto.secretKeyFromBytes("json".getBytes());
         Keychain keychain1 = new Keychain(entry1);
         Password passwordToMerge = new Password(password1.uuid, expectedPasswordForJson, keychain1);
-        passwordToMerge.metadata.put("identifier", "json");
+        passwordToMerge.metadata.put("title", "json");
         keychain1.passwords.add(passwordToMerge);
 
         DirectoryEntry entry = controller.getKeychains().get(0);
@@ -723,8 +723,8 @@ public class DirectoryControllerTest {
         assertThat(oldEntry.getServerid(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(2));
         for (Password password : oldKeychain.passwords) {
-            assertThat(password.getIdentifier(), anyOf(is("json"), is("test")));
-            switch (password.getIdentifier()) {
+            assertThat(password.getTitle(), anyOf(is("json"), is("test")));
+            switch (password.getTitle()) {
                 case "json":
                     assertThat(password.getPasswordAsString(), equalTo(new String(Crypto.secretKeyToBytes(expectedPasswordForJson))));
                     break;
@@ -752,7 +752,7 @@ public class DirectoryControllerTest {
 
         Keychain keychain1 = new Keychain(entry1);
         Password password = new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1);
-        password.metadata.put("identifier", "json2");
+        password.metadata.put("title", "json2");
         keychain1.passwords.add(password);
 
         assertThat(controller.createKeychain(
@@ -770,7 +770,7 @@ public class DirectoryControllerTest {
         assertThat(oldEntry.getServerid(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(1));
         assertThat(oldKeychain.passwords.get(0).uuid, is("json"));
-        assertThat(oldKeychain.passwords.get(0).getIdentifier(), is("json2"));
+        assertThat(oldKeychain.passwords.get(0).getTitle(), is("json2"));
         assertThat(oldKeychain.passwords.get(0).getPasswordAsString(), is("json"));
     }
 
@@ -790,7 +790,7 @@ public class DirectoryControllerTest {
 
         Keychain keychain1 = new Keychain(entry1);
         Password password = new Password("json", Crypto.secretKeyFromBytes("json".getBytes()), keychain1);
-        password.metadata.put("identifier", "json2");
+        password.metadata.put("title", "json2");
         keychain1.passwords.add(password);
 
         assertThat(controller.createKeychain(
@@ -810,7 +810,7 @@ public class DirectoryControllerTest {
         assertThat(oldEntry.getServerid(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(1));
         assertThat(oldKeychain.passwords.get(0).uuid, is("json"));
-        assertThat(oldKeychain.passwords.get(0).getIdentifier(), is("json2"));
+        assertThat(oldKeychain.passwords.get(0).getTitle(), is("json2"));
         assertThat(oldKeychain.passwords.get(0).getPasswordAsString(), is("json"));
     }
 
@@ -826,7 +826,7 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "7")) {
                 controller.updateMetadataEntry(password, "test", "banana");
@@ -834,7 +834,7 @@ public class DirectoryControllerTest {
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(true));
                 assertThat(password.metadata.get("test"), is("banana"));
@@ -854,7 +854,7 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "7")) {
                 controller.updateMetadataEntry(password, "test", "banana");
@@ -864,7 +864,7 @@ public class DirectoryControllerTest {
         reloadPersistent();
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(true));
                 assertThat(password.metadata.get("test"), is("banana"));
@@ -884,7 +884,7 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "7")) {
                 controller.updateMetadataEntry(password, "test", "banana");
@@ -893,7 +893,7 @@ public class DirectoryControllerTest {
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(true));
                 assertThat(password.metadata.containsKey("test2"), is(true));
@@ -904,7 +904,7 @@ public class DirectoryControllerTest {
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(true));
                 assertThat(password.metadata.containsKey("test2"), is(true));
@@ -926,7 +926,7 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "7")) {
                 controller.updateMetadataEntry(password, "test", "banana");
@@ -935,7 +935,7 @@ public class DirectoryControllerTest {
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(true));
                 assertThat(password.metadata.containsKey("test2"), is(true));
@@ -948,7 +948,7 @@ public class DirectoryControllerTest {
         reloadPersistent();
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(true));
                 assertThat(password.metadata.containsKey("test2"), is(true));
@@ -972,12 +972,12 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(3));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         Password password11 = passwords.stream()
-                .filter(password -> password.getIdentifier().equals("password11"))
+                .filter(password -> password.getTitle().equals("password11"))
                 .findAny()
                 .get();
 
@@ -987,7 +987,7 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(2));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "10")) {
                 controller.updateMetadataEntry(password, "test", "banana");
@@ -996,7 +996,7 @@ public class DirectoryControllerTest {
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "10")) {
                 assertThat(controller.removeMetadataEntryIfExists(password, "test"), is(true));
@@ -1004,7 +1004,7 @@ public class DirectoryControllerTest {
         }
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(false));
                 assertThat(password.metadata.containsKey("test2"), is(true));
@@ -1027,12 +1027,12 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(3));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             assertThat(controller.getPassword(password), is("secret" + number));
         }
 
         Password password11 = passwords.stream()
-                .filter(password -> password.getIdentifier().equals("password11"))
+                .filter(password -> password.getTitle().equals("password11"))
                 .findAny()
                 .get();
 
@@ -1042,7 +1042,7 @@ public class DirectoryControllerTest {
 
         assertThat(passwords.size(), is(2));
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "10")) {
                 controller.updateMetadataEntry(password, "test", "banana");
@@ -1053,7 +1053,7 @@ public class DirectoryControllerTest {
         reloadPersistent();
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
 
             if (Objects.equals(number, "10")) {
                 assertThat(controller.removeMetadataEntryIfExists(password, "test"), is(true));
@@ -1063,7 +1063,7 @@ public class DirectoryControllerTest {
         reloadPersistent();
 
         for (Password password : passwords) {
-            String number = password.getIdentifier().substring(8);
+            String number = password.getTitle().substring(8);
             if (Objects.equals(number, "7")) {
                 assertThat(password.metadata.containsKey("test"), is(false));
                 assertThat(password.metadata.containsKey("test2"), is(true));
@@ -1139,7 +1139,7 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            if (password.getIdentifier().equals("password8")) {
+            if (password.getTitle().equals("password8")) {
                 controller.updatePasswordTitle(password, "banana");
             }
         }
@@ -1147,7 +1147,7 @@ public class DirectoryControllerTest {
         passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            assertThat(password.getIdentifier(), anyOf(is("banana"), is("password7")));
+            assertThat(password.getTitle(), anyOf(is("banana"), is("password7")));
         }
     }
 
@@ -1163,7 +1163,7 @@ public class DirectoryControllerTest {
         List<Password> passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            if (password.getIdentifier().equals("password8")) {
+            if (password.getTitle().equals("password8")) {
                 controller.updatePasswordTitle(password, "banana");
             }
         }
@@ -1173,7 +1173,7 @@ public class DirectoryControllerTest {
         passwords = controller.getPasswords(keychain);
 
         for (Password password : passwords) {
-            assertThat(password.getIdentifier(), anyOf(is("banana"), is("password7")));
+            assertThat(password.getTitle(), anyOf(is("banana"), is("password7")));
         }
     }
 

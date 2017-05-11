@@ -2,14 +2,20 @@ package postit.client.gui;
 
 
 import postit.client.controller.DirectoryController;
+import postit.client.keychain.Account;
 import postit.client.keychain.Keychain;
 import postit.client.keychain.Password;
+import postit.client.log.KeychainLog;
 import postit.shared.Crypto;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+
+import org.bouncycastle.util.Arrays;
+
 import java.awt.*;
 import java.util.Map;
+import java.util.Optional;
 /**
  * Created by jackielaw on 2/26/17.
  */
@@ -23,7 +29,7 @@ public class PasswordViewer {
     private JButton toggleView;
     private JButton saveButton;
 
-    public PasswordViewer(KeychainViewer kv, DirectoryController c, Keychain k, Password p) {
+    public PasswordViewer(KeychainViewer kv, DirectoryController c, KeychainLog kl, Keychain k, Password p) {
         // TODO: place custom component creation code here
         titleField = new JTextField();
         userField = new JTextField();
@@ -41,17 +47,51 @@ public class PasswordViewer {
                 passField.setEchoChar((char)0);
         });
         saveButton.addActionListener(e -> {
+        	
+        	Optional<Account> act = c.getAccount();
+        	String username = null;
+        	if (act.isPresent()){
+        		username = act.get().getUsername();
+        	}
+        	
+        	String oldTitle = p.identifier;
+        	long keyId = k.getServerId();
+        	String keyName = k.getName();
+        	
             String newTitle = String.valueOf(titleField.getText());
-            c.updatePasswordTitle(p, newTitle);
+            boolean success = c.updatePasswordTitle(p, newTitle);
+            
+            if (success && username != null && !newTitle.equals(oldTitle)){
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
+            			String.format("Password %s changed name to %s in keychain <%s>", oldTitle, newTitle, keyName));
+            }
 
+            String oldUser = p.metadata.get("username");
             String newUser = String.valueOf(userField.getText());
-            c.updateMetadataEntry(p,"username",newUser);
-
+            success = c.updateMetadataEntry(p,"username",newUser);
+            
+            if (success && username != null && oldUser != null && !newUser.equals(oldUser)){
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
+            			String.format("Password %s changed username in keychain <%s>", p.identifier, keyName));
+            }
+            
+            String oldComments = p.metadata.get("comments");
             String newComments = String.valueOf(comments.getText());
-            c.updateMetadataEntry(p,"comments",newComments);
+            success = c.updateMetadataEntry(p,"comments",newComments);
+            
+            if (success && username != null && !newComments.equals(oldComments)){
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
+            			String.format("Password %s changed comments in keychain <%s>", p.identifier, keyName));
+            }
 
+            byte[] oldKey = p.password.getEncoded();
             String newKey = String.valueOf(passField.getPassword());
-            c.updatePassword(p, Crypto.secretKeyFromBytes(newKey.getBytes()));
+            success = c.updatePassword(p, Crypto.secretKeyFromBytes(newKey.getBytes()));
+            
+            if (success && username != null && !Arrays.areEqual(oldKey, newKey.getBytes())){
+            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
+            			String.format("Password %s changed password value in keychain <%s>", p.identifier, keyName));
+            }
 
             frame.dispose();
             kv.refreshTabbedPanes();
