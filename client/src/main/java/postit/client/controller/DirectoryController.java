@@ -111,8 +111,8 @@ public class DirectoryController {
     }
 
     public boolean deletePassword(Password p) {
-        p.markUpdated();
-        return p.delete() && store.save();
+        p.delete();
+        return store.save();
     }
 
     public String getPassword(Password p) {
@@ -225,8 +225,14 @@ public class DirectoryController {
             return Optional.empty();
         }
 
+        Optional<Account> account = getAccount();
+        if (!account.isPresent()) {
+            LOGGER.warning("No account availible; cant build KDO");
+            return Optional.empty();
+        }
+
         return new DirectoryKeychain(entry.getServerid(), keychain.get().dump().build(), entry.dump().build())
-                .dump(entry);
+                .dump(entry, account.get());
     }
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {

@@ -76,7 +76,7 @@ public class RequestHandlerTest {
 	}
 
 	public static void testCreateAccount(RequestHandler rh, Account account, String email) {
-		String req = RequestMessenger.createAddUserMessage(account, email, "", "", "", "");
+		String req = RequestMessenger.createAddUserMessage(account, email, "", "", "", "", "");
 		String res = rh.handleRequest(req);
 		System.out.println(res);
 		JSONObject js = new JSONObject(res);

@@ -34,7 +34,7 @@ public class DirectoryEntry {
 
     public LocalDateTime lastModified;
 
-    public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, BackingStore backingStore, RSAPublicKey publicKey) {
+    public DirectoryEntry(String name, SecretKey encryptionKey, Directory directory, BackingStore backingStore, RSAPublicKey publicKey, RSAPublicKey signingKey) {
         this.name = name;
         this.setEncryptionKey(encryptionKey);
         this.directory = directory;
@@ -42,7 +42,7 @@ public class DirectoryEntry {
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
         this.uuid = UUID.randomUUID().toString();
-        this.share = new Share(-1, null, true, publicKey, true);
+        this.share = new Share(-1, null, true, publicKey, signingKey, true);
         this.shares = new ArrayList<>();
         this.shares.add(this.share);
     }

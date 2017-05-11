@@ -15,6 +15,7 @@ public class ServerAccount {
     String salt;
     String phoneNumber;
     String keypair;
+    String publickey;
 
     // CONSTRUCTOR
     public ServerAccount(String username, String password, String email, String firstName, String lastName, String phoneNumber) {
@@ -26,7 +27,7 @@ public class ServerAccount {
         this.phoneNumber = phoneNumber;
     }
 
-    public ServerAccount(String username, String password, String email, String firstName, String lastName, String phoneNumber, String keypair) {
+    public ServerAccount(String username, String password, String email, String firstName, String lastName, String phoneNumber, String keypair, String publickey) {
     	this.username = username;
     	this.password = password;
     	this.email = email;
@@ -34,6 +35,7 @@ public class ServerAccount {
     	this.lastName = lastName;
     	this.phoneNumber = phoneNumber;
     	this.keypair = keypair;
+    	this.publickey = publickey;
     }
 
     public ServerAccount(ServerAccount a){
@@ -45,6 +47,7 @@ public class ServerAccount {
     	this.salt = a.salt;
     	this.phoneNumber = a.phoneNumber;
     	this.keypair = a.keypair;
+    	this.publickey = a.publickey;
     }
     
     // GETTERS
@@ -86,6 +89,7 @@ public class ServerAccount {
 
     public String getKeypair() { return this.keypair; }
 
+    public String getPublickey() { return this.publickey; }
 
     // SETTERS
     public void setUsername(String username){
@@ -112,15 +116,31 @@ public class ServerAccount {
 
     public void setKeypair(String keypair) {this.keypair = keypair; }
 
+    public void setPublickey(String publickey) {this.publickey = publickey; }
+
     public void setPhoneNumber(String phoneNumber){
     	this.phoneNumber = phoneNumber;
     }
     public static ServerAccount fromJSONObject(JsonObject act){
         if (act.getString("keypair") != null) {
-            return new ServerAccount(act.getString("username"), act.getString("password"),
-                    act.getString("email"), act.getString("firstname"), act.getString("lastname"), act.getString("phoneNumber"), act.getString("keypair"));
+            return new ServerAccount(
+                    act.getString("username"),
+                    act.getString("password"),
+                    act.getString("email"),
+                    act.getString("firstname"),
+                    act.getString("lastname"),
+                    act.getString("phoneNumber"),
+                    act.getString("keypair"),
+                    act.getString("publickey")
+            );
         }
-    	return new ServerAccount(act.getString("username"), act.getString("password"),
-    			act.getString("email"), act.getString("firstname"), act.getString("lastname"), act.getString("phoneNumber"));
+    	return new ServerAccount(
+    	        act.getString("username"),
+                act.getString("password"),
+    			act.getString("email"),
+                act.getString("firstname"),
+                act.getString("lastname"),
+                act.getString("phoneNumber")
+        );
     }
 }

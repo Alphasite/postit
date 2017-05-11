@@ -45,7 +45,8 @@ public class DirectoryControllerTest {
 
     Account account;
     Share ownerShare;
-    RSAPublicKey publicKey;
+    RSAPublicKey encryptionKey;
+    RSAPublicKey signgingKey;
 
     @Before
     public void setUp() throws Exception {
@@ -64,8 +65,9 @@ public class DirectoryControllerTest {
             controller = new DirectoryController(directory, backingStore, keyService);
 
             account = keyService.getAccount();
-            publicKey = (RSAPublicKey) account.getEncryptionKeypair().getPublic();
-            ownerShare = new Share(-1L, account.getUsername(), true, publicKey, true);
+            encryptionKey = (RSAPublicKey) account.getEncryptionKeypair().getPublic();
+            signgingKey = (RSAPublicKey) account.getSigningKeypair().getPublic();
+            ownerShare = new Share(-1L, account.getUsername(), true, encryptionKey, signgingKey, true);
         } catch (Exception e) {
             Files.deleteIfExists(backingStore.getContainer());
             throw e;
@@ -613,7 +615,8 @@ public class DirectoryControllerTest {
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
                 backingStore,
-                publicKey
+                encryptionKey,
+                signgingKey
         );
 
         entry1.setNonce(new byte[16]);
@@ -689,7 +692,8 @@ public class DirectoryControllerTest {
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
                 backingStore,
-                publicKey
+                encryptionKey,
+                signgingKey
         );
 
         entry1.setNonce(new byte[16]);
@@ -743,7 +747,8 @@ public class DirectoryControllerTest {
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
                 backingStore,
-                publicKey
+                encryptionKey,
+                signgingKey
         );
 
         entry1.setNonce(new byte[16]);
@@ -781,7 +786,8 @@ public class DirectoryControllerTest {
                 Crypto.secretKeyFromBytes("json".getBytes()),
                 directory,
                 backingStore,
-                publicKey
+                encryptionKey,
+                signgingKey
         );
 
         entry1.setNonce(new byte[16]);

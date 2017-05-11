@@ -291,6 +291,20 @@ public class Crypto {
         }
     }
 
+    public static byte[] signer(byte[] data, PrivateKey key) throws Exception {
+        Signature signer = Signature.getInstance("SHA512withRSA/ISO9796-2", "BC");
+        signer.initSign(key);
+        signer.update(data);
+        return signer.sign();
+    }
+
+    public static boolean verify(byte[] data, byte[] signature, PublicKey key) throws Exception {
+        Signature signer = Signature.getInstance("SHA512withRSA/ISO9796-2", "BC");
+        signer.initVerify(key);
+        signer.update(data);
+        return signer.verify(signature);
+    }
+
     public static SSLContext getSSLContext() {
         return sslContext;
     }

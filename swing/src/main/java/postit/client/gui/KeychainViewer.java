@@ -8,8 +8,8 @@ import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
 import postit.client.controller.ServerController;
 import postit.client.keychain.*;
-import postit.client.log.KeychainLog;
 import postit.client.log.AuthenticationLog;
+import postit.client.log.KeychainLog;
 import postit.client.passwordtools.Classify;
 import postit.client.passwordtools.PasswordGenerator;
 import postit.shared.AuditLog;
@@ -25,18 +25,16 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static javax.swing.SwingUtilities.invokeLater;
 
@@ -249,7 +247,7 @@ public class KeychainViewer {
             		Optional<Account> act = directoryController.getAccount();
             		if (act.isPresent()){
             			keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
-            					String.format("Password %s removed from keychain <%s>", selectedPassword.identifier, key.getName()));
+            					String.format("Password %s removed from keychain <%s>", selectedPassword.getTitle(), key.getName()));
             		}
             	}
                 refreshTabbedPanes();
@@ -275,11 +273,16 @@ public class KeychainViewer {
                 // save to file
                 String path = file.getPath();
 
-                RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getEncryptionKeypair().getPublic();
-                X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
+                RSAPublicKey encryptionKey = (RSAPublicKey) directoryController.getAccount().get().getEncryptionKeypair().getPublic();
+                RSAPublicKey signingKey = (RSAPublicKey) directoryController.getAccount().get().getSigningKeypair().getPublic();
 
-                try {
-                    Files.write(Paths.get(path), x509EncodedKeySpec.getEncoded());
+                X509EncodedKeySpec x509EncodedEncryptionKeySpec = new X509EncodedKeySpec(encryptionKey.getEncoded());
+                X509EncodedKeySpec x509EncodedSingingKeySpec = new X509EncodedKeySpec(signingKey.getEncoded());
+
+                try (PrintWriter writer = new PrintWriter(file)) {
+                    Base64.Encoder encoder = Base64.getEncoder();
+                    writer.println(encoder.encodeToString(x509EncodedEncryptionKeySpec.getEncoded()));
+                    writer.println(encoder.encodeToString(x509EncodedSingingKeySpec.getEncoded()));
                 } catch (IOException e1) {
                     JOptionPane.showConfirmDialog(frame, "Unable to write to location: "+path);
                 }
@@ -410,12 +413,19 @@ public class KeychainViewer {
 //                    String readWrite = (String)priv.getSelectedItem();
                     //Try to read public key
                     try {
-                        byte[] keyBytes = Files.readAllBytes(file[0].toPath());
-                        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-                        KeyFactory kf = KeyFactory.getInstance("RSA");
-                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
+                        Base64.Decoder decoder = Base64.getDecoder();
+                        List<String> keyLines = Files.readAllLines(file[0].toPath());
 
-                        Share newshare = new Share(-1L,username,readWrite, publicKey, false);
+                        X509EncodedKeySpec spec;
+                        KeyFactory kf = KeyFactory.getInstance("RSA");
+
+                        spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(0)));
+                        RSAPublicKey encryptionKey = (RSAPublicKey) kf.generatePublic(spec);
+
+                        spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(1)));
+                        RSAPublicKey signingKey = (RSAPublicKey) kf.generatePublic(spec);
+
+                        Share newshare = new Share(-1L, username, readWrite, encryptionKey, signingKey, false);
 
                         boolean success = directoryController.shareKeychain(activeDE,newshare);
                         if(success){

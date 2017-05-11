@@ -81,7 +81,8 @@ public class Directory {
                 encryptionKey,
                 this,
                 backingStore,
-                (RSAPublicKey) account.getEncryptionKeypair().getPublic()
+                (RSAPublicKey) account.getEncryptionKeypair().getPublic(),
+                (RSAPublicKey) account.getSigningKeypair().getPublic()
         );
 
         entry.setOwner(account.getUsername());

@@ -1,10 +1,9 @@
 package postit.server.controller;
 
-import java.security.SecureRandom;
+import postit.server.model.ServerAccount;
 
 import javax.json.JsonObject;
-
-import postit.server.model.ServerAccount;
+import java.security.SecureRandom;
 
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
@@ -49,8 +48,8 @@ public class AccountHandler {
 	 * @param lastname
 	 * @return
 	 */
-	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname, String keypair, String phoneNumber) {
-		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber, keypair));
+	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname, String keypair, String publickey, String phoneNumber) {
+		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber, keypair, publickey));
 	}
 
 	public boolean addAccount(ServerAccount serverAccount){

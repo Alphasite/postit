@@ -74,9 +74,8 @@ public class Password {
         return metadata.get("title");
     }
 
-    public boolean delete() {
-        this.keychain.passwords.remove(this);
-        return true;
+    public void delete() {
+        this.keychain.delete(this);
     }
 
     @Override

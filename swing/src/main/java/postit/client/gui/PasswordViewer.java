@@ -1,6 +1,7 @@
 package postit.client.gui;
 
 
+import org.bouncycastle.util.Arrays;
 import postit.client.controller.DirectoryController;
 import postit.client.keychain.Account;
 import postit.client.keychain.Keychain;
@@ -10,9 +11,6 @@ import postit.shared.Crypto;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-
-import org.bouncycastle.util.Arrays;
-
 import java.awt.*;
 import java.util.Map;
 import java.util.Optional;
@@ -54,7 +52,7 @@ public class PasswordViewer {
         		username = act.get().getUsername();
         	}
         	
-        	String oldTitle = p.identifier;
+        	String oldTitle = p.getTitle();
         	long keyId = k.getServerId();
         	String keyName = k.getName();
         	
@@ -72,7 +70,7 @@ public class PasswordViewer {
             
             if (success && username != null && oldUser != null && !newUser.equals(oldUser)){
             	kl.addUpdateKeychainLogEntry(username, true, keyId, 
-            			String.format("Password %s changed username in keychain <%s>", p.identifier, keyName));
+            			String.format("Password %s changed username in keychain <%s>", p.getTitle(), keyName));
             }
             
             String oldComments = p.metadata.get("comments");
@@ -81,7 +79,7 @@ public class PasswordViewer {
             
             if (success && username != null && !newComments.equals(oldComments)){
             	kl.addUpdateKeychainLogEntry(username, true, keyId, 
-            			String.format("Password %s changed comments in keychain <%s>", p.identifier, keyName));
+            			String.format("Password %s changed comments in keychain <%s>", p.getTitle(), keyName));
             }
 
             byte[] oldKey = p.password.getEncoded();
@@ -90,7 +88,7 @@ public class PasswordViewer {
             
             if (success && username != null && !Arrays.areEqual(oldKey, newKey.getBytes())){
             	kl.addUpdateKeychainLogEntry(username, true, keyId, 
-            			String.format("Password %s changed password value in keychain <%s>", p.identifier, keyName));
+            			String.format("Password %s changed password value in keychain <%s>", p.getTitle(), keyName));
             }
 
             frame.dispose();

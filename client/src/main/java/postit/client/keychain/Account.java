@@ -56,6 +56,10 @@ public class Account {
         return encryptionKeypair;
     }
 
+    public KeyPair getSigningKeypair() {
+        return signingKeypair;
+    }
+
     public void setEncryptionKeypair(KeyPair encryptionKeypair) {
         this.encryptionKeypair = encryptionKeypair;
     }

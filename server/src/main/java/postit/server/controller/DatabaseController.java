@@ -25,7 +25,7 @@ public class DatabaseController {
             + "WHERE `user_name`=?;";
 
     private static final String addAccountSQL
-            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `phone_number`, `salt`, `keypair`) VALUES (?,?,?,?,?,?,?,?);";
+            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `phone_number`, `salt`, `key_pair`, `public_key`) VALUES (?,?,?,?,?,?,?,?,?);";
 
     private static final String updateAccountSQL
             = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=?, `phone_number`=? "
@@ -165,6 +165,7 @@ public class DatabaseController {
             statement.setString(6, serverAccount.getPhoneNumber());
             statement.setString(7, serverAccount.getSalt());
             statement.setString(8, serverAccount.getKeypair());
+            statement.setString(9, serverAccount.getPublickey());
             add = statement.executeUpdate();
         } catch (SQLException e) {
         	e.printStackTrace();
@@ -394,9 +395,9 @@ public class DatabaseController {
     
     public List<LogEntry> getLogins(String username) {
         ResultSet resultSet;
-        LogEntry log = null;
+        LogEntry log;
 
-        List<LogEntry> list = new ArrayList<LogEntry>();
+        List<LogEntry> list = new ArrayList<>();
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getLoginsSQL)) {
             statement.setString(1, username);
             resultSet = statement.executeQuery();

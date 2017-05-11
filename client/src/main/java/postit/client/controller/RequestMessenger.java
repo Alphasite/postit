@@ -17,7 +17,7 @@ public class RequestMessenger {
 		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.ACCOUNT, serverAccount);
 	}
 	
-	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber, String keypair){
+	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber, String keypair, String publickey){
 		ServerAccount serverAccount = new ServerAccount();
 		serverAccount.setUsername(clientAccount.getUsername());
 		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
@@ -26,6 +26,7 @@ public class RequestMessenger {
 		serverAccount.setLastname(lastname);
 		serverAccount.setPhoneNumber(phoneNumber);
 		serverAccount.setKeypair(keypair);
+		serverAccount.setPublickey(publickey);
 		return createRequest(Action.ADD, null, Asset.ACCOUNT, serverAccount);
 	}
 	

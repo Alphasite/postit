@@ -13,6 +13,7 @@ import javax.json.JsonArray;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import java.io.StringReader;
+import java.security.PublicKey;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Logger;
@@ -138,7 +139,7 @@ public class ServerController {
 
             // Download fresh keychains which the client has permission to access.
             for (Long serverid : keychainsToDownload) {
-                Optional<DirectoryKeychain> directoryKeychain = getOwnerDirectoryKeychainObject(account.get(), serverid);
+                Optional<DirectoryKeychain> directoryKeychain = getOwnerDirectoryKeychainObject(account.get(), serverid, Optional.empty());
 
                 if (directoryKeychain.isPresent()) {
                     if (!directoryController.createKeychain(
@@ -164,9 +165,16 @@ public class ServerController {
                 }
 
                 if (keychainsToUpdate.contains(entry.getServerid())) {
+                    Optional<Share> any = entry.shares.stream()
+                            .filter(share -> share.isOwner)
+                            .findAny();
 
                     // Merge owner first.
-                    Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(account.get(), entry.getServerid());
+                    Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(
+                            account.get(),
+                            entry.getServerid(),
+                            Optional.of(any.get().signatureKey)
+                    );
 
                     directoryController.updateLocalIfIsOlder(
                             entry,
@@ -281,8 +289,8 @@ public class ServerController {
         }
     }
 
-    public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber, String keypair) {
-        String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber, keypair);
+    public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber, String keypair, String publicKey) {
+        String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber, keypair, publicKey);
         return sendAndCheckIfSuccess(req);
     }
 
@@ -299,7 +307,7 @@ public class ServerController {
     public String getPhoneNumber(Account account){
     	String req = RequestMessenger.createGetUserMessage(account);
     	Optional<JsonObject> response = clientToServer.send(req);
-    	if (response.isPresent()){
+    	if (response.isPresent()) {
     		return response.get().getJsonObject("account").getString("phoneNumber");
     	}
     	
@@ -333,16 +341,16 @@ public class ServerController {
     public Optional<DirectoryKeychain> getDirectoryKeychainObject(Account account, long serverid) {
         String req = RequestMessenger.createGetKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
-        return parseDirectoryKeychainResponse(account, response, KEYCHAIN);
+        return parseDirectoryKeychainResponse(account, response, KEYCHAIN, Optional.of(account.getSigningKeypair().getPublic()));
     }
 
-    public Optional<DirectoryKeychain> getOwnerDirectoryKeychainObject(Account account, long serverid) {
+    public Optional<DirectoryKeychain> getOwnerDirectoryKeychainObject(Account account, long serverid, Optional<PublicKey> signingKey) {
         String req = RequestMessenger.createGetOwnerKeychainMessage(account, serverid);
         Optional<JsonObject> response = clientToServer.send(req);
-        return parseDirectoryKeychainResponse(account, response, OWNER_KEYCHAIN);
+        return parseDirectoryKeychainResponse(account, response, OWNER_KEYCHAIN, signingKey);
     }
 
-    public static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response, MessagePackager.Asset asset) {
+    public static Optional<DirectoryKeychain> parseDirectoryKeychainResponse(Account account, Optional<JsonObject> response, MessagePackager.Asset asset, Optional<PublicKey> signingKey) {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             try {
                 JsonObject keychain = response.get().getJsonObject(typeToString(asset));
@@ -351,7 +359,9 @@ public class ServerController {
                 return DirectoryKeychain.init(
                         keychain.getJsonNumber("directoryEntryId").longValue(),
                         object,
-                        account);
+                        account,
+                        signingKey
+                );
             } catch (JsonException | IllegalStateException e) {
                 LOGGER.warning("Failed to parse server keychain response: " + e.getMessage());
                 return Optional.empty();
@@ -465,12 +475,23 @@ public class ServerController {
                 JsonObject keychain = list.getJsonObject(i);
 
                 try {
+                    long directoryEntryId = keychain.getJsonNumber("directoryEntryId").longValue();
+                    Optional<Share> currentShareOfEntry = entry.shares.stream()
+                            .filter(share -> share.serverid == directoryEntryId)
+                            .findAny();
+
+                    if (!currentShareOfEntry.isPresent()) {
+                        LOGGER.warning("Directory entry " + entry.name + " with server id: " + directoryEntryId + " has no local share. skipping.");
+                        continue;
+                    }
+
                     String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
                     JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
                     Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(
-                            keychain.getJsonNumber("directoryEntryId").longValue(),
+                            directoryEntryId,
                             object,
-                            account
+                            account,
+                            Optional.of(currentShareOfEntry.get().signatureKey)
                     );
 
                     if (!directoryKeychain.isPresent()) {
