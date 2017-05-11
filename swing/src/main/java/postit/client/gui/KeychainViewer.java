@@ -325,7 +325,7 @@ public class KeychainViewer {
                 if (directoryController.createKeychain(k)){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, getActiveKeychain().getServerId(), 
+                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, directoryController.getKeychain(k).get().getServerId(),
                 				String.format("Keychain <%s> created.", k));
                 	}
                 }
