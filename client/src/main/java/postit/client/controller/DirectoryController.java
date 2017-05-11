@@ -164,6 +164,11 @@ public class DirectoryController {
 
             // TODO replace this later
             JsonArray passwordArray = keychainObject.getJsonArray("passwords");
+            JsonArray deletedPasswordArray = keychainObject.getJsonArray("deleted-passwords");
+
+            for (int i = 0; i < deletedPasswordArray.size(); i++) {
+                keychain.get().deletedPasswords.add(deletedPasswordArray.getString(i));
+            }
 
             HashMap<String, List<Password>> allPasswords = new HashMap<>();
 

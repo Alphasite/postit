@@ -5,14 +5,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by nishadmathur on 22/2/17.
  */
 public class Keychain {
     public List<Password> passwords;
+    public Set<String> deletedPasswords;
     private DirectoryEntry directoryEntry;
-    private Set<String> deletedPasswords;
 
     public Keychain(DirectoryEntry directoryEntry) {
         this.directoryEntry = directoryEntry;
@@ -26,7 +27,9 @@ public class Keychain {
     }
 
     public void initFrom(List<Password> passwords) {
-        this.passwords = new ArrayList<>(passwords);
+        this.passwords = passwords.stream()
+                .filter(password -> !deletedPasswords.contains(password.uuid))
+                .collect(Collectors.toList());
     }
 
     public void initFrom(JsonObject object) {
