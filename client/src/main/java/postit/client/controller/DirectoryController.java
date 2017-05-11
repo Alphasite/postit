@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAmount;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -277,6 +278,13 @@ public class DirectoryController {
         entry.setOwner(username);
         entry.markUpdated();
         return store.save();
+    }
+
+    public List<Password> getExpired(Keychain keychain, TemporalAmount validityPeriod) {
+        LocalDateTime expireyDate = LocalDateTime.now().minus(validityPeriod);
+        return keychain.passwords.stream()
+                .filter(password -> password.lastModified.isBefore(expireyDate))
+                .collect(Collectors.toList());
     }
 
     public boolean save() {
