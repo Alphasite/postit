@@ -1,5 +1,8 @@
 package postit.client.passwordtools;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.swing.*;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -26,12 +29,20 @@ public class PasswordGenerator{
 
 
     public PasswordGenerator(){
-
         passwordlength=8;
         useUpper=true;
         useLower=true;
         useNumbers=true;
         useSymbols=true;
+    }
+
+    public PasswordGenerator(JsonObject object) {
+        passwordlength = object.getInt("lenght");
+        useUpper = object.getBoolean("use-upper");
+        useLower = object.getBoolean("use-lower");
+        useNumbers = object.getBoolean("use-numbers");
+        useSymbols = object.getBoolean("use-symbols");
+        SYMBOLS = object.getString("symbols");
     }
 
     public void editSettings(JFrame frame){
@@ -75,8 +86,7 @@ public class PasswordGenerator{
             permittedSymbols.addActionListener(e->{
                 permittedSymbols.setText(removeDuplicates(permittedSymbols.getText()));
             });
-
-
+        
             ArrayList<Object>  message = new ArrayList<Object>();
             message.add("Length");
             message.add(newLength);
@@ -155,5 +165,15 @@ public class PasswordGenerator{
             symbolString.append(String.valueOf(c));
         }
         return symbolString.toString();
+    }
+
+    public JsonObjectBuilder dump() {
+        return Json.createObjectBuilder()
+                .add("lenght", passwordlength)
+                .add("use-upper", useUpper)
+                .add("use-lower", useLower)
+                .add("use-numbers", useNumbers)
+                .add("use-symbols", useSymbols)
+                .add("symbols", SYMBOLS);
     }
 }

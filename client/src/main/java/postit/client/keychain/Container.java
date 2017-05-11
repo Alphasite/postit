@@ -1,11 +1,10 @@
 package postit.client.keychain;
 
-import postit.client.backend.BackingStore;
-
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by nishadmathur on 16/3/17.
@@ -17,6 +16,8 @@ public class Container {
     public String directoryNonce;
 
     public Map<String, String> keychains;
+
+    public Map<String, String> blobs;
 
     public Container() {
         this.keychains = new HashMap<>();
@@ -35,6 +36,11 @@ public class Container {
         for (String id : keychainsObject.keySet()) {
             this.keychains.put(id, keychainsObject.getString(id));
         }
+
+        JsonObject blobObject = object.getJsonObject("blobs");
+        for (String id : blobObject.keySet()) {
+            this.blobs.put(id, blobObject.getString(id));
+        }
     }
 
     public JsonObjectBuilder dump() {
@@ -51,9 +57,15 @@ public class Container {
             keychainsObject.add(keychainEntry.getKey(), keychainEntry.getValue());
         }
 
+        JsonObjectBuilder blobObject = Json.createObjectBuilder();
+        for (Map.Entry<String, String> blob : blobs.entrySet()) {
+            keychainsObject.add(blob.getKey(), blob.getValue());
+        }
+
         return Json.createObjectBuilder()
                 .add("account", accountObject)
                 .add("directory", directoryObject)
-                .add("keychains", keychainsObject);
+                .add("keychains", keychainsObject)
+                .add("blob", blobObject);
     }
 }
