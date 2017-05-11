@@ -37,7 +37,7 @@ public class PasswordGenerator{
     }
 
     public PasswordGenerator(JsonObject object) {
-        passwordlength = object.getInt("lenght");
+        passwordlength = object.getInt("length");
         useUpper = object.getBoolean("use-upper");
         useLower = object.getBoolean("use-lower");
         useNumbers = object.getBoolean("use-numbers");
@@ -86,7 +86,7 @@ public class PasswordGenerator{
             permittedSymbols.addActionListener(e->{
                 permittedSymbols.setText(removeDuplicates(permittedSymbols.getText()));
             });
-        
+
             ArrayList<Object>  message = new ArrayList<Object>();
             message.add("Length");
             message.add(newLength);
@@ -169,7 +169,7 @@ public class PasswordGenerator{
 
     public JsonObjectBuilder dump() {
         return Json.createObjectBuilder()
-                .add("lenght", passwordlength)
+                .add("length", passwordlength)
                 .add("use-upper", useUpper)
                 .add("use-lower", useLower)
                 .add("use-numbers", useNumbers)
