@@ -21,6 +21,7 @@ public class Container {
 
     public Container() {
         this.keychains = new HashMap<>();
+        this.blobs = new HashMap<>();
     }
 
     public Container(JsonObject object) {
@@ -31,6 +32,7 @@ public class Container {
         this.directoryNonce = object.getJsonObject("directory").getString("nonce");
 
         this.keychains = new HashMap<>();
+        this.blobs = new HashMap<>();
 
         JsonObject keychainsObject = object.getJsonObject("keychains");
         for (String id : keychainsObject.keySet()) {
@@ -66,6 +68,6 @@ public class Container {
                 .add("account", accountObject)
                 .add("directory", directoryObject)
                 .add("keychains", keychainsObject)
-                .add("blob", blobObject);
+                .add("blobs", blobObject);
     }
 }
