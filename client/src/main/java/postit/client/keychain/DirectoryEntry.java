@@ -17,6 +17,14 @@ import java.util.logging.Logger;
 public class DirectoryEntry {
     private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
+    public static final String SHARES = "shares";
+    public static final String ENCRYPTION_KEY = "encryption-key";
+    public static final String NONCE = "nonce";
+    public static final String LAST_MODIFIED = "lastModified";
+    public static final String NAME = "name";
+    public static final String UUID = "uuid";
+    public static final String SERVERID = "serverid";
+
     public String name;
     private Share share;
 
@@ -41,7 +49,7 @@ public class DirectoryEntry {
         this.keychain = null;
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
-        this.uuid = UUID.randomUUID().toString();
+        this.uuid = java.util.UUID.randomUUID().toString();
         this.share = new Share(-1, null, true, publicKey, signingKey, true);
         this.shares = new ArrayList<>();
         this.shares.add(this.share);
@@ -54,7 +62,7 @@ public class DirectoryEntry {
         this.shares = new ArrayList<>();
         this.updateFrom(object);
 
-        JsonArray shareArray = object.getJsonArray("shares");
+        JsonArray shareArray = object.getJsonArray(SHARES);
         for (int i = 0; i < shareArray.size(); i++) {
             try {
                 Share share = new Share(shareArray.getJsonObject(i));
@@ -71,30 +79,30 @@ public class DirectoryEntry {
 
     public void updateFrom(JsonObject object) {
         Base64.Decoder decoder = Base64.getDecoder();
-        this.name = object.getString("name");
-        this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString("encryption-key"))));
-        this.setNonce(decoder.decode(object.getString("nonce")));
-        this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
-        this.uuid = object.getString("uuid");
+        this.name = object.getString(NAME);
+        this.setEncryptionKey(Crypto.secretKeyFromBytes(decoder.decode(object.getString(ENCRYPTION_KEY))));
+        this.setNonce(decoder.decode(object.getString(NONCE)));
+        this.lastModified = LocalDateTime.parse(object.getString(LAST_MODIFIED));
+        this.uuid = object.getString(UUID);
     }
 
     public JsonObjectBuilder dump() {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         Base64.Encoder encoder = Base64.getEncoder();
 
-        builder.add("name", name);
-        builder.add("encryption-key", encoder.encodeToString(Crypto.secretKeyToBytes(getEncryptionKey())));
-        builder.add("nonce", encoder.encodeToString(getNonce()));
-        builder.add("serverid", getServerid());
-        builder.add("lastModified", lastModified.toString()); // TODO check this handles timezones correctly
-        builder.add("uuid", uuid);
+        builder.add(NAME, name);
+        builder.add(ENCRYPTION_KEY, encoder.encodeToString(Crypto.secretKeyToBytes(getEncryptionKey())));
+        builder.add(NONCE, encoder.encodeToString(getNonce()));
+        builder.add(SERVERID, getServerid());
+        builder.add(LAST_MODIFIED, lastModified.toString()); // TODO check this handles timezones correctly
+        builder.add(UUID, uuid);
 
         JsonArrayBuilder shareArray = Json.createArrayBuilder();
         for (Share share: shares) {
             shareArray.add(share.dump());
         }
 
-        builder.add("shares", shareArray);
+        builder.add(SHARES, shareArray);
 
         return builder;
     }

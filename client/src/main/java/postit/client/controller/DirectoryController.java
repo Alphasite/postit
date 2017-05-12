@@ -184,8 +184,10 @@ public class DirectoryController {
             for (int i = 0; i < passwordArray.size(); i++) {
                 JsonObject jsonPassword = passwordArray.getJsonObject(i);
                 Password password = new Password(jsonPassword, keychain.get());
+
                 List<Password> passwordList = allPasswords.getOrDefault(password.uuid, new ArrayList<>());
                 passwordList.add(password);
+                allPasswords.put(password.uuid, passwordList);
             }
 
             // Select the newest version and use that.

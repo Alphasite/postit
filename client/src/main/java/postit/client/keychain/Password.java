@@ -14,6 +14,12 @@ import java.util.Map;
  * Created by nishadmathur on 23/2/17.
  */
 public class Password {
+    public static final String UUID = "uuid";
+    public static final String PASSWORD = "password";
+    public static final String LAST_MODIFIED = "lastModified";
+    public static final String METADATA = "metadata";
+    public static final String TITLE = "title";
+
     public String uuid;
     public SecretKey password;
     public Map<String, String> metadata;
@@ -32,12 +38,12 @@ public class Password {
     public Password(JsonObject object, Keychain keychain) {
         this.keychain = keychain;
 
-        this.uuid = object.getString("uuid");
-        this.password = Crypto.secretKeyFromBytes(object.getString("password").getBytes());
-        this.lastModified = LocalDateTime.parse(object.getString("lastModified"));
+        this.uuid = object.getString(UUID);
+        this.password = Crypto.secretKeyFromBytes(object.getString(PASSWORD).getBytes());
+        this.lastModified = LocalDateTime.parse(object.getString(LAST_MODIFIED));
         this.metadata = new HashMap<>();
 
-        JsonObject metadataObject = object.getJsonObject("metadata");
+        JsonObject metadataObject = object.getJsonObject(METADATA);
         for (String key: metadataObject.keySet()) {
             this.metadata.put(key, metadataObject.getString(key));
         }
@@ -56,10 +62,10 @@ public class Password {
         }
 
         return Json.createObjectBuilder()
-                .add("uuid", uuid)
-                .add("password", new String(Crypto.secretKeyToBytes(password)))
-                .add("lastModified", lastModified.toString())
-                .add("metadata", metadataObject);
+                .add(UUID, uuid)
+                .add(PASSWORD, new String(Crypto.secretKeyToBytes(password)))
+                .add(LAST_MODIFIED, lastModified.toString())
+                .add(METADATA, metadataObject);
     }
 
     public String getPasswordAsString() {
@@ -71,7 +77,7 @@ public class Password {
     }
 
     public String getTitle() {
-        return metadata.get("title");
+        return metadata.get(TITLE);
     }
 
     public void delete() {

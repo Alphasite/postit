@@ -18,6 +18,11 @@ import java.util.logging.Logger;
  */
 public class DirectoryKeychain {
     private final static Logger LOGGER = Logger.getLogger(DirectoryKeychain.class.getName());
+    public static final String PARAMETERS = "parameters";
+    public static final String NONCE = "nonce";
+    public static final String DATA = "data";
+    public static final String KEYCHAIN = "keychain";
+    public static final String DIRECTORY = "directory";
 
     public final JsonObject keychain;
     public final JsonObject entry;
@@ -34,9 +39,9 @@ public class DirectoryKeychain {
         Base64.Decoder decoder = Base64.getDecoder();
 
         try {
-            JsonObject parameters = object.getJsonObject("parameters");
-            byte[] nonce = decoder.decode(parameters.getString("nonce"));
-            byte[] data = decoder.decode(object.getString("data"));
+            JsonObject parameters = object.getJsonObject(PARAMETERS);
+            byte[] nonce = decoder.decode(parameters.getString(NONCE));
+            byte[] data = decoder.decode(object.getString(DATA));
 
             String encryptedEncryptionKey = parameters.getString(account.getUsername() + "-key", null);
             String signatureEncryptionKey = parameters.getString(account.getUsername() + "-signature", null);
@@ -81,8 +86,8 @@ public class DirectoryKeychain {
 
             return Optional.of(new DirectoryKeychain(
                     serverid,
-                    directorKeychainObject.get().getJsonObject("keychain"),
-                    directorKeychainObject.get().getJsonObject("directory")
+                    directorKeychainObject.get().getJsonObject(KEYCHAIN),
+                    directorKeychainObject.get().getJsonObject(DIRECTORY)
             ));
         } catch (JsonException | IllegalStateException e) {
             LOGGER.warning("Failed to parse json object: " + e.getMessage());
@@ -95,13 +100,13 @@ public class DirectoryKeychain {
         byte[] nonce = Crypto.getNonce();
 
         JsonObjectBuilder directoryKeychain = Json.createObjectBuilder()
-                .add("directory", entry)
-                .add("keychain", keychain);
+                .add(DIRECTORY, entry)
+                .add(KEYCHAIN, keychain);
 
         Base64.Encoder encoder = Base64.getEncoder();
 
         JsonObjectBuilder encryptedParameters = Json.createObjectBuilder()
-                .add("nonce", encoder.encodeToString(nonce));
+                .add(NONCE, encoder.encodeToString(nonce));
 
         try {
             for (Share share : entryObject.shares) {
@@ -118,7 +123,7 @@ public class DirectoryKeychain {
                         .add(share.username + "-signature", encoder.encodeToString(Crypto.signer(encryptedKey.get(), account.signingKeypair.getPrivate())));
             }
         } catch (Exception e) {
-            LOGGER.warning("Failed to sign entry: " + e.getLocalizedMessage());
+            LOGGER.warning("Failed to sign entry: " + e.getMessage());
             return Optional.empty();
         }
 
@@ -132,8 +137,8 @@ public class DirectoryKeychain {
 
         return Optional.of(
                 Json.createObjectBuilder()
-                        .add("data", encoder.encodeToString(directoryKeychainData.get()))
-                        .add("parameters", encryptedParameters)
+                        .add(DATA, encoder.encodeToString(directoryKeychainData.get()))
+                        .add(PARAMETERS, encryptedParameters)
                         .build()
         );
     }

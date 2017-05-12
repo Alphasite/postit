@@ -74,7 +74,7 @@ public class Crypto {
                 CPU_SCALING_FACTOR = (int) Math.pow(2, 14);
                 MEMORY_SCALING_FACTOR = 8;
                 PARALLELISM_SCALING_FACTOR = 1;
-                RSA_KEY_LENGTH = 4096;
+                RSA_KEY_LENGTH = 2048;
             } else {
                 random = new SecureRandom();
                 CPU_SCALING_FACTOR = 5;
@@ -256,7 +256,7 @@ public class Crypto {
             cipher.init(Cipher.UNWRAP_MODE, privateKey);
             return Optional.of(cipher.unwrap(key, "AES", Cipher.SECRET_KEY));
         } catch (Exception e) {
-            LOGGER.severe("Failed to encrypt data using public key: " + e.getMessage());
+            LOGGER.severe("Failed to decrypt data using public key: " + e.getMessage());
             return Optional.empty();
         }
     }

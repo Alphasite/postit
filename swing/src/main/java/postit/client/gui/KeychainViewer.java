@@ -114,6 +114,8 @@ public class KeychainViewer {
         
         this.keyLog = keyLog;
         this.authLog = authLog;
+
+        backingStore.save();
     }
 
     /**

@@ -104,10 +104,10 @@ public class BackingStore {
         }
     }
 
-    public boolean writeKeypair(KeyPair keyPair) {
+    public boolean writeKeypair(Account account) {
         try  {
-            Files.write(getKeyPairPath(), Crypto.serialiseObject(keyPair).getBytes());
-            Files.write(getPublicKeyPath(), Crypto.serialiseObject(keyPair.getPublic()).getBytes());
+            Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs().get().build());
+            Files.write(getPublicKeyPath(), Crypto.serialiseObject(account.getEncryptionKeypair().getPublic()).getBytes());
             return true;
         } catch (IOException e) {
             LOGGER.severe("Failed to save keypair... " + e.getMessage());

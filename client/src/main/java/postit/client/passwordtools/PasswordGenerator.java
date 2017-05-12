@@ -12,7 +12,7 @@ import java.util.HashSet;
 /**
  * Created by jackielaw on 3/27/17.
  */
-public class PasswordGenerator{
+public class PasswordGenerator {
 
     private int passwordlength;
     private boolean useUpper;
