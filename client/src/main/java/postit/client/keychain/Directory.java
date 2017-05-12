@@ -15,6 +15,11 @@ import java.util.logging.Logger;
 public class Directory {
     private final static Logger LOGGER = Logger.getLogger(Directory.class.getName());
 
+    public static final String VERSION = "version";
+    public static final String ACCOUNT = "account";
+    public static final String KEYCHAINS = "keychains";
+    public static final String DELETED = "deleted";
+
     private BackingStore backingStore;
 
     public List<DirectoryEntry> keychains;
@@ -33,9 +38,9 @@ public class Directory {
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
-        this.account = new Account(object.getJsonObject("account"));
+        this.account = new Account(object.getJsonObject(ACCOUNT));
 
-        JsonArray keychainArray = object.getJsonArray("keychains");
+        JsonArray keychainArray = object.getJsonArray(KEYCHAINS);
         for (int i = 0; i < keychainArray.size(); i++) {
             keychains.add(new DirectoryEntry(
                     account.getUsername(),
@@ -45,7 +50,7 @@ public class Directory {
             ));
         }
 
-        JsonArray deletedKeychainsArray = object.getJsonArray("deleted");
+        JsonArray deletedKeychainsArray = object.getJsonArray(DELETED);
         for (int i = 0; i < deletedKeychainsArray.size(); i++) {
             deletedKeychains.add(deletedKeychainsArray.getJsonNumber(i).longValue());
         }
@@ -63,10 +68,10 @@ public class Directory {
         }
 
         return Json.createObjectBuilder()
-                .add("version", "1.0.0")
-                .add("account", account.dump())
-                .add("keychains", keychainArray)
-                .add("deleted", deletedKeychainsArray);
+                .add(VERSION, "1.0.0")
+                .add(ACCOUNT, account.dump())
+                .add(KEYCHAINS, keychainArray)
+                .add(DELETED, deletedKeychainsArray);
     }
 
     public List<DirectoryEntry> getKeychains() {

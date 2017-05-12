@@ -23,6 +23,7 @@ public class Account {
     public static final String SIGNING_KEYPAIR = "signingKeypair";
     public static final String NONCE = "nonce";
     public static final String DATA = "data";
+
     String username;
     SecretKey secretKey;
     KeyPair encryptionKeypair;

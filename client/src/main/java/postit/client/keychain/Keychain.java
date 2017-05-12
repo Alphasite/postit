@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
  * Created by nishadmathur on 22/2/17.
  */
 public class Keychain {
+    public static final String PASSWORDS = "passwords";
+    public static final String DELETED_PASSWORDS = "deleted-passwords";
     public List<Password> passwords;
     public Set<String> deletedPasswords;
     private DirectoryEntry directoryEntry;
@@ -34,13 +36,13 @@ public class Keychain {
 
     public void initFrom(JsonObject object) {
         this.passwords = new ArrayList<>();
-        JsonArray passwordArray = object.getJsonArray("passwords");
+        JsonArray passwordArray = object.getJsonArray(PASSWORDS);
         for (int i = 0; i < passwordArray.size(); i++) {
             this.passwords.add(new Password(passwordArray.getJsonObject(i), this));
         }
 
         this.deletedPasswords = new HashSet<>();
-        JsonArray deletedPasswordArray = object.getJsonArray("deleted-passwords");
+        JsonArray deletedPasswordArray = object.getJsonArray(DELETED_PASSWORDS);
         for (int i = 0; i < deletedPasswordArray.size(); i++) {
             this.deletedPasswords.add(deletedPasswordArray.getString(i));
         }
@@ -63,8 +65,8 @@ public class Keychain {
         }
 
         return Json.createObjectBuilder()
-                .add("passwords", passwordArray)
-                .add("deleted-passwords", deletedPasswordArray);
+                .add(PASSWORDS, passwordArray)
+                .add(DELETED_PASSWORDS, deletedPasswordArray);
     }
 
     public String getName() {

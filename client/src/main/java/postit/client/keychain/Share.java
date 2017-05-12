@@ -12,6 +12,15 @@ import java.security.interfaces.RSAPublicKey;
  * Created by nishadmathur on 16/4/17.
  */
 public class Share {
+    public static final String SERVERID = "serverid";
+    public static final String USERNAME = "username";
+    public static final String CAN_WRITE = "canWrite";
+    public static final String ENCRYPT_PUBLICKEY_MODULUS = "encrypt-publickey-modulus";
+    public static final String ENCRYPT_PUBLICKEY_EXPONENT = "encrypt-publickey-exponent";
+    public static final String SIGN_PUBLICKEY_MODULUS = "sign-publickey-modulus";
+    public static final String SIGN_PUBLICKEY_EXPONENT = "sign-publickey-exponent";
+    public static final String IS_OWNER = "isOwner";
+
     public long serverid;
     public String username;
     public boolean canWrite;
@@ -29,29 +38,29 @@ public class Share {
     }
 
     public Share(JsonObject object) throws InvalidKeyException {
-        this.serverid = object.getJsonNumber("serverid").longValue();
-        this.username = object.getString("username");
-        this.canWrite = object.getBoolean("canWrite");
+        this.serverid = object.getJsonNumber(SERVERID).longValue();
+        this.username = object.getString(USERNAME);
+        this.canWrite = object.getBoolean(CAN_WRITE);
         this.encryptionKey = new RSAPublicKeyImpl(
-                object.getJsonNumber("encrypt-publickey-modulus").bigIntegerValue(),
-                object.getJsonNumber("encrypt-publickey-exponent").bigIntegerValue()
+                object.getJsonNumber(ENCRYPT_PUBLICKEY_MODULUS).bigIntegerValue(),
+                object.getJsonNumber(ENCRYPT_PUBLICKEY_EXPONENT).bigIntegerValue()
         );
         this.signatureKey = new RSAPublicKeyImpl(
-                object.getJsonNumber("sign-publickey-modulus").bigIntegerValue(),
-                object.getJsonNumber("sign-publickey-exponent").bigIntegerValue()
+                object.getJsonNumber(SIGN_PUBLICKEY_MODULUS).bigIntegerValue(),
+                object.getJsonNumber(SIGN_PUBLICKEY_EXPONENT).bigIntegerValue()
         );
-        this.isOwner = object.getBoolean("isOwner");
+        this.isOwner = object.getBoolean(IS_OWNER);
     }
 
     public JsonObjectBuilder dump() {
         return Json.createObjectBuilder()
-                .add("serverid", serverid)
-                .add("username", username)
-                .add("canWrite", canWrite)
-                .add("isOwner", isOwner)
-                .add("encrypt-publickey-modulus", encryptionKey.getModulus())
-                .add("encrypt-publickey-exponent", encryptionKey.getPublicExponent())
-                .add("sign-publickey-modulus", signatureKey.getModulus())
-                .add("sign-publickey-exponent", signatureKey.getPublicExponent());
+                .add(SERVERID, serverid)
+                .add(USERNAME, username)
+                .add(CAN_WRITE, canWrite)
+                .add(IS_OWNER, isOwner)
+                .add(ENCRYPT_PUBLICKEY_MODULUS, encryptionKey.getModulus())
+                .add(ENCRYPT_PUBLICKEY_EXPONENT, encryptionKey.getPublicExponent())
+                .add(SIGN_PUBLICKEY_MODULUS, signatureKey.getModulus())
+                .add(SIGN_PUBLICKEY_EXPONENT, signatureKey.getPublicExponent());
     }
 }
