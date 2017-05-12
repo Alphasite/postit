@@ -17,6 +17,12 @@ import static postit.shared.Crypto.serialiseObject;
  * Created by nishadmathur on 8/3/17.
  */
 public class Account {
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String ENCRYPTION_KEYPAIR = "encryptionKeypair";
+    public static final String SIGNING_KEYPAIR = "signingKeypair";
+    public static final String NONCE = "nonce";
+    public static final String DATA = "data";
     String username;
     SecretKey secretKey;
     KeyPair encryptionKeypair;
@@ -37,11 +43,10 @@ public class Account {
     }
 
     public Account(JsonObject object) {
-        this.username = object.getString("username");
-        this.secretKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString("password")));
-        this.encryptionKeypair = deserialiseObject(object.getString("encryptionKeypair"));
-        this.encryptionKeypair = deserialiseObject(object.getString("signingKeypair"));
-
+        this.username = object.getString(USERNAME);
+        this.secretKey = Crypto.secretKeyFromBytes(Base64.getDecoder().decode(object.getString(PASSWORD)));
+        this.encryptionKeypair = deserialiseObject(object.getString(ENCRYPTION_KEYPAIR));
+        this.signingKeypair = deserialiseObject(object.getString(SIGNING_KEYPAIR));
     }
 
     public String getUsername() {
@@ -66,10 +71,10 @@ public class Account {
 
     public JsonObjectBuilder dump() {
         return Json.createObjectBuilder()
-                .add("username", username)
-                .add("password", new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(secretKey))))
-                .add("encryptionKeypair", serialiseObject(encryptionKeypair))
-                .add("signingKeypair", serialiseObject(signingKeypair));
+                .add(USERNAME, username)
+                .add(PASSWORD, new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(secretKey))))
+                .add(ENCRYPTION_KEYPAIR, serialiseObject(encryptionKeypair))
+                .add(SIGNING_KEYPAIR, serialiseObject(signingKeypair));
     }
 
     public Optional<JsonObjectBuilder> dumpKeypairs() {
@@ -77,8 +82,8 @@ public class Account {
         byte[] nonce = Crypto.getNonce();
 
         JsonObjectBuilder dataObject = Json.createObjectBuilder()
-                .add("encryptionKeypair", serialiseObject(encryptionKeypair))
-                .add("signingKeypair", serialiseObject(signingKeypair));
+                .add(ENCRYPTION_KEYPAIR, serialiseObject(encryptionKeypair))
+                .add(SIGNING_KEYPAIR, serialiseObject(signingKeypair));
 
         Optional<byte[]> data = Crypto.encryptJsonObject(secretKey, nonce, dataObject.build());
 
@@ -87,16 +92,16 @@ public class Account {
         }
 
         return Optional.of(Json.createObjectBuilder()
-                .add("nonce", encoder.encodeToString(nonce))
-                .add("data", encoder.encodeToString(data.get())));
+                .add(NONCE, encoder.encodeToString(nonce))
+                .add(DATA, encoder.encodeToString(data.get())));
     }
 
     public boolean deserialiseKeypairs(JsonObject jsonObject) {
         Base64.Decoder decoder = Base64.getDecoder();
 
         try {
-            byte[] nonce = decoder.decode(jsonObject.getString("nonce"));
-            byte[] data = decoder.decode(jsonObject.getString("data"));
+            byte[] nonce = decoder.decode(jsonObject.getString(NONCE));
+            byte[] data = decoder.decode(jsonObject.getString(DATA));
 
             Optional<JsonObject> decryptedObject = Crypto.decryptJsonObject(secretKey, nonce, data);
 
@@ -104,8 +109,8 @@ public class Account {
                 return false;
             }
 
-            KeyPair encryptionKeypair = deserialiseObject(decryptedObject.get().getString("encryptionKeypair"));
-            KeyPair signingKeypair = deserialiseObject(decryptedObject.get().getString("signingKeypair"));
+            KeyPair encryptionKeypair = deserialiseObject(decryptedObject.get().getString(ENCRYPTION_KEYPAIR));
+            KeyPair signingKeypair = deserialiseObject(decryptedObject.get().getString(SIGNING_KEYPAIR));
 
             if (encryptionKeypair != null && signingKeypair != null) {
                 this.encryptionKeypair = encryptionKeypair;

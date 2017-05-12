@@ -118,7 +118,7 @@ public class DirectoryKeychain {
                         .add(share.username + "-signature", encoder.encodeToString(Crypto.signer(encryptedKey.get(), account.signingKeypair.getPrivate())));
             }
         } catch (Exception e) {
-            LOGGER.warning("Failed to sign entry: " + e.getLocalizedMessage());
+            LOGGER.warning("Failed to sign entry: " + e.getMessage());
             return Optional.empty();
         }
 

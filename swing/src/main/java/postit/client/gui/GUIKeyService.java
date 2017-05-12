@@ -251,7 +251,7 @@ public class GUIKeyService implements KeyService {
                             Crypto.serialiseObject(newAccount.getSigningKeypair().getPublic()))
                         ) {
 
-                            if (backingStore.writeKeypair(newAccount.getEncryptionKeypair())) {
+                            if (backingStore.writeKeypair(newAccount)) {
                                 JOptionPane.showMessageDialog(
                                     null,
                                     "Generated a new keypair and saved it to the disk. Please transfer this " +
