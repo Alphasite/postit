@@ -33,6 +33,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.*;
 import java.util.List;
 
@@ -93,6 +94,17 @@ public class KeychainViewer {
             Optional<Account> act = directoryController.getAccount();
             if (act.isPresent()){
             	authLog.addAuthenticationLogEntry(act.get().getUsername(), true, "Login successful");
+            }
+            String overduePasswords = "";
+            for(DirectoryEntry directoryEntry:directoryController.getKeychains()) {
+                List<Password>expiredPasswords = directoryController.getExpired(directoryEntry.readKeychain().get(), Duration.ofDays(365));
+                for (Password p:expiredPasswords){
+                    overduePasswords+=p.getTitle()+"\n";
+                }
+            }
+            if(!overduePasswords.equals("")){
+                JOptionPane.showMessageDialog(null,"Passwords that have not updated for a year: \n"+overduePasswords,
+                        "Overdue passwords",JOptionPane.PLAIN_MESSAGE);
             }
         }
 
