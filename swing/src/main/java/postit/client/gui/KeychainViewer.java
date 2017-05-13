@@ -103,7 +103,8 @@ public class KeychainViewer {
                 }
             }
             if(!overduePasswords.equals("")){
-                JOptionPane.showMessageDialog(null,"Passwords that have not updated for a year: \n"+overduePasswords,
+                JOptionPane.showMessageDialog(null,
+                        "Passwords that have not updated for a year: \n"+overduePasswords+"To stop update messages, re-save your passwords",
                         "Overdue passwords",JOptionPane.PLAIN_MESSAGE);
             }
         }
