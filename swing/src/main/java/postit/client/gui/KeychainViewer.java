@@ -106,7 +106,7 @@ public class KeychainViewer {
             }
         }
 
-        passwordGenerator = new PasswordGenerator();
+        passwordGenerator = directoryController.getPasswordGenerator();
         classify = new Classify();
         this.keyService = keyService;
         
@@ -633,7 +633,10 @@ public class KeychainViewer {
         settingsMenu.add(menuItem);
 
         menuItem = new JMenuItem("Pwd Gen Settings");
-        menuItem.addActionListener( e -> {passwordGenerator.editSettings(frame);});
+        menuItem.addActionListener( e -> {
+            passwordGenerator.editSettings(frame);
+            directoryController.setPasswordGenerator(passwordGenerator);
+        });
         settingsMenu.add(menuItem);
 
         tabbedPane.addChangeListener(new ChangeListener() {

@@ -3,6 +3,7 @@ package postit.client.controller;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.keychain.*;
+import postit.client.passwordtools.PasswordGenerator;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
@@ -279,6 +280,15 @@ public class DirectoryController {
     public boolean setKeychainOwner(DirectoryEntry entry, String username) {
         entry.setOwner(username);
         entry.markUpdated();
+        return store.save();
+    }
+
+    public PasswordGenerator getPasswordGenerator() {
+        return directory.passwordGenerator;
+    }
+
+    public boolean setPasswordGenerator(PasswordGenerator pg) {
+        directory.savePasswordGenerator(pg);
         return store.save();
     }
 

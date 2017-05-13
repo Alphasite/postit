@@ -29,7 +29,7 @@ public class Directory {
 
     private Account account;
 
-    private PasswordGenerator passwordGenerator;
+    public PasswordGenerator passwordGenerator;
 
     public Directory(BackingStore backingStore, KeyService keyService) {
         this.backingStore = backingStore;
@@ -105,6 +105,12 @@ public class Directory {
         }
 
         this.keychains.add(entry);
+
+        return true;
+    }
+
+    public boolean savePasswordGenerator(PasswordGenerator pg) {
+        this.passwordGenerator=pg;
 
         return true;
     }

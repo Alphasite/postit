@@ -6,6 +6,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
 import postit.server.model.ServerAccount;
 import postit.server.model.ServerKeychain;
+import postit.shared.EFactorAuth;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.Action;
 import postit.shared.MessagePackager.Asset;
@@ -189,8 +190,11 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				return createResponse(true, username, "", asset, null);
 			case KEYPAIR:
 				// TODO fill this in Zhan.
+				ServerAccount serverAccount = ah.getAccount(username);
+				String otp = json.getString("keypair");
+				String phoneNumber = serverAccount.getPhoneNumber();
 				// check otp.
-				boolean otpSuccessfullyAuthenticated = true;
+				boolean otpSuccessfullyAuthenticated = new EFactorAuth().verifyMsg(phoneNumber, otp);
 				if (otpSuccessfullyAuthenticated) {
 					String keypair = ah.getAccount(username).getKeypair();
 					return createResponse(true, username, "", asset, keypair);
@@ -232,6 +236,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 			case KEYPAIR:
 				// TODO fill this in Zhan.
+				ServerAccount serverAccount1 = ah.getAccount(username);
+				String phoneNumber = serverAccount1.getPhoneNumber();
+				new EFactorAuth().sendMsg(phoneNumber);
 				// send otp.
 				return createResponse(true, username, "Please send otp.", asset, null);
 
