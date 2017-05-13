@@ -6,11 +6,18 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import javax.json.JsonObject;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyPair;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -105,9 +112,29 @@ public class BackingStore {
     }
 
     public boolean writeKeypair(Account account) {
-        try  {
-            Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs().get().build());
+        if (Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs(keyService.getMasterKey()).get().build())) {
+            return writePublicKeys(account);
+        } else {
+            LOGGER.warning("Failed to save keypair.");
+            return false;
+        }
+    }
+
+    public boolean writePublicKeys(Account account) {
+        try (PrintWriter writer = new PrintWriter(getPublicKeyPath().toFile())) {
+
+            Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs(keyService.getMasterKey()).get().build());
             Files.write(getPublicKeyPath(), Crypto.serialiseObject(account.getEncryptionKeypair().getPublic()).getBytes());
+            RSAPublicKey encryptionKey = (RSAPublicKey) account.getEncryptionKeypair().getPublic();
+            RSAPublicKey signingKey = (RSAPublicKey) account.getSigningKeypair().getPublic();
+
+            X509EncodedKeySpec x509EncodedEncryptionKeySpec = new X509EncodedKeySpec(encryptionKey.getEncoded());
+            X509EncodedKeySpec x509EncodedSingingKeySpec = new X509EncodedKeySpec(signingKey.getEncoded());
+
+            Base64.Encoder encoder = Base64.getEncoder();
+            writer.println(encoder.encodeToString(x509EncodedEncryptionKeySpec.getEncoded()));
+            writer.println(encoder.encodeToString(x509EncodedSingingKeySpec.getEncoded()));
+
             return true;
         } catch (IOException e) {
             LOGGER.severe("Failed to save keypair... " + e.getMessage());
@@ -119,17 +146,34 @@ public class BackingStore {
         Optional<JsonObject> object = Crypto.readJsonObjectFromFile(getKeyPairPath());
 
         if (object.isPresent()) {
-            account.deserialiseKeypairs(object.get());
+            account.deserialiseKeypairs(keyService.getMasterKey(), object.get());
             return true;
         } else {
             return false;
         }
     }
 
-    public Optional<KeyPair> readPublicKey(Path path) {
+    public Optional<List<RSAPublicKey>> readPublicKey(Path path) {
         try {
-            return Optional.of(Crypto.deserialiseObject(new String(Files.readAllBytes(path))));
-        } catch (IOException e) {
+            Base64.Decoder decoder = Base64.getDecoder();
+            List<String> keyLines = Files.readAllLines(path);
+
+            X509EncodedKeySpec spec;
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+
+            spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(0)));
+            RSAPublicKey encryptionKey = (RSAPublicKey) kf.generatePublic(spec);
+
+            spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(1)));
+            RSAPublicKey signingKey = (RSAPublicKey) kf.generatePublic(spec);
+
+            ArrayList<RSAPublicKey> keys = new ArrayList<>();
+            keys.add(encryptionKey);
+            keys.add(signingKey);
+
+            return Optional.of(keys);
+
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
             return Optional.empty();
         }

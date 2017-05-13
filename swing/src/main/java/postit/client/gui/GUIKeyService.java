@@ -239,7 +239,7 @@ public class GUIKeyService implements KeyService {
                             && LoginPanel.isValidEmailAddress(email)
                             && LoginPanel.isValidPhoneNumber(phone)) {
                         Account newAccount = new Account(username, pass1);
-                        Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs();
+                        Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs(getMasterKey());
 
                         if (sc.addUser(
                             newAccount,

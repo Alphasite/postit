@@ -24,6 +24,7 @@ public class GuiApp {
         BackingStore backingStore = new BackingStore(keyService);
 
         keyService.setBackingStore(backingStore);
+        serverController.setKeyService(keyService);
 
         if (!Crypto.init()) {
             // TODO

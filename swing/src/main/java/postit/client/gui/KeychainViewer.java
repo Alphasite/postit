@@ -24,18 +24,13 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.sql.Timestamp;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static javax.swing.SwingUtilities.invokeLater;
 
@@ -46,6 +41,8 @@ public class KeychainViewer {
     KeychainViewer kv = this;
     DirectoryController directoryController;
     ServerController serverController;
+    BackingStore backingStore;
+
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -75,6 +72,7 @@ public class KeychainViewer {
     public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService, KeychainLog keyLog, AuthenticationLog authLog) {
 
         this.serverController = serverController;
+        this.backingStore = backingStore;
 
         Optional<Directory> directory = backingStore.readDirectory();
 
@@ -279,29 +277,9 @@ public class KeychainViewer {
 
         menuItem = new JMenuItem("Create Public Keyfile");
         menuItem.addActionListener((ActionEvent e) ->{
-            String username = directoryController.getAccount().get().getUsername();
-            JFileChooser fc = new JFileChooser();
-            JFileChooser fileChooser = new JFileChooser();
-            if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                // save to file
-                String path = file.getPath();
-
-                RSAPublicKey encryptionKey = (RSAPublicKey) directoryController.getAccount().get().getEncryptionKeypair().getPublic();
-                RSAPublicKey signingKey = (RSAPublicKey) directoryController.getAccount().get().getSigningKeypair().getPublic();
-
-                X509EncodedKeySpec x509EncodedEncryptionKeySpec = new X509EncodedKeySpec(encryptionKey.getEncoded());
-                X509EncodedKeySpec x509EncodedSingingKeySpec = new X509EncodedKeySpec(signingKey.getEncoded());
-
-                try (PrintWriter writer = new PrintWriter(file)) {
-                    Base64.Encoder encoder = Base64.getEncoder();
-                    writer.println(encoder.encodeToString(x509EncodedEncryptionKeySpec.getEncoded()));
-                    writer.println(encoder.encodeToString(x509EncodedSingingKeySpec.getEncoded()));
-                } catch (IOException e1) {
-                    JOptionPane.showConfirmDialog(frame, "Unable to write to location: "+path);
-                }
+            if (!backingStore.writeKeypair(directoryController.getAccount().get())) {
+                JOptionPane.showConfirmDialog(frame, "Unable to write public keyfile.");
             }
-
         });
 
 
@@ -426,41 +404,34 @@ public class KeychainViewer {
                     Boolean readWrite = writepriv.isSelected();
 //                    String readWrite = (String)priv.getSelectedItem();
                     //Try to read public key
-                    try {
-                        Base64.Decoder decoder = Base64.getDecoder();
-                        List<String> keyLines = Files.readAllLines(file[0].toPath());
+                    Optional<List<RSAPublicKey>> keys = backingStore.readPublicKey(file[0].toPath());
 
-                        X509EncodedKeySpec spec;
-                        KeyFactory kf = KeyFactory.getInstance("RSA");
-
-                        spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(0)));
-                        RSAPublicKey encryptionKey = (RSAPublicKey) kf.generatePublic(spec);
-
-                        spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(1)));
-                        RSAPublicKey signingKey = (RSAPublicKey) kf.generatePublic(spec);
-
-                        Share newshare = new Share(-1L, username, readWrite, encryptionKey, signingKey, false);
-
-                        boolean success = directoryController.shareKeychain(activeDE,newshare);
-                        if(success){
-                            JOptionPane.showMessageDialog(frame,
-                                    "Successfully shared " + activeDE.name+ " with "+ username);
-                            
-                            Optional<Account> act = directoryController.getAccount();
-                            String user = null;
-                            if (act.isPresent())
-                            	user = act.get().getUsername();
-                            keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getServerId(), 
-                            		String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username));
-                        }
-                        else{
-                            JOptionPane.showMessageDialog(frame,
-                                    "Unable to share " + activeDE.name+ " with "+ username);
-                        }
-                    }catch (IOException | ClassCastException|
-                            InvalidKeySpecException |NoSuchAlgorithmException e1){
-
+                    if (!keys.isPresent()) {
+                        // TODO
                         JOptionPane.showMessageDialog(frame,"Unable to read public key file");
+                        System.err.println("Error loading public key");
+                        return;
+                    }
+
+                    RSAPublicKey encryptionKey = keys.get().get(0);
+                    RSAPublicKey signingKey = keys.get().get(1);
+
+                    Share newshare = new Share(-1L, username, readWrite, encryptionKey, signingKey, false);
+
+                    boolean success = directoryController.shareKeychain(activeDE,newshare);
+                    if (success) {
+                        JOptionPane.showMessageDialog(frame,
+                                "Successfully shared " + activeDE.name+ " with "+ username);
+
+                        Optional<Account> act = directoryController.getAccount();
+                        String user = null;
+                        if (act.isPresent())
+                            user = act.get().getUsername();
+                        keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getServerId(),
+                                String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username));
+                    } else {
+                        JOptionPane.showMessageDialog(frame,
+                                "Unable to share " + activeDE.name+ " with "+ username);
                     }
                 }
             }

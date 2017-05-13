@@ -78,7 +78,7 @@ public class Account {
                 .add(SIGNING_KEYPAIR, serialiseObject(signingKeypair));
     }
 
-    public Optional<JsonObjectBuilder> dumpKeypairs() {
+    public Optional<JsonObjectBuilder> dumpKeypairs(SecretKey keychainEncryptionKey) {
         Base64.Encoder encoder = Base64.getEncoder();
         byte[] nonce = Crypto.getNonce();
 
@@ -86,7 +86,7 @@ public class Account {
                 .add(ENCRYPTION_KEYPAIR, serialiseObject(encryptionKeypair))
                 .add(SIGNING_KEYPAIR, serialiseObject(signingKeypair));
 
-        Optional<byte[]> data = Crypto.encryptJsonObject(secretKey, nonce, dataObject.build());
+        Optional<byte[]> data = Crypto.encryptJsonObject(keychainEncryptionKey, nonce, dataObject.build());
 
         if (!data.isPresent()) {
             return Optional.empty();
@@ -97,14 +97,14 @@ public class Account {
                 .add(DATA, encoder.encodeToString(data.get())));
     }
 
-    public boolean deserialiseKeypairs(JsonObject jsonObject) {
+    public boolean deserialiseKeypairs(SecretKey keychainEncryptionKey, JsonObject jsonObject) {
         Base64.Decoder decoder = Base64.getDecoder();
 
         try {
             byte[] nonce = decoder.decode(jsonObject.getString(NONCE));
             byte[] data = decoder.decode(jsonObject.getString(DATA));
 
-            Optional<JsonObject> decryptedObject = Crypto.decryptJsonObject(secretKey, nonce, data);
+            Optional<JsonObject> decryptedObject = Crypto.decryptJsonObject(keychainEncryptionKey, nonce, data);
 
             if (!decryptedObject.isPresent()) {
                 return false;
