@@ -27,6 +27,7 @@ public class PasswordGenerator {
     public PasswordGenerator() {
         this.activeConfiguration = new PasswordGeneratorConfiguration();
         this.configurations = new ArrayList<>();
+        configurations.add(activeConfiguration);
     }
 
     public PasswordGenerator(JsonObject object) {
@@ -42,6 +43,7 @@ public class PasswordGenerator {
             this.activeConfiguration = this.configurations.get(0);
         } else {
             this.activeConfiguration = new PasswordGeneratorConfiguration();
+            configurations.add(activeConfiguration);
         }
     }
 
