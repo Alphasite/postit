@@ -2,6 +2,7 @@ package postit.client.keychain;
 
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
+import postit.client.passwordtools.PasswordGenerator;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
@@ -19,6 +20,7 @@ public class Directory {
     public static final String ACCOUNT = "account";
     public static final String KEYCHAINS = "keychains";
     public static final String DELETED = "deleted";
+    public static final String PASSWORD_GENERATOR = "password-generator";
 
     private BackingStore backingStore;
 
@@ -27,11 +29,14 @@ public class Directory {
 
     private Account account;
 
+    private PasswordGenerator passwordGenerator;
+
     public Directory(BackingStore backingStore, KeyService keyService) {
         this.backingStore = backingStore;
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
         this.account = keyService.getAccount();
+        this.passwordGenerator = new PasswordGenerator();
     }
 
     public Directory(JsonObject object, BackingStore backingStore) {
@@ -39,6 +44,7 @@ public class Directory {
         this.keychains = new ArrayList<>();
         this.deletedKeychains = new ArrayList<>();
         this.account = new Account(object.getJsonObject(ACCOUNT));
+        this.passwordGenerator = new PasswordGenerator(object.getJsonObject(PASSWORD_GENERATOR));
 
         JsonArray keychainArray = object.getJsonArray(KEYCHAINS);
         for (int i = 0; i < keychainArray.size(); i++) {
@@ -71,7 +77,8 @@ public class Directory {
                 .add(VERSION, "1.0.0")
                 .add(ACCOUNT, account.dump())
                 .add(KEYCHAINS, keychainArray)
-                .add(DELETED, deletedKeychainsArray);
+                .add(DELETED, deletedKeychainsArray)
+                .add(PASSWORD_GENERATOR, passwordGenerator.dump());
     }
 
     public List<DirectoryEntry> getKeychains() {
