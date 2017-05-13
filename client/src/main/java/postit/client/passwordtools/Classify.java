@@ -50,8 +50,8 @@ public class Classify {
         ERROR
     }
 
-    URL wordlist = Classify.class.getClassLoader().getResource("./passwordStrength/password-2011.lst");
-    URL wordlist2 = Classify.class.getClassLoader().getResource("./passwordStrength/words.txt");
+    public static final URL wordlist = Classify.class.getClassLoader().getResource("./passwordStrength/password-2011.lst");
+    public static final URL wordlist2 = Classify.class.getClassLoader().getResource("./passwordStrength/words.txt");
 
     /**“Password must have at
      least 8 characters,
