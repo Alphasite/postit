@@ -1,5 +1,6 @@
 package postit.client.controller;
 
+import postit.client.backend.KeyService;
 import postit.client.communication.Client;
 import postit.client.keychain.Account;
 import postit.client.keychain.DirectoryEntry;
@@ -38,12 +39,18 @@ public class ServerController {
 
     private Client clientToServer;
     private DirectoryController directoryController;
+    private KeyService keyService;
 
     private Thread syncThread;
+
+    public void setKeyService(KeyService keyService) {
+        this.keyService = keyService;
+    }
 
     public ServerController(Client client) {
         this.clientToServer = client;
         this.directoryController = null;
+        this.keyService = null;
         this.syncThread = null;
     }
 
@@ -532,7 +539,7 @@ public class ServerController {
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             JsonObject jsonObject = response.get().getJsonObject(typeToString(SHARED_KEYCHAIN));
-            return account.deserialiseKeypairs(jsonObject);
+            return account.deserialiseKeypairs(keyService.getMasterKey(), jsonObject);
         } else {
             return false;
         }

@@ -93,6 +93,7 @@ public class ServerControllerTest {
 
         clientToServer = new Client(2048, "localhost");
         serverController = new ServerController(clientToServer);
+        serverController.setKeyService(keyService);
         assertTrue(serverController.setDirectoryController(directoryController));
 
         serverController.addUser(account, "test@test.com", "te", "st", "8000000000", "", "");

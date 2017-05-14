@@ -6,7 +6,6 @@ buildscript {
     }
 
     dependencies {
-//        classpath 'com.android.tools.build:gradle:2.4.0-alpha7'
         classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
     }
 }
@@ -21,40 +20,48 @@ idea {
 }
 
 subprojects {subproject ->
-    if (!subproject.name.startsWith("android")) {
-        apply plugin: 'java'
-        apply plugin: 'info.solidsoft.pitest'
-        apply plugin: 'findbugs'
+    apply plugin: 'java'
+    apply plugin: 'info.solidsoft.pitest'
+    apply plugin: 'findbugs'
 
-        sourceCompatibility = 1.8
+    sourceCompatibility = 1.8
 
-        pitest {
-            targetClasses = ['postit.*']  //by default "${project.group}.*"
-            pitestVersion = "1.1.0" //not needed when a default PIT version should be used
-            threads = 4
-            outputFormats = ['XML', 'HTML']
-            reportDir = "build/reports/pit"
-            excludedClasses = ['postit.server.*']
-            avoidCallsTo = ['postit.server.*']
+    pitest {
+        targetClasses = ['postit.*']  //by default "${project.group}.*"
+        pitestVersion = "1.1.0" //not needed when a default PIT version should be used
+        threads = 4
+        outputFormats = ['XML', 'HTML']
+        reportDir = "build/reports/pit"
+        excludedClasses = ['postit.server.*']
+        avoidCallsTo = ['postit.server.*']
+    }
+
+    findbugsMain {
+        ignoreFailures = true
+
+        reports {
+            xml.enabled = false
+            html.enabled = true
         }
+    }
 
-        findbugsMain {
-            ignoreFailures = true
+    findbugsTest {
+        ignoreFailures = true
+        reportLevel = "high"
 
-            reports {
-                xml.enabled = false
-                html.enabled = true
-            }
+        reports {
+            xml.enabled = false
+            html.enabled = false
         }
+    }
 
-        dependencies {
-            // Use JUnit test framework
-            testCompile 'junit:junit:4.12'
-            testCompile 'commons-io:commons-io:2.5'
+    dependencies {
+        // Use JUnit test framework
+        testCompile 'junit:junit:4.12'
+        testCompile 'commons-io:commons-io:2.5'
 
-            testCompile project(':testUtilities')
-            testRuntime project(':testUtilities')
-        }
+        testCompile project(':testUtilities')
+        testRuntime project(':testUtilities')
     }
 
     apply plugin: "jacoco"

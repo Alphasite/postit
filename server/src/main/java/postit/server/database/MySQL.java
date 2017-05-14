@@ -46,12 +46,12 @@ public class MySQL implements Database {
 		return new MySQL("localhost:3306", database, user, pwd);
 	}
 
-	public static MySQL remoteDatabase(String database, String user, String pwd) throws SQLException {
-		return new MySQL("nishadmathur.com:3306", database, user, pwd);
+	public static MySQL remoteDatabase(String address, String database, String user, String pwd) throws SQLException {
+		return new MySQL(address, database, user, pwd);
 	}
 
 	public static MySQL defaultDatabase() throws SQLException {
-		return MySQL.remoteDatabase("postit", "postit", "xDljSX8Ojk");
+		return new MySQL("nishadmathur.com:3306","postit", "postit", "xDljSX8Ojk");
 	}
 
 	@Override

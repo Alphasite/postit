@@ -1,10 +1,10 @@
 FROM openjdk:8
-ADD build/distributions/postit.zip /usr/src/
+ADD server/build/distributions/server.zip /usr/src/
 WORKDIR /usr/src/
-RUN unzip postit.zip
-WORKDIR /usr/src/postit
+RUN unzip server.zip
+WORKDIR /usr/src/server
 
 EXPOSE 4880
 EXPOSE 2048
 
-CMD java -cp 'lib/*' postit.server.serverApp
+CMD ["bin/server"]
