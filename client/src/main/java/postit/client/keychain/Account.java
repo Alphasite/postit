@@ -83,8 +83,8 @@ public class Account {
         byte[] nonce = Crypto.getNonce();
 
         JsonObjectBuilder dataObject = Json.createObjectBuilder()
-                .add(ENCRYPTION_KEYPAIR, serialiseObject(encryptionKeypair))
-                .add(SIGNING_KEYPAIR, serialiseObject(signingKeypair));
+                .add(ENCRYPTION_KEYPAIR, encoder.encodeToString(serialiseObject(encryptionKeypair).getBytes()))
+                .add(SIGNING_KEYPAIR, encoder.encodeToString(serialiseObject(signingKeypair).getBytes()));
 
         Optional<byte[]> data = Crypto.encryptJsonObject(keychainEncryptionKey, nonce, dataObject.build());
 
@@ -110,8 +110,8 @@ public class Account {
                 return false;
             }
 
-            KeyPair encryptionKeypair = deserialiseObject(decryptedObject.get().getString(ENCRYPTION_KEYPAIR));
-            KeyPair signingKeypair = deserialiseObject(decryptedObject.get().getString(SIGNING_KEYPAIR));
+            KeyPair encryptionKeypair = deserialiseObject(new String(decoder.decode(decryptedObject.get().getString(ENCRYPTION_KEYPAIR))));
+            KeyPair signingKeypair = deserialiseObject(new String(decoder.decode(decryptedObject.get().getString(SIGNING_KEYPAIR))));
 
             if (encryptionKeypair != null && signingKeypair != null) {
                 this.encryptionKeypair = encryptionKeypair;

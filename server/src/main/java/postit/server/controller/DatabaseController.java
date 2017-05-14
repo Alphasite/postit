@@ -17,6 +17,12 @@ public class DatabaseController {
     private static final String ACCOUNT = "account";
     private static final String DIRECTORY_ENTRY = "directory_entry";
     private static final String LOGIN = "login";
+    public static final String EMAIL = "email";
+    public static final String FIRST_NAME = "first_name";
+    public static final String LAST_NAME = "last_name";
+    public static final String PHONE_NUMBER = "phone_number";
+    public static final String KEY_PAIR = "key_pair";
+    public static final String PUBLIC_KEY = "public_key";
 
     private Database database;
 
@@ -83,8 +89,17 @@ public class DatabaseController {
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    serverAccount = new ServerAccount(username, null, resultSet.getString("email"),
-                            resultSet.getString("first_name"), resultSet.getString("last_name"), resultSet.getString("phone_number"));
+                    serverAccount = new ServerAccount(
+                            username,
+                            null,
+                            resultSet.getString(EMAIL),
+                            resultSet.getString(FIRST_NAME),
+                            resultSet.getString(LAST_NAME),
+                            resultSet.getString(PHONE_NUMBER),
+                            resultSet.getString(KEY_PAIR),
+                            resultSet.getString(PUBLIC_KEY)
+
+                    );
                 }
             }
         } catch (SQLException e) {
@@ -101,7 +116,7 @@ public class DatabaseController {
             statement.setString(1, username);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return resultSet.getString("key_pair");
+                    return resultSet.getString(KEY_PAIR);
                 }
             }
         } catch (SQLException e) {

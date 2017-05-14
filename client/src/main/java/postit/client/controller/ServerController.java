@@ -9,10 +9,7 @@ import postit.client.keychain.Share;
 import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonException;
-import javax.json.JsonObject;
+import javax.json.*;
 import java.io.StringReader;
 import java.security.PublicKey;
 import java.text.MessageFormat;
@@ -297,6 +294,7 @@ public class ServerController {
     }
 
     public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber, String keypair, String publicKey) {
+        Base64.Encoder encoder = Base64.getEncoder();
         String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber, keypair, publicKey);
         return sendAndCheckIfSuccess(req);
     }
@@ -538,8 +536,13 @@ public class ServerController {
         Optional<JsonObject> response = clientToServer.send(req);
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
-            JsonObject jsonObject = response.get().getJsonObject(typeToString(SHARED_KEYCHAIN));
-            return account.deserialiseKeypairs(keyService.getMasterKey(), jsonObject);
+            String jsonObject = response.get().getString(typeToString(KEYPAIR));
+            try (JsonReader reader = Json.createReader(new StringReader(jsonObject))) {
+                return account.deserialiseKeypairs(keyService.getMasterKey(), reader.readObject());
+            } catch (Exception e) {
+                LOGGER.warning("Failed to parse keypair object...");
+                return false;
+            }
         } else {
             return false;
         }

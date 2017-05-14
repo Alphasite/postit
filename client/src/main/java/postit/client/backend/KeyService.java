@@ -20,4 +20,6 @@ public interface KeyService {
     SecretKey getClientKey();
 
     Account getAccount();
+
+    void destroyKey();
 }
