@@ -155,7 +155,13 @@ public class KeychainViewer {
                     passwordStrength.setText("Password Strength: "+strength);
                 }
             });
-            generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
+            generatePass.addActionListener(ee->{
+                newpassword.setText(passwordGenerator.generatePassword());
+                JSONObject result = classify.strengthCheck(newpassword.getText());
+                String strength = (String) result.get("strength");
+
+                passwordStrength.setText("Password Strength: "+strength);
+            });
 
             Object[] message = {
                     "Title:", newtitle,

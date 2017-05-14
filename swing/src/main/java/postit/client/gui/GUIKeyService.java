@@ -244,19 +244,12 @@ public class GUIKeyService implements KeyService {
                             keypair.get().build().toString(),
                             Crypto.serialiseObject(newAccount.getSigningKeypair().getPublic()))
                         ) {
-
-                            if (backingStore.writeKeypair(newAccount)) {
-                                JOptionPane.showMessageDialog(
-                                    null,
-                                    "Generated a new keypair and saved it to the disk. Please transfer this " +
-                                            "to a memory stick and store it in a safe, or other secure location as you " +
-                                            "will need it to login at new locations."
-                                );
-
-                                return newAccount;
-                            } else {
-                                JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
-                            }
+                            return newAccount;
+//                            if (backingStore.writeKeypair(newAccount)) {
+//                                return newAccount;
+//                            } else {
+//                                JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
+//                            }
                         }
 
                     } else if (!pass1.equals(pass2)) {
