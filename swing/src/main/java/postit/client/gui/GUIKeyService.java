@@ -8,7 +8,6 @@ import postit.client.keychain.Account;
 import postit.client.log.AuthenticationLog;
 import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
-import postit.shared.EFactorAuth;
 
 import javax.crypto.SecretKey;
 import javax.json.JsonObjectBuilder;
@@ -127,16 +126,7 @@ public class GUIKeyService implements KeyService {
     public SecretKey getMasterKey() {
         if (key == null || retrieved == null || Instant.now().isAfter(retrieved.plus(GUIKeyService.timeout))) {
 
-            try {
-                if (key != null) {
-                    // Try destroy, but its not significant if it fails.
-                    key.destroy();
-                }
-            } catch (DestroyFailedException ignored) {
-
-            } finally {
-                key = null;
-            }
+            destroyKey();
 
             key = null;
 
@@ -148,6 +138,20 @@ public class GUIKeyService implements KeyService {
 
         retrieved = Instant.now();
         return key;
+    }
+
+    @Override
+    public void destroyKey() {
+        try {
+            if (key != null) {
+                // Try destroy, but its not significant if it fails.
+                key.destroy();
+            }
+        } catch (DestroyFailedException ignored) {
+
+        } finally {
+            key = null;
+        }
     }
 
     @Override
@@ -189,31 +193,20 @@ public class GUIKeyService implements KeyService {
                 		if (sc.authenticate(newAccount)) {
                 			//authenticate via text
                 			//TODO send text
-                			String phoneNumber=sc.getPhoneNumber(newAccount);
-                			new EFactorAuth().sendMsg(phoneNumber);
                             String pin = null;
                 			if (sc.sendGetKeypairRequest(newAccount)) {
                                 while (pin == null){
                                     pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
                                 }
+
+                                if (sc.sendKeypairOtpResponse(newAccount, pin)) {
+                                    al.addAuthenticationLogEntry(username, true, "Login successful");
+                                    return newAccount;
+                                } else {
+                                    this.destroyKey();
+                                    JOptionPane.showMessageDialog(null, "Incorrect PIN");
+                                }
                             }
-
-                			if (new EFactorAuth().verifyMsg(phoneNumber, pin)) {
-                				JOptionPane.showConfirmDialog(
-                						null,
-                						"Please ensure your keypair is in the data directory. Select any option to proceed"
-                                );
-                				
-                				al.addAuthenticationLogEntry(username, true, "Login successful");
-
-                				if (backingStore.readKeypair(newAccount)) {
-                					return newAccount;
-                				} else {
-                					JOptionPane.showMessageDialog(null, "Failed to load keypair.");
-                				}
-                			} else {
-                				JOptionPane.showMessageDialog(null, "Incorrect PIN");
-                			}
 
                 		} else {
                 			al.addAuthenticationLogEntry(username, false, "Login credentials are invalid");

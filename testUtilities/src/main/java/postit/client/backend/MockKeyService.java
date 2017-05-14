@@ -55,4 +55,9 @@ public class MockKeyService implements KeyService {
     public Account getAccount() {
         return account;
     }
+
+    @Override
+    public void destroyKey() {
+        // TODO?
+    }
 }

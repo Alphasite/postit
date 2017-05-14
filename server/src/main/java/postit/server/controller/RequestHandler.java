@@ -109,9 +109,11 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		String assetName = MessagePackager.typeToString(asset).toLowerCase();
 		LOGGER.info("Handling request of type: " + act.toString() + " " + assetName);
 		JSONObject obj = null;
+		String str = null;
 
 		if (json.has(assetName)) {
-			obj = json.getJSONObject(assetName);
+			str = json.optString(assetName);
+			obj = json.optJSONObject(assetName);
 		}
 
 		JSONObject js;
@@ -127,7 +129,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 						obj.getString("email"),
 						obj.getString("firstname"),
 						obj.getString("lastname"),
-						obj.getString("phoneNumber")
+						obj.getString("phoneNumber"),
+						obj.getString("keypair"),
+						obj.getString("publickey")
 				);
 
 				if (ah.addAccount(serverAccount)) {
@@ -192,7 +196,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			case KEYPAIR:
 				// TODO fill this in Zhan.
 				ServerAccount serverAccount = ah.getAccount(username);
-				String otp = json.getString("keypair");
+				String otp = str;
 				String phoneNumber = serverAccount.getPhoneNumber();
 				// check otp.
 				boolean otpSuccessfullyAuthenticated = new EFactorAuth().verifyMsg(phoneNumber, otp);
