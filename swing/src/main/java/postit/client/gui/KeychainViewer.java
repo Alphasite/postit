@@ -24,6 +24,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.security.interfaces.RSAPublicKey;
 import java.sql.Timestamp;
 import java.time.Duration;
@@ -67,7 +68,6 @@ public class KeychainViewer {
     private KeyService keyService;
 
     private KeychainLog keyLog;
-    private AuthenticationLog authLog;
 
     public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService, KeychainLog keyLog, AuthenticationLog authLog) {
 
@@ -93,16 +93,17 @@ public class KeychainViewer {
             if (act.isPresent()){
             	authLog.addAuthenticationLogEntry(act.get().getUsername(), true, "Login successful");
             }
-            String overduePasswords = "";
+            StringBuffer overduePasswords = new StringBuffer("");
             for(DirectoryEntry directoryEntry:directoryController.getKeychains()) {
                 List<Password>expiredPasswords = directoryController.getExpired(directoryEntry.readKeychain().get(), Duration.ofDays(365));
                 for (Password p:expiredPasswords){
-                    overduePasswords+=p.getTitle()+"\n";
+                    overduePasswords.append(p.getTitle());
+                    overduePasswords.append("\n");
                 }
             }
-            if(!overduePasswords.equals("")){
+            if(overduePasswords.length()!=0){
                 JOptionPane.showMessageDialog(null,
-                        "Passwords that have not updated for a year: \n"+overduePasswords+"To stop update messages, re-save your passwords",
+                        "Passwords that have not updated for a year: \n"+overduePasswords.toString()+"To stop update messages, re-save your passwords",
                         "Overdue passwords",JOptionPane.PLAIN_MESSAGE);
             }
         }
@@ -112,7 +113,6 @@ public class KeychainViewer {
         this.keyService = keyService;
         
         this.keyLog = keyLog;
-        this.authLog = authLog;
 
         backingStore.save();
     }
@@ -171,7 +171,7 @@ public class KeychainViewer {
                         && newusername.getText().length() > 0) {
                     boolean success = directoryController.createPassword(getActiveKeychain(),
                             newtitle.getText(), newusername.getText(),
-                            Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
+                            Crypto.secretKeyFromBytes(newpassword.getText().getBytes(StandardCharsets.UTF_8)));
                     if (success){
                     	Keychain key = getActiveKeychain();
                     	Optional<Account> act = directoryController.getAccount();

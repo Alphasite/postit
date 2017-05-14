@@ -143,7 +143,7 @@ public class DirectoryKeychain {
         );
     }
 
-    public long getServerid() {
+    public long getServerId() {
         return serverid;
     }
 }

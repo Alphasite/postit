@@ -14,6 +14,7 @@ import javax.crypto.SecretKey;
 import javax.json.JsonObjectBuilder;
 import javax.security.auth.DestroyFailedException;
 import javax.swing.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -67,7 +68,7 @@ public class GUIKeyService implements KeyService {
         	}
             
         }while (key == null);
-        return key.getBytes();
+        return key.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -75,15 +76,15 @@ public class GUIKeyService implements KeyService {
         String password;
 
         while (true) {
-            String password1 = new String(getKey("Please enter NEW master password: "));
-            String password2 = new String(getKey("Please re-enter NEW master password: "));
+            String password1 = new String(getKey("Please enter NEW master password: "),StandardCharsets.UTF_8);
+            String password2 = new String(getKey("Please re-enter NEW master password: "),StandardCharsets.UTF_8);
             if (password1.equals(password2)) {
                 password = password1;
                 break;
             }
         }
 
-        key = Crypto.secretKeyFromBytes(password.getBytes());
+        key = Crypto.secretKeyFromBytes(password.getBytes(StandardCharsets.UTF_8));
         retrieved = Instant.now();
 
         return key;
@@ -94,14 +95,14 @@ public class GUIKeyService implements KeyService {
         String password;
 
         while (true) {
-        	String passwordOld1 = new String(getMasterKey().getEncoded());
-        	String passwordOld2 = new String(getKey("Current master password"));
+        	String passwordOld1 = new String(getMasterKey().getEncoded(),StandardCharsets.UTF_8);
+        	String passwordOld2 = new String(getKey("Current master password"),StandardCharsets.UTF_8);
         	if (! passwordOld1.equals(passwordOld2)){
         		JOptionPane.showMessageDialog(null, "The CURRENT master password is incorrect.");
         		return null;
         	}
-            String password1 = new String(getKey("New master password"));
-            String password2 = new String(getKey("Re-enter new master password"));
+            String password1 = new String(getKey("New master password"),StandardCharsets.UTF_8);
+            String password2 = new String(getKey("Re-enter new master password"),StandardCharsets.UTF_8);
             if (password1.equals(password2)) {
                 password = password1;
                 break;

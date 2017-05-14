@@ -1,18 +1,12 @@
 package postit.client.log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-
 import postit.shared.AuditLog;
 import postit.shared.AuditLog.EventType;
 import postit.shared.AuditLog.LogEntry;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class KeychainLog {
 
@@ -21,13 +15,21 @@ public class KeychainLog {
 	public KeychainLog(){
 		// Creates log file if not existing
 		File logDir = new File(AuditLog.LOG_DIR);
-		if (! logDir.exists())
-			logDir.mkdirs();
+		if (! logDir.exists()){
+			Boolean success = logDir.mkdirs();
+			if(!success){
+				//TODO Ning: handle if mkdir was unsuccessful
+			}
+		}
+
 		
 		File log = new File(KEYCHAIN_LOG);
 		if (! log.exists())
 			try {
-				log.createNewFile();
+				Boolean success = log.createNewFile();
+				if(!success){
+					//TODO Ning: handle if createNewFile is unsuccessful
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -139,8 +141,9 @@ public class KeychainLog {
 	
 	public List<LogEntry> getKeychainLogEntries(long keychainId){
 		List<LogEntry> entries = new ArrayList<LogEntry>();
+		BufferedReader reader = null;
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(new File(KEYCHAIN_LOG)));
+			reader = new BufferedReader(new FileReader(new File(KEYCHAIN_LOG)));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);
@@ -155,6 +158,13 @@ public class KeychainLog {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (reader != null) reader.close();;
+			} catch (IOException io) {
+				//log exception here
+			}
 		}
 		
 		return entries;

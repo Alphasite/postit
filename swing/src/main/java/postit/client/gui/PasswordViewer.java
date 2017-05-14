@@ -12,6 +12,7 @@ import postit.shared.Crypto;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 /**
@@ -84,9 +85,9 @@ public class PasswordViewer {
 
             byte[] oldKey = p.password.getEncoded();
             String newKey = String.valueOf(passField.getPassword());
-            success = c.updatePassword(p, Crypto.secretKeyFromBytes(newKey.getBytes()));
+            success = c.updatePassword(p, Crypto.secretKeyFromBytes(newKey.getBytes(StandardCharsets.UTF_8)));
             
-            if (success && username != null && !Arrays.areEqual(oldKey, newKey.getBytes())){
+            if (success && username != null && !Arrays.areEqual(oldKey, newKey.getBytes(StandardCharsets.UTF_8))){
             	kl.addUpdateKeychainLogEntry(username, true, keyId, 
             			String.format("Password %s changed password value in keychain <%s>", p.getTitle(), keyName));
             }
@@ -116,7 +117,7 @@ public class PasswordViewer {
             userField.setText("");
 
         byte[] bytes = Crypto.secretKeyToBytes(p.password);
-        passField.setText(new String(bytes));
+        passField.setText(new String(bytes, StandardCharsets.UTF_8));
 
         if (metadata.containsKey("comments"))
             comments.setText(metadata.get("comments"));

@@ -14,6 +14,7 @@ import javax.json.JsonArray;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.text.MessageFormat;
 import java.util.*;
@@ -78,12 +79,12 @@ public class ServerController {
             List<DirectoryEntry> clientKeychains = directoryController.getKeychains();
 
             Set<Long> clientKeychainNames = clientKeychains.stream()
-                    .map(keychain -> keychain.getServerid())
+                    .map(keychain -> keychain.getServerId())
                     .collect(Collectors.toSet());
 
             // Figure out which keychains have been uploaded to the server and are no longer there.
             Set<Long> serverDeletedKeychains = clientKeychains.stream()
-                            .map(keychain -> keychain.getServerid())
+                            .map(keychain -> keychain.getServerId())
                             .filter(id -> id != -1)
                             .collect(Collectors.toSet());
             serverDeletedKeychains.removeAll(serverKeychains);
@@ -103,7 +104,7 @@ public class ServerController {
 
             // Figure out which keychains to upload to the server
             List<DirectoryEntry> keychainsToUpload = clientKeychains.stream()
-                    .filter(keychain -> keychain.getServerid() == -1)
+                    .filter(keychain -> keychain.getServerId() == -1)
                     .collect(Collectors.toList());
 
             // Figure out which keychains may need an update, and update them.
@@ -166,12 +167,12 @@ public class ServerController {
             // This is the meat of the sync function
             // It handles downloading and merging server copies of the keychains.
             for (DirectoryEntry entry : new ArrayList<>(directoryController.getKeychains())) {
-                if (localKeychainsToDelete.contains(entry.getServerid())) {
+                if (localKeychainsToDelete.contains(entry.getServerId())) {
                     directoryController.deleteEntry(entry);
                     continue;
                 }
 
-                if (keychainsToUpdate.contains(entry.getServerid())) {
+                if (keychainsToUpdate.contains(entry.getServerId())) {
                     Optional<Share> any = entry.shares.stream()
                             .filter(share -> share.isOwner)
                             .findAny();
@@ -179,7 +180,7 @@ public class ServerController {
                     // Merge owner first.
                     Optional<DirectoryKeychain> ownerDirectoryKeychainObject = this.getOwnerDirectoryKeychainObject(
                             account.get(),
-                            entry.getServerid(),
+                            entry.getServerId(),
                             Optional.of(any.get().signatureKey)
                     );
 
@@ -196,7 +197,7 @@ public class ServerController {
                             .findAny()
                             .get();
 
-                    boolean isOwnerOfEntry = ownerShare.serverid == entry.getServerid();
+                    boolean isOwnerOfEntry = ownerShare.serverid == entry.getServerId();
 
                     // Get all non-owner instances of this keychain.
                     Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry);
@@ -208,14 +209,14 @@ public class ServerController {
 
                     // Get the ids of all the shared copies of the keychain
                     Set<Long> sharedKeychainsOnServer = allInstancesOfKeychain.get().stream()
-                            .map(DirectoryKeychain::getServerid)
+                            .map(DirectoryKeychain::getServerId)
                             .collect(Collectors.toSet());
 
                     // Iterate through each of them
                     for (DirectoryKeychain directoryKeychain : allInstancesOfKeychain.get()) {
                         // Find the share for this entry.
                         Optional<Share> share = entry.shares.stream()
-                                    .filter(s -> s.serverid == directoryKeychain.getServerid())
+                                    .filter(s -> s.serverid == directoryKeychain.getServerId())
                                     .findAny();
 
                         if (!share.isPresent()) {
@@ -225,7 +226,7 @@ public class ServerController {
                         }
 
                         // Allow if owner can write or is self.
-                        if (!share.get().canWrite && share.get().serverid != entry.getServerid()) {
+                        if (!share.get().canWrite && share.get().serverid != entry.getServerId()) {
                             continue;
                         }
 
@@ -259,7 +260,7 @@ public class ServerController {
                         }
 
                         sharedKeychainsOnServer = allInstancesOfKeychain.get().stream()
-                                .map(DirectoryKeychain::getServerid)
+                                .map(DirectoryKeychain::getServerId)
                                 .collect(Collectors.toSet());
 
                         Set<Long> sharedKeychainsTheClientKnowsOf = entry.shares.stream()
@@ -361,7 +362,7 @@ public class ServerController {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             try {
                 JsonObject keychain = response.get().getJsonObject(typeToString(asset));
-                String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
+                String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")), StandardCharsets.UTF_8);
                 JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
                 return DirectoryKeychain.init(
                         keychain.getJsonNumber("directoryEntryId").longValue(),
@@ -385,7 +386,7 @@ public class ServerController {
             return false;
         }
 
-        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().toString().getBytes());
+        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().toString().getBytes(StandardCharsets.UTF_8));
 
         String req = RequestMessenger.createAddKeychainsMessage(
                 account,
@@ -419,12 +420,12 @@ public class ServerController {
             return false;
         }
 
-        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().toString().getBytes());
+        String encodedKeychainEntryObject = Base64.getEncoder().encodeToString(keychainEntryObject.get().toString().getBytes(StandardCharsets.UTF_8));
 
         // TODO fill this in?
         String req = RequestMessenger.createUpdateKeychainMessage(
                 account,
-                entry.getServerid(),
+                entry.getServerId(),
                 entry.name,
                 encodedKeychainEntryObject
         );
@@ -449,7 +450,7 @@ public class ServerController {
     }
 
     public boolean shareKeychain(Account account, DirectoryEntry entry, Share share) {
-        String req = RequestMessenger.createSharedKeychainMessage(account, entry.getServerid(), share.username, share.canWrite);
+        String req = RequestMessenger.createSharedKeychainMessage(account, entry.getServerId(), share.username, share.canWrite);
         Optional<JsonObject> response = clientToServer.send(req);
 
         if (response.isPresent() && response.get().getString("status").equals("success")) {
@@ -465,7 +466,7 @@ public class ServerController {
     }
 
     public Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry) {
-        String req = RequestMessenger.createGetKeychainInstancesMessage(account, entry.getServerid());
+        String req = RequestMessenger.createGetKeychainInstancesMessage(account, entry.getServerId());
         Optional<JsonObject> response = clientToServer.send(req);
 
         List<DirectoryKeychain> directoryKeychains = new ArrayList<>();
@@ -492,7 +493,7 @@ public class ServerController {
                         continue;
                     }
 
-                    String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")));
+                    String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")),StandardCharsets.UTF_8);
                     JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
                     Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(
                             directoryEntryId,

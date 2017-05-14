@@ -6,6 +6,7 @@ import javax.crypto.SecretKey;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.util.Base64;
 import java.util.Optional;
@@ -31,14 +32,14 @@ public class Account {
 
     public Account(String username) {
         this.username = username;
-        this.secretKey = Crypto.secretKeyFromBytes("DEAD BEEF".getBytes());
+        this.secretKey = Crypto.secretKeyFromBytes("DEAD BEEF".getBytes(StandardCharsets.UTF_8));
         this.encryptionKeypair = Crypto.generateRSAKeyPair().orElseThrow(() -> new RuntimeException("Missing bouncy castle library!"));
         this.signingKeypair = Crypto.generateRSAKeyPair().orElseThrow(() -> new RuntimeException("Missing bouncy castle library!"));
     }
 
     public Account(String username, String password) {
         this.username = username;
-        this.secretKey = Crypto.secretKeyFromBytes(password.getBytes());
+        this.secretKey = Crypto.secretKeyFromBytes(password.getBytes(StandardCharsets.UTF_8));
         this.encryptionKeypair = Crypto.generateRSAKeyPair().orElseThrow(() -> new RuntimeException("Missing bouncy castle library!"));
         this.signingKeypair = Crypto.generateRSAKeyPair().orElseThrow(() -> new RuntimeException("Missing bouncy castle library!"));
     }
@@ -73,7 +74,7 @@ public class Account {
     public JsonObjectBuilder dump() {
         return Json.createObjectBuilder()
                 .add(USERNAME, username)
-                .add(PASSWORD, new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(secretKey))))
+                .add(PASSWORD, new String(Base64.getEncoder().encode(Crypto.secretKeyToBytes(secretKey)),StandardCharsets.UTF_8))
                 .add(ENCRYPTION_KEYPAIR, serialiseObject(encryptionKeypair))
                 .add(SIGNING_KEYPAIR, serialiseObject(signingKeypair));
     }

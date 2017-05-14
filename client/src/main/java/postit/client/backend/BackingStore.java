@@ -121,10 +121,10 @@ public class BackingStore {
     }
 
     public boolean writePublicKeys(Account account) {
-        try (PrintWriter writer = new PrintWriter(getPublicKeyPath().toFile())) {
+        try (PrintWriter writer = new PrintWriter(getPublicKeyPath().toFile(),"UTF-8")) {
 
             Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs(keyService.getMasterKey()).get().build());
-            Files.write(getPublicKeyPath(), Crypto.serialiseObject(account.getEncryptionKeypair().getPublic()).getBytes());
+            Files.write(getPublicKeyPath(), Crypto.serialiseObject(account.getEncryptionKeypair().getPublic()).getBytes("UTF-8"));
             RSAPublicKey encryptionKey = (RSAPublicKey) account.getEncryptionKeypair().getPublic();
             RSAPublicKey signingKey = (RSAPublicKey) account.getSigningKeypair().getPublic();
 

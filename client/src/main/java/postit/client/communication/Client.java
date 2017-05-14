@@ -1,6 +1,5 @@
 package postit.client.communication;
 
-import postit.client.backend.BackingStore;
 import postit.shared.Crypto;
 
 import javax.json.Json;
@@ -11,7 +10,8 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Base64;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -45,7 +45,7 @@ public class Client {
                 System.out.println("Starting handshake...");
                 socket.startHandshake();
 
-                out.write(Base64.getEncoder().encodeToString(request.getBytes()));
+                out.write(Base64.getEncoder().encodeToString(request.getBytes("UTF-8")));
                 out.newLine();
                 out.flush();
 
@@ -57,7 +57,7 @@ public class Client {
                     char character = (char) in.read();
 
                     if (character == '\r' || character == '\n') {
-                        response = responseStream.toString();
+                        response = responseStream.toString("UTF-8");
                         break;
                     }
 

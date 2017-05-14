@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by Zhan on 3/23/2017.
@@ -66,7 +67,7 @@ public class Classify {
      a dictionary, ignoring case.**/
 
     public static boolean checkDicWords (String target, URL file) throws Exception{
-        BufferedReader in = new BufferedReader(new InputStreamReader(file.openStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(file.openStream(), StandardCharsets.UTF_8));
         try {
             String str;
             while ((str = in.readLine()) != null) {

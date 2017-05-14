@@ -9,6 +9,7 @@ import postit.shared.Crypto;
 import javax.crypto.SecretKey;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
@@ -118,7 +119,7 @@ public class DirectoryController {
     }
 
     public String getPassword(Password p) {
-        return new String(Crypto.secretKeyToBytes(p.password));
+        return new String(Crypto.secretKeyToBytes(p.password), StandardCharsets.UTF_8);
     }
 
     public List<Long> getDeletedKeychains() {
@@ -240,7 +241,7 @@ public class DirectoryController {
             return Optional.empty();
         }
 
-        return new DirectoryKeychain(entry.getServerid(), keychain.get().dump().build(), entry.dump().build())
+        return new DirectoryKeychain(entry.getServerId(), keychain.get().dump().build(), entry.dump().build())
                 .dump(entry, account.get());
     }
 

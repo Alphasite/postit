@@ -6,6 +6,8 @@ import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager.Action;
 import postit.shared.MessagePackager.Asset;
 
+import java.nio.charset.StandardCharsets;
+
 import static postit.client.ClientMessagePackager.createRequest;
 
 public class RequestMessenger {
@@ -13,14 +15,14 @@ public class RequestMessenger {
 	public static String createAuthenticateMessage(Account clientAccount){
 		ServerAccount serverAccount = new ServerAccount();
 		serverAccount.setUsername(clientAccount.getUsername());
-		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.ACCOUNT, serverAccount);
 	}
 	
 	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber, String keypair, String publickey){
 		ServerAccount serverAccount = new ServerAccount();
 		serverAccount.setUsername(clientAccount.getUsername());
-		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		serverAccount.setEmail(email);
 		serverAccount.setFirstname(firstname);
 		serverAccount.setLastname(lastname);
@@ -33,21 +35,21 @@ public class RequestMessenger {
 	public static String createRemoveUserMessage(Account clientAccount){
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		return createRequest(Action.REMOVE, clientAccount, Asset.ACCOUNT, account);
 	}
 
 	public static String createGetKeypairMessage(Account clientAccount) {
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		return createRequest(Action.GET, clientAccount, Asset.KEYPAIR, null);
 	}
 
 	public static String sendOtpMessage(Account clientAccount, String otp) {
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded(), StandardCharsets.UTF_8));
 		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.KEYPAIR, otp);
 	}
 

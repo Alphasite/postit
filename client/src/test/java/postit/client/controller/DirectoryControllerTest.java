@@ -645,7 +645,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.getServerid(), is(-1L));
+        assertThat(oldEntry.getServerId(), is(-1L));
         assertThat(oldKeychain.passwords.size(), is(2));
         for (Password password : oldKeychain.passwords) {
             assertThat(password.getTitle(), anyOf(is("json"), is("test")));
@@ -724,7 +724,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.getServerid(), is(5L));
+        assertThat(oldEntry.getServerId(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(2));
         for (Password password : oldKeychain.passwords) {
             assertThat(password.getTitle(), anyOf(is("json"), is("test")));
@@ -761,7 +761,7 @@ public class DirectoryControllerTest {
         keychain1.passwords.add(password);
 
         assertThat(controller.createKeychain(
-                entry1.getServerid(),
+                entry1.getServerId(),
                 entry1.dump().build(),
                 keychain1.dump().build()
         ), is(true));
@@ -772,7 +772,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.getServerid(), is(5L));
+        assertThat(oldEntry.getServerId(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(1));
         assertThat(oldKeychain.passwords.get(0).uuid, is("json"));
         assertThat(oldKeychain.passwords.get(0).getTitle(), is("json2"));
@@ -800,7 +800,7 @@ public class DirectoryControllerTest {
         keychain1.passwords.add(password);
 
         assertThat(controller.createKeychain(
-                entry1.getServerid(),
+                entry1.getServerId(),
                 entry1.dump().build(),
                 keychain1.dump().build()
         ), is(true));
@@ -813,7 +813,7 @@ public class DirectoryControllerTest {
         assertThat(oldKeychain, notNullValue());
         assertThat(oldKeychain.getName(), is("json"));
         assertThat(oldEntry.lastModified, is(entry1.lastModified));
-        assertThat(oldEntry.getServerid(), is(5L));
+        assertThat(oldEntry.getServerId(), is(5L));
         assertThat(oldKeychain.passwords.size(), is(1));
         assertThat(oldKeychain.passwords.get(0).uuid, is("json"));
         assertThat(oldKeychain.passwords.get(0).getTitle(), is("json2"));
@@ -1115,7 +1115,7 @@ public class DirectoryControllerTest {
 
             assertThat(controller.setKeychainOnlineId(controller.getKeychains().get(0), 100), is(true));
 
-            assertThat(controller.getKeychains().get(0).getServerid(), is(100L));
+            assertThat(controller.getKeychains().get(0).getServerId(), is(100L));
     }
 
     @Test
@@ -1130,7 +1130,7 @@ public class DirectoryControllerTest {
 
         reloadPersistent();
 
-        assertThat(controller.getKeychains().get(0).getServerid(), is(100L));
+        assertThat(controller.getKeychains().get(0).getServerId(), is(100L));
     }
 
     @Test

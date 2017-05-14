@@ -222,7 +222,7 @@ public class ServerControllerTest {
         ArrayList<Long> serverKeychains = (ArrayList) serverController.getKeychains(account);
         ArrayList<Long> directoryKeychains = new ArrayList<Long>();
         for (int i = 0; i < directoryController.getKeychains().size(); i++) {
-            directoryKeychains.add(directoryController.getKeychains().get(i).getServerid());
+            directoryKeychains.add(directoryController.getKeychains().get(i).getServerId());
         }
         assertEquals(directoryKeychains,serverKeychains);
 
@@ -230,10 +230,10 @@ public class ServerControllerTest {
 
     public void deleteKeychain() throws Exception {
         LOGGER.info("----deleteKeychain");
-        assertTrue(serverController.deleteKeychain(account, directoryController.getKeychains().get(0).getServerid()));
+        assertTrue(serverController.deleteKeychain(account, directoryController.getKeychains().get(0).getServerId()));
     }
 
-    private class TestDataContainer {
+    private static class TestDataContainer {
         public boolean success = false;
     }
 }

@@ -11,6 +11,7 @@ import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.Action;
 import postit.shared.MessagePackager.Asset;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.logging.Logger;
@@ -42,8 +43,8 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
 		System.out.println("Starting request handle...");
-		msg = new String(Base64.getDecoder().decode(msg));
-		String response = Base64.getEncoder().encodeToString(handleRequest(msg).getBytes());
+		msg = new String(Base64.getDecoder().decode(msg), StandardCharsets.UTF_8);
+		String response = Base64.getEncoder().encodeToString(handleRequest(msg).getBytes(StandardCharsets.UTF_8));
 		ChannelFuture send = ctx.writeAndFlush(response + "\r\n");
 		send.sync();
 		ctx.close();
@@ -83,7 +84,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 			username = json.getString("username");
 			password = json.getString("password");
-			password = new String(Base64.getDecoder().decode(password));
+			password = new String(Base64.getDecoder().decode(password),StandardCharsets.UTF_8);
 			
 			int numFails = lc.getLatestNumFailedLogins(username);
 			if (numFails > 4){

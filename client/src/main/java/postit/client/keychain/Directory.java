@@ -124,8 +124,8 @@ public class Directory {
     }
 
     public boolean delete(DirectoryEntry keychain) {
-        if (keychain.getServerid() != -1L) {
-            deletedKeychains.add(keychain.getServerid());
+        if (keychain.getServerId() != -1L) {
+            deletedKeychains.add(keychain.getServerId());
         }
 
         this.keychains.remove(keychain);
