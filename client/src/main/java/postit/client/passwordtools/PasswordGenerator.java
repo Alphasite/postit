@@ -1,7 +1,6 @@
 package postit.client.passwordtools;
 
 import javax.json.*;
-import javax.swing.*;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +21,7 @@ public class PasswordGenerator {
     private final static String NUMBERS = "0123456789";
 
     public List<PasswordGeneratorConfiguration> configurations;
-    PasswordGeneratorConfiguration activeConfiguration;
+    public PasswordGeneratorConfiguration activeConfiguration;
 
     public PasswordGenerator() {
         this.activeConfiguration = new PasswordGeneratorConfiguration();
@@ -45,73 +44,6 @@ public class PasswordGenerator {
             this.activeConfiguration = new PasswordGeneratorConfiguration();
             configurations.add(activeConfiguration);
         }
-    }
-
-    public void editSettings(JFrame frame){
-            SpinnerNumberModel model = new SpinnerNumberModel();
-            model.setMaximum(256);
-            model.setMinimum(8);
-
-            JSpinner newLength = new JSpinner(model);
-            newLength.setValue(activeConfiguration.passwordlength);
-
-            JCheckBox upper = new JCheckBox();
-            upper.setText("Upper case (A-Z)?");
-            upper.setHorizontalTextPosition(SwingConstants.LEFT);
-            if(this.activeConfiguration.useUpper)
-                upper.setSelected(true);
-
-            JCheckBox lower = new JCheckBox();
-            lower.setText("Lower case (a-z)?");
-            lower.setHorizontalTextPosition(SwingConstants.LEFT);
-            if(this.activeConfiguration.useLower)
-                lower.setSelected(true);
-
-            JCheckBox numbers = new JCheckBox();
-            numbers.setText("Number (0-9)?");
-            numbers.setHorizontalTextPosition(SwingConstants.LEFT);
-            if(this.activeConfiguration.useNumbers)
-                numbers.setSelected(true);
-
-            JCheckBox symbols = new JCheckBox();
-            symbols.setText("Symbols?");
-            symbols.setHorizontalTextPosition(SwingConstants.LEFT);
-            if(this.activeConfiguration.useSymbols)
-                symbols.setSelected(true);
-            JTextField permittedSymbols = new JTextField(this.activeConfiguration.SYMBOLS);
-            symbols.addActionListener(e->{
-                if (symbols.isSelected())
-                    permittedSymbols.setEnabled(true);
-                else
-                    permittedSymbols.setEnabled(false);
-            });
-            permittedSymbols.addActionListener(e->{
-                permittedSymbols.setText(removeDuplicates(permittedSymbols.getText()));
-            });
-
-            ArrayList<Object>  message = new ArrayList<Object>();
-            message.add("Length");
-            message.add(newLength);
-            message.add(upper);
-            message.add(lower);
-            message.add(numbers);
-            message.add(symbols);
-            message.add(permittedSymbols);
-            do{
-                int option = JOptionPane.showConfirmDialog(frame, message.toArray(), "Password Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                if (option == JOptionPane.OK_OPTION) {
-                    this.activeConfiguration.passwordlength = (int) newLength.getValue();
-                    this.activeConfiguration.useUpper = upper.isSelected();
-                    this.activeConfiguration.useLower = lower.isSelected();
-                    this.activeConfiguration.useNumbers = numbers.isSelected();
-                    this.activeConfiguration.useSymbols = symbols.isSelected();
-                    permittedSymbols.setText(removeDuplicates(permittedSymbols.getText()));
-                    this.activeConfiguration.SYMBOLS=permittedSymbols.getText();
-                }
-                message.add("Some chars must be selected");
-
-            } while (!(activeConfiguration.useUpper||activeConfiguration.useLower||activeConfiguration.useNumbers||activeConfiguration.useSymbols));
     }
 
     public String generatePassword(){
@@ -143,7 +75,7 @@ public class PasswordGenerator {
             int index = random.nextInt(VALIDCHARS.length());
             password.append(VALIDCHARS.charAt(index));
         }
-        ArrayList<Character> passwordList = new ArrayList<Character>();
+        ArrayList<Character> passwordList = new ArrayList<>();
         for (char c : password.toString().toCharArray()){
             passwordList.add(c);
         }
@@ -157,7 +89,7 @@ public class PasswordGenerator {
         return passwordReturn.toString();
     }
 
-    private String removeDuplicates(String stringWithDups){
+    public String removeDuplicates(String stringWithDups){
         HashSet<Character> symbolSet = new HashSet<>();
         for (char c:stringWithDups.toCharArray()){
             symbolSet.add(c);
