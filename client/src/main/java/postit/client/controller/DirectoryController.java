@@ -1,6 +1,5 @@
 package postit.client.controller;
 
-import com.sun.org.apache.bcel.internal.generic.LOOKUPSWITCH;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.keychain.*;
@@ -311,7 +310,7 @@ public class DirectoryController {
         if (account.isPresent()) {
             return entry.shares.stream()
                     .filter(share -> share.isOwner)
-                    .anyMatch(share -> share.username.equals(account.get().getUsername()))
+                    .anyMatch(share -> share.username.equals(account.get().getUsername()));
         } else {
             LOGGER.warning("SelfISOwner: System has no account?? Assuming offline.");
             return true;
