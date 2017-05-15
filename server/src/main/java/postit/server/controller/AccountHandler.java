@@ -75,7 +75,15 @@ public class AccountHandler {
 	}
 	
 	public boolean updateAccount(ServerAccount serverAccount){
-		return db.updateAccount(serverAccount);
+		ServerAccount account = new ServerAccount();
+		ServerAccount server = getAccount(serverAccount.getUsername());
+		account.setUsername(serverAccount.getUsername());
+		account.setPassword(serverAccount.getPassword() == null ? server.getUsername() : serverAccount.getPassword());
+		account.setEmail(serverAccount.getEmail() == null ? server.getEmail() : serverAccount.getEmail());
+		account.setFirstname(serverAccount.getFirstname() == null ? server.getFirstname() : serverAccount.getFirstname());
+		account.setLastname(serverAccount.getLastname() == null ? server.getLastname() : serverAccount.getLastname());
+		account.setPhoneNumber(serverAccount.getPhoneNumber() == null ? server.getPhoneNumber() : serverAccount.getPhoneNumber());
+		return db.updateAccount(account);
 	}
 	
 	public boolean removeAccount(String username, String pwd){
