@@ -33,8 +33,7 @@ public class KeychainLog {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		
-		System.out.println(log.getAbsolutePath());
+
 	}
 	
 	public void addCreateKeychainLogEntry(String username, boolean status, long keychainId, String message){

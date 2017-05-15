@@ -141,9 +141,9 @@ public class Classify {
         return result.get("strength").equals(Level.LOW.name());
     }
 
-    public static void main (String[] args) {
-        Classify classify = new Classify();
-        String pwd = "Bjxdf-92";
-        System.out.println(classify.strengthCheck(pwd).get("strength"));
-    }
+//    public static void main (String[] args) {
+//        Classify classify = new Classify();
+//        String pwd = "Bjxdf-92";
+//        System.out.println(classify.strengthCheck(pwd).get("strength"));
+//    }
 }

@@ -112,7 +112,7 @@ public class BackingStore {
     }
 
     public boolean writeKeypair(Account account) {
-        if (Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs(keyService.getMasterKey()).get().build())) {
+        if (Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs(keyService.getMasterKey(false)).get().build())) {
             return writePublicKeys(account);
         } else {
             LOGGER.warning("Failed to save keypair.");
@@ -123,7 +123,7 @@ public class BackingStore {
     public boolean writePublicKeys(Account account) {
         try (PrintWriter writer = new PrintWriter(getPublicKeyPath().toFile(),"UTF-8")) {
 
-            Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs(keyService.getMasterKey()).get().build());
+            Crypto.writeJsonObjectToFile(getKeyPairPath(), account.dumpKeypairs(keyService.getMasterKey(true)).get().build());
             Files.write(getPublicKeyPath(), Crypto.serialiseObject(account.getEncryptionKeypair().getPublic()).getBytes("UTF-8"));
             RSAPublicKey encryptionKey = (RSAPublicKey) account.getEncryptionKeypair().getPublic();
             RSAPublicKey signingKey = (RSAPublicKey) account.getSigningKeypair().getPublic();
@@ -146,7 +146,7 @@ public class BackingStore {
         Optional<JsonObject> object = Crypto.readJsonObjectFromFile(getKeyPairPath());
 
         if (object.isPresent()) {
-            account.deserialiseKeypairs(keyService.getMasterKey(), object.get());
+            account.deserialiseKeypairs(keyService.getMasterKey(false), object.get());
             return true;
         } else {
             return false;
@@ -210,7 +210,7 @@ public class BackingStore {
         byte[] nonce = decoder.decode(container.directoryNonce);
         byte[] data = decoder.decode(container.directory);
 
-        SecretKey key = Crypto.hashedSecretKeyFromBytes(keyService.getMasterKey().getEncoded(), salt.get());
+        SecretKey key = Crypto.hashedSecretKeyFromBytes(keyService.getMasterKey(false).getEncoded(), salt.get());
 
         Optional<JsonObject> object = Crypto.decryptJsonObject(key, nonce, data);
 
@@ -240,7 +240,7 @@ public class BackingStore {
 
         byte[] nonce = Crypto.getNonce();
 
-        SecretKey key = Crypto.hashedSecretKeyFromBytes(keyService.getMasterKey().getEncoded(), salt.get());
+        SecretKey key = Crypto.hashedSecretKeyFromBytes(keyService.getMasterKey(false).getEncoded(), salt.get());
 
         Optional<byte[]> bytes = Crypto.encryptJsonObject(key, nonce, directory.dump().build());
 

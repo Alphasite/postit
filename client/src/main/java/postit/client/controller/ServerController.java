@@ -563,7 +563,7 @@ public class ServerController {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             String jsonObject = response.get().getString(typeToString(KEYPAIR));
             try (JsonReader reader = Json.createReader(new StringReader(jsonObject))) {
-                return account.deserialiseKeypairs(keyService.getMasterKey(), reader.readObject());
+                return account.deserialiseKeypairs(keyService.getMasterKey(false), reader.readObject());
             } catch (Exception e) {
                 LOGGER.warning("Failed to parse keypair object...");
                 return false;

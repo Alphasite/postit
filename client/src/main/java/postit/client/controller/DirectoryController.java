@@ -55,7 +55,7 @@ public class DirectoryController {
     }
 
     public boolean createKeychain(String keychainName) {
-        return directory.createKeychain(keyService.getMasterKey(), keychainName) && store.save();
+        return directory.createKeychain(keyService.getMasterKey(true), keychainName) && store.save();
     }
 
     public boolean createPassword(Keychain keychain, String title, String username, SecretKey key) {
