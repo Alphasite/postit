@@ -84,8 +84,6 @@ public class AccountHandler {
 		return updateAccount(oldAccount);
 	}
 
-	public
-
 	public boolean updateAccountPassword(String username, String newpwd) {
 		ServerAccount oldAccount = db.getAccount(username);
 		if (oldAccount != null) {
