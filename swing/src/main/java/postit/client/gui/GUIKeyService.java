@@ -110,7 +110,7 @@ public class GUIKeyService implements KeyService {
 
     	backingStore.readDirectory();
         
-        key = Crypto.secretKeyFromBytes(password.getBytes());
+        key = Crypto.secretKeyFromBytes(password.getBytes(StandardCharsets.UTF_8));
         retrieved = Instant.now();
         
         backingStore.writeDirectory();
