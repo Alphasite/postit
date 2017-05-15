@@ -327,6 +327,12 @@ public class KeychainViewer {
             }
         });
 
+        fileMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Export Log File");
+        menuItem.addActionListener((ActionEvent e) ->{
+            keyLog.dumpLogs(directoryController);
+        });
 
         fileMenu.add(menuItem);
 
