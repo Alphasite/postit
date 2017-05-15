@@ -317,6 +317,19 @@ public class DirectoryController {
         }
     }
 
+    public boolean selfCanEdit(DirectoryEntry entry) {
+        Optional<Account> account = this.getAccount();
+
+        if (account.isPresent()) {
+            return entry.shares.stream()
+                    .filter(share -> share.username.equals(account.get().getUsername()))
+                    .anyMatch(share -> share.canWrite);
+        } else {
+            LOGGER.warning("SelfISOwner: System has no account?? Assuming offline.");
+            return true;
+        }
+    }
+
     public boolean save() {
         return store.save();
     }
