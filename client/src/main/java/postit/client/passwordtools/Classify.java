@@ -93,7 +93,7 @@ public class Classify {
     }
 
     public static boolean comprehensive8 (String password, URL wordlist) throws Exception{
-        String regex = "^(?=.*[A-Z])(?=.*[-!@#$&*])(?=.*[0-9])(?=.*[a-z]).{8,}$";
+        String regex = "^(?=.*[A-Z])(?=.*[!@#$%^&*_=+-/.?<>)])(?=.*[0-9])(?=.*[a-z]).{8,}$";
         boolean flag = password.matches(regex);
         if (flag) { // check if dictionary 8, i.e. contains a dictionary word
             String word = password.replaceAll("[^a-zA-Z]", "");

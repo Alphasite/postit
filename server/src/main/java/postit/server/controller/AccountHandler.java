@@ -73,6 +73,26 @@ public class AccountHandler {
 		}
 		return updateAccount(serverAccount);
 	}
+
+	public boolean updateAccountEmail(String username, String newEmail) {
+		ServerAccount oldAccount = db.getAccount(username);
+		if (oldAccount != null) {
+			oldAccount.setEmail(newEmail);
+		} else {
+			return false;
+		}
+		return updateAccount(oldAccount);
+	}
+
+	public boolean updateAccountPassword(String username, String newpwd) {
+		ServerAccount oldAccount = db.getAccount(username);
+		if (oldAccount != null) {
+			oldAccount.setPassword(Util.hashPassword(newpwd, db.getSalt(username)));
+		} else {
+			return false;
+		}
+		return updateAccount(oldAccount);
+	}
 	
 	public boolean updateAccount(ServerAccount serverAccount){
 		ServerAccount account = new ServerAccount();
