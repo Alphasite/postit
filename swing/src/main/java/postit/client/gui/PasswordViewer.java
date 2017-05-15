@@ -61,7 +61,11 @@ public class PasswordViewer {
             boolean success = c.updatePasswordTitle(p, newTitle);
             
             if (success && username != null && !newTitle.equals(oldTitle)){
-            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
+            	kl.addUpdateKeychainLogEntry(
+            	        k.directoryEntry,
+            	        username,
+                        true,
+                        keyId,
             			String.format("Password %s changed name to %s in keychain <%s>", oldTitle, newTitle, keyName));
             }
 
@@ -70,8 +74,13 @@ public class PasswordViewer {
             success = c.updateMetadataEntry(p,"username",newUser);
             
             if (success && username != null && oldUser != null && !newUser.equals(oldUser)){
-            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
-            			String.format("Password %s changed username in keychain <%s>", p.getTitle(), keyName));
+            	kl.addUpdateKeychainLogEntry(
+            	        k.directoryEntry,
+            	        username,
+                        true,
+                        keyId,
+            			String.format("Password %s changed username in keychain <%s>", p.getTitle(), keyName)
+                );
             }
             
             String oldComments = p.metadata.get("comments");
@@ -79,8 +88,13 @@ public class PasswordViewer {
             success = c.updateMetadataEntry(p,"comments",newComments);
             
             if (success && username != null && !newComments.equals(oldComments)){
-            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
-            			String.format("Password %s changed comments in keychain <%s>", p.getTitle(), keyName));
+            	kl.addUpdateKeychainLogEntry(
+            	        k.directoryEntry,
+            	        username,
+                        true,
+                        keyId,
+            			String.format("Password %s changed comments in keychain <%s>", p.getTitle(), keyName)
+                );
             }
 
             byte[] oldKey = p.password.getEncoded();
@@ -88,8 +102,13 @@ public class PasswordViewer {
             success = c.updatePassword(p, Crypto.secretKeyFromBytes(newKey.getBytes(StandardCharsets.UTF_8)));
             
             if (success && username != null && !Arrays.areEqual(oldKey, newKey.getBytes(StandardCharsets.UTF_8))){
-            	kl.addUpdateKeychainLogEntry(username, true, keyId, 
-            			String.format("Password %s changed password value in keychain <%s>", p.getTitle(), keyName));
+            	kl.addUpdateKeychainLogEntry(
+            	        k.directoryEntry,
+            	        username,
+                        true,
+                        keyId,
+            			String.format("Password %s changed password value in keychain <%s>", p.getTitle(), keyName)
+                );
             }
 
             frame.dispose();
