@@ -5,6 +5,7 @@ import postit.shared.AuditLog.EventType;
 import postit.shared.AuditLog.LogEntry;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class AuthenticationLog {
 	public static final String AUTH_LOG = AuditLog.LOG_DIR + "/auth_log";
@@ -41,7 +42,8 @@ public class AuthenticationLog {
 		// Appends new log in attempt to log
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(AUTH_LOG), true));
+
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(AUTH_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -58,7 +60,8 @@ public class AuthenticationLog {
 		int numFailed = 0;
 		BufferedReader reader =null;
 		try {
-			reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
+
+			reader = new BufferedReader(new InputStreamReader(new FileInputStream(AUTH_LOG), StandardCharsets.UTF_8));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);
@@ -97,7 +100,7 @@ public class AuthenticationLog {
 		long time = -1; // -1 if never logged in before
 		BufferedReader reader = null;
 		try {
-			 reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
+			 reader = new BufferedReader(new InputStreamReader(new FileInputStream(AUTH_LOG), StandardCharsets.UTF_8));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);

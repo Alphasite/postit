@@ -153,7 +153,7 @@ public class Crypto {
     }
 
     public static Optional<byte[]> encryptJsonObject(Key key, byte[] nonce, JsonObject object) {
-        System.out.println(key.getEncoded().length);
+
         AEADBlockCipher cipher = new GCMBlockCipher(new AESEngine());
         KeyParameter keyParameter = new KeyParameter(key.getEncoded());
         AEADParameters parameters = new AEADParameters(keyParameter, 128, nonce);
