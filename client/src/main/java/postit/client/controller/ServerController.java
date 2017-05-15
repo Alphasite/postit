@@ -305,6 +305,31 @@ public class ServerController {
     	return sendAndCheckIfSuccess(req);
     }
     
+    public boolean updateAccount(Account account, String email, String firstname, String lastname, String phoneNumber){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, email, firstname, lastname, phoneNumber);
+    	return sendAndCheckIfSuccess(req);
+    }
+    
+    public boolean updateEmail(Account account, String email){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, email, null, null, null);
+    	return sendAndCheckIfSuccess(req);
+    }
+    
+    public boolean updateFirstname(Account account, String firstname){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, null, firstname, null, null);
+    	return sendAndCheckIfSuccess(req);
+    }
+    
+    public boolean updateLastname(Account account, String lastname){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, null, null, lastname, null);
+    	return sendAndCheckIfSuccess(req);
+    }
+    
+    public boolean updatePhonenumber(Account account, String phoneNumber){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, null, null, null, phoneNumber);
+    	return sendAndCheckIfSuccess(req);
+    }
+    
     public boolean authenticate(Account account) {
         String req = RequestMessenger.createAuthenticateMessage(account);
         return sendAndCheckIfSuccess(req);

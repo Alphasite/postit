@@ -281,8 +281,13 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		case UPDATE:
 			switch(asset){
 			case ACCOUNT:
-				ServerAccount serverAccount = new ServerAccount(obj.getString("username"), obj.getString("password"), obj.getString("email"),
-						obj.getString("firstname"), obj.getString("lastname"), obj.getString("phoneNumber"));
+				ServerAccount serverAccount = new ServerAccount();
+				serverAccount.setUsername(username);
+				if (obj.has("password")) serverAccount.setPassword(obj.getString("password"));
+				if (obj.has("email")) serverAccount.setEmail(obj.getString("email"));
+				if (obj.has("firstname")) serverAccount.setFirstname(obj.getString("firstname"));
+				if (obj.has("lastname")) serverAccount.setLastname(obj.getString("lastname"));
+				if (obj.has("phoneNumber")) serverAccount.setPhoneNumber(obj.getString("phoneNumber"));
 				if (ah.updateAccount(serverAccount))
 					return createResponse(true, username, "", asset, serverAccount);
 				else

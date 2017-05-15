@@ -59,6 +59,17 @@ public class RequestMessenger {
 		return createRequest(Action.GET, clientAccount, Asset.ACCOUNT, account);
 	}
 	
+	public static String createUpdateAccountMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber){
+		ServerAccount account = new ServerAccount();
+		account.setUsername(clientAccount.getUsername());
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
+		account.setEmail(email);
+		account.setFirstname(firstname);
+		account.setLastname(lastname);
+		account.setPhoneNumber(phoneNumber);
+		return createRequest(Action.UPDATE, clientAccount, Asset.ACCOUNT, account);
+	}
+	
 	public static String createAddKeychainsMessage(Account account, String name, String data){
 		ServerKeychain keychain = new ServerKeychain();
 		keychain.setName(name);
