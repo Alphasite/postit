@@ -10,14 +10,17 @@ import java.nio.charset.StandardCharsets;
 public class AuthenticationLog {
 	public static final String AUTH_LOG = AuditLog.LOG_DIR + "/auth_log";
 	
+	private boolean initialized = true;
+	
 	public AuthenticationLog(){
 		// Creates log file if not existing
 		// Reads in log file for past failed attempts
 		File logDir = new File(AuditLog.LOG_DIR);
 		if (! logDir.exists()){
-			Boolean success = logDir.mkdirs();
+			boolean success = logDir.mkdirs();
 			if(!success){
-				//TODO Ning: handle if mkdir was unsuccessful
+				initialized = false;
+				return;
 			}
 		}
 
@@ -27,15 +30,20 @@ public class AuthenticationLog {
 		File log = new File(AUTH_LOG);
 		if (! log.exists())
 			try {
-				Boolean success = log.createNewFile();
+				boolean success = log.createNewFile();
 				if(!success){
-					//TODO Ning: handle if createNewFile is unsuccessful
+					initialized = false;
+					return;
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		//System.out.println(new File(AUTH_LOG).getAbsolutePath());
+	}
+	
+	public boolean isInitialized(){
+		return initialized;
 	}
 	
 	public void addAuthenticationLogEntry(String username, boolean status, String message){

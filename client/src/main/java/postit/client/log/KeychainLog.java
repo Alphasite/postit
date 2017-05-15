@@ -13,13 +13,16 @@ public class KeychainLog {
 
 	public static final String KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
 	
+	private boolean initialized = true;
+	
 	public KeychainLog(){
 		// Creates log file if not existing
 		File logDir = new File(AuditLog.LOG_DIR);
 		if (! logDir.exists()){
-			Boolean success = logDir.mkdirs();
+			boolean success = logDir.mkdirs();
 			if(!success){
-				//TODO Ning: handle if mkdir was unsuccessful
+				initialized = false;
+				return;
 			}
 		}
 
@@ -27,14 +30,19 @@ public class KeychainLog {
 		File log = new File(KEYCHAIN_LOG);
 		if (! log.exists())
 			try {
-				Boolean success = log.createNewFile();
+				boolean success = log.createNewFile();
 				if(!success){
-					//TODO Ning: handle if createNewFile is unsuccessful
+					initialized = false;
+					return;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
+	}
+	
+	public boolean isInitialized(){
+		return initialized;
 	}
 	
 	public void addCreateKeychainLogEntry(String username, boolean status, long keychainId, String message){

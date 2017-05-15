@@ -32,8 +32,12 @@ public class GUIKeyService implements KeyService {
     private BackingStore backingStore;
 
     public GUIKeyService(ServerController sc, AuthenticationLog al) {
-        this.sc = sc;
-        this.al = al;
+    	this.sc = sc;
+    	this.al = al;
+    	if (! al.isInitialized()){
+    		JOptionPane.showMessageDialog(null, "Log file cannot be created. ABORTING");
+    		System.exit(0);
+    	}
     }
 
     public void setBackingStore(BackingStore backingStore) {
