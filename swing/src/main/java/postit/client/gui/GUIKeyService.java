@@ -32,8 +32,11 @@ public class GUIKeyService implements KeyService {
     private BackingStore backingStore;
 
     public GUIKeyService(ServerController sc, AuthenticationLog al) {
-        this.sc = sc;
-        this.al = al;
+    	this.sc = sc;
+    	this.al = al;
+    	if (! al.isInitialized()){
+    		JOptionPane.showMessageDialog(null, "Log file cannot be created. ABORTING");
+    	}
     }
 
     public void setBackingStore(BackingStore backingStore) {
@@ -41,7 +44,7 @@ public class GUIKeyService implements KeyService {
     }
 
     @Override
-    public byte[] getKey(String displayMessage) {
+    public byte[] getKey(String displayMessage,Boolean isBeingCreated) {
         String key = null;
         Classify classify = new Classify();
         boolean strong = false;
@@ -50,14 +53,14 @@ public class GUIKeyService implements KeyService {
                 key = JOptionPane.showInputDialog(null, displayMessage, "", JOptionPane.PLAIN_MESSAGE);
                 strong = !classify.isWeak(key);
             }
-            if (!strong){
+            if (isBeingCreated && !strong){
                 JOptionPane.showMessageDialog(null,"Master password is too weak");
                 key=null;
             }
             
         	int numFails = al.getLatestNumFailedLogins();
         	long diff;
-        	if (numFails > 4 && (diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
+        	if (numFails > 4 && (diff = (numFails - 4) * 30L - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
         		// disabled time is linear right now. may change to exponential
         		JOptionPane.showMessageDialog(
         				null,
@@ -75,8 +78,8 @@ public class GUIKeyService implements KeyService {
         String password;
 
         while (true) {
-            String password1 = new String(getKey("Please enter NEW master password: "),StandardCharsets.UTF_8);
-            String password2 = new String(getKey("Please re-enter NEW master password: "),StandardCharsets.UTF_8);
+            String password1 = new String(getKey("Please enter NEW master password: ",true),StandardCharsets.UTF_8);
+            String password2 = new String(getKey("Please re-enter NEW master password: ",false),StandardCharsets.UTF_8);
             if (password1.equals(password2)) {
                 password = password1;
                 break;
@@ -94,14 +97,14 @@ public class GUIKeyService implements KeyService {
         String password;
 
         while (true) {
-        	String passwordOld1 = new String(getMasterKey().getEncoded(),StandardCharsets.UTF_8);
-        	String passwordOld2 = new String(getKey("Current master password"),StandardCharsets.UTF_8);
+        	String passwordOld1 = new String(getMasterKey(false).getEncoded(),StandardCharsets.UTF_8);
+        	String passwordOld2 = new String(getKey("Current master password",false),StandardCharsets.UTF_8);
         	if (! passwordOld1.equals(passwordOld2)){
         		JOptionPane.showMessageDialog(null, "The CURRENT master password is incorrect.");
         		return null;
         	}
-            String password1 = new String(getKey("New master password"),StandardCharsets.UTF_8);
-            String password2 = new String(getKey("Re-enter new master password"),StandardCharsets.UTF_8);
+            String password1 = new String(getKey("New master password",true),StandardCharsets.UTF_8);
+            String password2 = new String(getKey("Re-enter new master password",false),StandardCharsets.UTF_8);
             if (password1.equals(password2)) {
                 password = password1;
                 break;
@@ -110,7 +113,7 @@ public class GUIKeyService implements KeyService {
 
     	backingStore.readDirectory();
         
-        key = Crypto.secretKeyFromBytes(password.getBytes());
+        key = Crypto.secretKeyFromBytes(password.getBytes(StandardCharsets.UTF_8));
         retrieved = Instant.now();
         
         backingStore.writeDirectory();
@@ -123,7 +126,7 @@ public class GUIKeyService implements KeyService {
     }
     
     @Override
-    public SecretKey getMasterKey() {
+    public SecretKey getMasterKey(Boolean isBeingCreated) {
         if (key == null || retrieved == null || Instant.now().isAfter(retrieved.plus(GUIKeyService.timeout))) {
 
             destroyKey();
@@ -131,7 +134,7 @@ public class GUIKeyService implements KeyService {
             key = null;
 
             while (key == null) {
-                key = Crypto.secretKeyFromBytes(getKey("Please enter master password: "));
+                key = Crypto.secretKeyFromBytes(getKey("Please enter master password: ",isBeingCreated));
                 
             }
         }
@@ -158,7 +161,7 @@ public class GUIKeyService implements KeyService {
     public SecretKey getClientKey() {
         SecretKey key = null;
         while (key == null)
-            key = Crypto.secretKeyFromBytes(getKey("Please enter client password: "));
+            key = Crypto.secretKeyFromBytes(getKey("Please enter client password: ",true));
         return key;
 
     }
@@ -176,7 +179,7 @@ public class GUIKeyService implements KeyService {
                 	
                 	int numFails = al.getLatestNumFailedLogins();
                 	long diff;
-                	if (numFails > 4 && (diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
+                	if (numFails > 4 && (diff = (numFails - 4) * 30L - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
                 		// disabled time is linear right now. may change to exponential
                 		JOptionPane.showMessageDialog(
                 				null,
@@ -233,7 +236,7 @@ public class GUIKeyService implements KeyService {
                             && LoginPanel.isValidEmailAddress(email)
                             && LoginPanel.isValidPhoneNumber(phone)) {
                         Account newAccount = new Account(username, pass1);
-                        Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs(getMasterKey());
+                        Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs(getMasterKey(true));
 
                         if (sc.addUser(
                             newAccount,

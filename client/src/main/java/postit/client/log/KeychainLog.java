@@ -5,6 +5,7 @@ import postit.shared.AuditLog.EventType;
 import postit.shared.AuditLog.LogEntry;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,13 +13,16 @@ public class KeychainLog {
 
 	public static final String KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
 	
+	private boolean initialized = true;
+	
 	public KeychainLog(){
 		// Creates log file if not existing
 		File logDir = new File(AuditLog.LOG_DIR);
 		if (! logDir.exists()){
-			Boolean success = logDir.mkdirs();
+			boolean success = logDir.mkdirs();
 			if(!success){
-				//TODO Ning: handle if mkdir was unsuccessful
+				initialized = false;
+				return;
 			}
 		}
 
@@ -26,15 +30,19 @@ public class KeychainLog {
 		File log = new File(KEYCHAIN_LOG);
 		if (! log.exists())
 			try {
-				Boolean success = log.createNewFile();
+				boolean success = log.createNewFile();
 				if(!success){
-					//TODO Ning: handle if createNewFile is unsuccessful
+					initialized = false;
+					return;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		
-		System.out.println(log.getAbsolutePath());
+
+	}
+	
+	public boolean isInitialized(){
+		return initialized;
 	}
 	
 	public void addCreateKeychainLogEntry(String username, boolean status, long keychainId, String message){
@@ -43,7 +51,8 @@ public class KeychainLog {
 		// Appends new log to file
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
+
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -60,7 +69,7 @@ public class KeychainLog {
 		// Appends new log to file
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -77,7 +86,7 @@ public class KeychainLog {
 		// Appends new log to file
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -94,7 +103,7 @@ public class KeychainLog {
 		// Appends new log to file
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -111,7 +120,7 @@ public class KeychainLog {
 		// Appends new log to file
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -128,7 +137,7 @@ public class KeychainLog {
 		// Appends new log to file
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -143,7 +152,8 @@ public class KeychainLog {
 		List<LogEntry> entries = new ArrayList<LogEntry>();
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new FileReader(new File(KEYCHAIN_LOG)));
+
+			reader = new BufferedReader(new InputStreamReader(new FileInputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);

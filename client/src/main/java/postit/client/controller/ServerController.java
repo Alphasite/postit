@@ -295,7 +295,6 @@ public class ServerController {
     }
 
     public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber, String keypair, String publicKey) {
-        Base64.Encoder encoder = Base64.getEncoder();
         String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber, keypair, publicKey);
         return sendAndCheckIfSuccess(req);
     }
@@ -330,11 +329,36 @@ public class ServerController {
     	return sendAndCheckIfSuccess(req);
     }
     
-    public boolean authenticate(Account account) {
-        String req = RequestMessenger.createAuthenticateMessage(account);
-        return sendAndCheckIfSuccess(req);
+    
+    public String getEmail(Account account){
+    	String req = RequestMessenger.createGetUserMessage(account);
+    	Optional<JsonObject> response = clientToServer.send(req);
+    	if (response.isPresent()) {
+    		return response.get().getJsonObject("account").getString("email");
+    	}
+    	return null;
     }
-
+    
+    public String getFirstname(Account account){
+    	String req = RequestMessenger.createGetUserMessage(account);
+    	Optional<JsonObject> response = clientToServer.send(req);
+    	if (response.isPresent()) {
+    		return response.get().getJsonObject("account").getString("firstname");
+    	}
+    	
+    	return null;
+    }
+    
+    public String getLastname(Account account){
+    	String req = RequestMessenger.createGetUserMessage(account);
+    	Optional<JsonObject> response = clientToServer.send(req);
+    	if (response.isPresent()) {
+    		return response.get().getJsonObject("account").getString("lastname");
+    	}
+    	
+    	return null;
+    }
+    
     public String getPhoneNumber(Account account){
     	String req = RequestMessenger.createGetUserMessage(account);
     	Optional<JsonObject> response = clientToServer.send(req);
@@ -343,6 +367,11 @@ public class ServerController {
     	}
     	
     	return null;
+    }
+    
+    public boolean authenticate(Account account) {
+        String req = RequestMessenger.createAuthenticateMessage(account);
+        return sendAndCheckIfSuccess(req);
     }
     
     public List<Long> getKeychains(Account account) {
@@ -564,8 +593,8 @@ public class ServerController {
         if (response.isPresent() && response.get().getString("status").equals("success")) {
             String jsonObject = response.get().getString(typeToString(KEYPAIR));
             try (JsonReader reader = Json.createReader(new StringReader(jsonObject))) {
-                return account.deserialiseKeypairs(keyService.getMasterKey(), reader.readObject());
-            } catch (Exception e) {
+                return account.deserialiseKeypairs(keyService.getMasterKey(false), reader.readObject());
+            } catch (RuntimeException e) {
                 LOGGER.warning("Failed to parse keypair object...");
                 return false;
             }

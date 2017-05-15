@@ -84,8 +84,8 @@ public class Account {
         byte[] nonce = Crypto.getNonce();
 
         JsonObjectBuilder dataObject = Json.createObjectBuilder()
-                .add(ENCRYPTION_KEYPAIR, encoder.encodeToString(serialiseObject(encryptionKeypair).getBytes()))
-                .add(SIGNING_KEYPAIR, encoder.encodeToString(serialiseObject(signingKeypair).getBytes()));
+                .add(ENCRYPTION_KEYPAIR, encoder.encodeToString(serialiseObject(encryptionKeypair).getBytes(StandardCharsets.UTF_8)))
+                .add(SIGNING_KEYPAIR, encoder.encodeToString(serialiseObject(signingKeypair).getBytes(StandardCharsets.UTF_8)));
 
         Optional<byte[]> data = Crypto.encryptJsonObject(keychainEncryptionKey, nonce, dataObject.build());
 
@@ -111,8 +111,8 @@ public class Account {
                 return false;
             }
 
-            KeyPair encryptionKeypair = deserialiseObject(new String(decoder.decode(decryptedObject.get().getString(ENCRYPTION_KEYPAIR))));
-            KeyPair signingKeypair = deserialiseObject(new String(decoder.decode(decryptedObject.get().getString(SIGNING_KEYPAIR))));
+            KeyPair encryptionKeypair = deserialiseObject(new String(decoder.decode(decryptedObject.get().getString(ENCRYPTION_KEYPAIR)), StandardCharsets.UTF_8));
+            KeyPair signingKeypair = deserialiseObject(new String(decoder.decode(decryptedObject.get().getString(SIGNING_KEYPAIR)), StandardCharsets.UTF_8));
 
             if (encryptionKeypair != null && signingKeypair != null) {
                 this.encryptionKeypair = encryptionKeypair;
@@ -121,7 +121,7 @@ public class Account {
             } else {
                 return false;
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return false;
         }
     }

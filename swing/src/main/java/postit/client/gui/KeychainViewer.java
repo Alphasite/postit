@@ -19,6 +19,8 @@ import javax.crypto.SecretKey;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
@@ -77,7 +79,11 @@ public class KeychainViewer {
         Optional<Directory> directory = backingStore.readDirectory();
 
 
-        if (!directory.isPresent()) {
+        if (! keyLog.isInitialized()){
+        	JOptionPane.showMessageDialog(null, "Log file cannot be created. ABORTING");
+        	return;
+        }
+        else if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
             
@@ -142,13 +148,25 @@ public class KeychainViewer {
 
             JButton generatePass = new JButton("Generate Password");
             JLabel passwordStrength = new JLabel("\n");
-            newpassword.addFocusListener(new FocusListener() {
+            newpassword.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
-                public void focusGained(FocusEvent e) {
-                    passwordStrength.setText("\n");
+                public void insertUpdate(DocumentEvent e) {
+                    JSONObject result = classify.strengthCheck(newpassword.getText());
+                    String strength = (String) result.get("strength");
+
+                    passwordStrength.setText("Password Strength: "+strength);
                 }
+
                 @Override
-                public void focusLost(FocusEvent e) {
+                public void removeUpdate(DocumentEvent e) {
+                    JSONObject result = classify.strengthCheck(newpassword.getText());
+                    String strength = (String) result.get("strength");
+
+                    passwordStrength.setText("Password Strength: "+strength);
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
                     JSONObject result = classify.strengthCheck(newpassword.getText());
                     String strength = (String) result.get("strength");
 
@@ -588,11 +606,10 @@ public class KeychainViewer {
 
             JTextField username = new JTextField(directoryController.getAccount().get().getUsername());
             username.setEnabled(false);
-            JTextField firstName = new JTextField();
-            JTextField lastName = new JTextField();
-            JTextField email = new JTextField();
-            JTextField phoneNumber = new JTextField();
-            JPasswordField password = new JPasswordField();
+            JTextField firstName = new JTextField(serverController.getFirstname(directoryController.getAccount().get()));
+            JTextField lastName = new JTextField(serverController.getLastname(directoryController.getAccount().get()));
+            JTextField email = new JTextField(serverController.getEmail(directoryController.getAccount().get()));
+            JTextField phoneNumber = new JTextField(serverController.getPhoneNumber(directoryController.getAccount().get()));
 
             Object[] message = {
                     "Username:", username,
@@ -600,7 +617,6 @@ public class KeychainViewer {
                     "Last name:", lastName,
                     "Email:", email,
                     "Phone number:", phoneNumber,
-                    "Password:", password
             };
 
             int option = JOptionPane.showConfirmDialog(frame, message, "Edit Account Settings",
@@ -608,27 +624,24 @@ public class KeychainViewer {
             if (option == JOptionPane.OK_OPTION) {
                 if(firstName.getText().length()>0||
                         lastName.getText().length()>0 || email.getText().length()>0 ||
-                        phoneNumber.getText().length()>0 || password.getPassword().length>0){
-                    String key = null;
-                    key = JOptionPane.showInputDialog(null, "Enter password", "", JOptionPane.PLAIN_MESSAGE);
+                        phoneNumber.getText().length()>0 ){
+                    String key = JOptionPane.showInputDialog(null, "Enter account password (NOT master password)", "", JOptionPane.PLAIN_MESSAGE);
                     if (key!=null && serverController.authenticate(new Account(username.getText(),key))){
-                        if(username.getText().length()>0){
-                            //update username
-                        }
                         if (firstName.getText().length()>0){
                             //update first name
+                            serverController.updateFirstname(directoryController.getAccount().get(),firstName.getText());
                         }
                         if (lastName.getText().length()>0){
                             //update last name
+                            serverController.updateLastname(directoryController.getAccount().get(),lastName.getText());
                         }
                         if(email.getText().length()>0){
                             //update email
+                            serverController.updateEmail(directoryController.getAccount().get(),email.getText());
                         }
                         if(phoneNumber.getText().length()>0){
                             //update phone number
-                        }
-                        if(password.getPassword().length>0){
-                            //update password
+                            serverController.updatePhonenumber(directoryController.getAccount().get(),phoneNumber.getText());
                         }
                     }
                     else{ //wrong password
@@ -679,9 +692,9 @@ public class KeychainViewer {
         for (DirectoryEntry entry : this.keychains) {
             Optional<Keychain> keychain = entry.readKeychain();
 
-            if (!keychain.isPresent()) {
-                // TODO
-            }
+//            if (!keychain.isPresent()) {
+//                // TODO
+//            }
 
             addPanes(keychain.get());
         }
@@ -768,9 +781,9 @@ public class KeychainViewer {
 
         Optional<Keychain> keychain = this.keychains.get(activeKeychainidx).readKeychain();
 
-        if (!keychain.isPresent()) {
-            // TODO
-        }
+//        if (!keychain.isPresent()) {
+//            // TODO
+//        }
 
         return keychain.get();
     }

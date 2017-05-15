@@ -14,6 +14,7 @@ import postit.shared.MessagePackager.Asset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Logger;
 
 import static postit.server.ServerMessagePackager.createResponse;
@@ -89,7 +90,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			int numFails = lc.getLatestNumFailedLogins(username);
 			if (numFails > 4){
 				// disabled time is linear right now. may change to exponential
-				long diff = (numFails - 4) * 30 - (System.currentTimeMillis() - lc.getLastLoginTime(username)) / 1000;
+				long diff = (numFails - 4) * 30L - (System.currentTimeMillis() - lc.getLastLoginTime(username)) / 1000;
 				if (diff > 0){
 					LOGGER.info("Sign in disabled");
 					return createResponse(false, username, String.format("Login is temporarily disabled. Try again in %d seconds.", diff), 
@@ -106,7 +107,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			}
 		}
 
-		String assetName = MessagePackager.typeToString(asset).toLowerCase();
+		String assetName = MessagePackager.typeToString(asset).toLowerCase(Locale.getDefault());
 		LOGGER.info("Handling request of type: " + act.toString() + " " + assetName);
 		JSONObject obj = null;
 		String str = null;

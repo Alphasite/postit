@@ -61,12 +61,13 @@ public class MySQL implements Database {
 
 	@Override
 	public boolean initDatabase() {
-		try (Connection connection = connect(); Statement statement = connection.createStatement()){
+		try (Connection connection = connect();
+		Statement statement = connection.createStatement();
+        PreparedStatement ps = connection.prepareStatement("?")){
 			final String sql = DatabaseUtils.getSetupSQL();
-            PreparedStatement ps = connection.prepareStatement("?");
+
             ps.setString(1, sql);
 			Boolean res = ps.execute();
-            ps.close();
             return res;
 		} catch (SQLException | IOException | URISyntaxException e) {
 			e.printStackTrace();

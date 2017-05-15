@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /**
  * Created by Zhan on 3/23/2017.
@@ -71,7 +72,7 @@ public class Classify {
         try {
             String str;
             while ((str = in.readLine()) != null) {
-                if (str.indexOf(target.toLowerCase()) != -1) {
+                if (str.indexOf(target.toLowerCase(Locale.getDefault())) != -1) {
                     return true;
                 }
             }
@@ -141,9 +142,9 @@ public class Classify {
         return result.get("strength").equals(Level.LOW.name());
     }
 
-    public static void main (String[] args) {
-        Classify classify = new Classify();
-        String pwd = "Bjxdf-92";
-        System.out.println(classify.strengthCheck(pwd).get("strength"));
-    }
+//    public static void main (String[] args) {
+//        Classify classify = new Classify();
+//        String pwd = "Bjxdf-92";
+//        System.out.println(classify.strengthCheck(pwd).get("strength"));
+//    }
 }

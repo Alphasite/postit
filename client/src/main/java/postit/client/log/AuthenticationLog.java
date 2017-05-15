@@ -5,18 +5,22 @@ import postit.shared.AuditLog.EventType;
 import postit.shared.AuditLog.LogEntry;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class AuthenticationLog {
 	public static final String AUTH_LOG = AuditLog.LOG_DIR + "/auth_log";
+	
+	private boolean initialized = true;
 	
 	public AuthenticationLog(){
 		// Creates log file if not existing
 		// Reads in log file for past failed attempts
 		File logDir = new File(AuditLog.LOG_DIR);
 		if (! logDir.exists()){
-			Boolean success = logDir.mkdirs();
+			boolean success = logDir.mkdirs();
 			if(!success){
-				//TODO Ning: handle if mkdir was unsuccessful
+				initialized = false;
+				return;
 			}
 		}
 
@@ -26,9 +30,10 @@ public class AuthenticationLog {
 		File log = new File(AUTH_LOG);
 		if (! log.exists())
 			try {
-				Boolean success = log.createNewFile();
+				boolean success = log.createNewFile();
 				if(!success){
-					//TODO Ning: handle if createNewFile is unsuccessful
+					initialized = false;
+					return;
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -37,11 +42,16 @@ public class AuthenticationLog {
 		//System.out.println(new File(AUTH_LOG).getAbsolutePath());
 	}
 	
+	public boolean isInitialized(){
+		return initialized;
+	}
+	
 	public void addAuthenticationLogEntry(String username, boolean status, String message){
 		// Appends new log in attempt to log
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new FileWriter(new File(AUTH_LOG), true));
+
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(AUTH_LOG), StandardCharsets.UTF_8), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -58,7 +68,8 @@ public class AuthenticationLog {
 		int numFailed = 0;
 		BufferedReader reader =null;
 		try {
-			reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
+
+			reader = new BufferedReader(new InputStreamReader(new FileInputStream(AUTH_LOG), StandardCharsets.UTF_8));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);
@@ -97,7 +108,7 @@ public class AuthenticationLog {
 		long time = -1; // -1 if never logged in before
 		BufferedReader reader = null;
 		try {
-			 reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
+			 reader = new BufferedReader(new InputStreamReader(new FileInputStream(AUTH_LOG), StandardCharsets.UTF_8));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);
