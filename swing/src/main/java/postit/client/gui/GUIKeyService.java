@@ -57,7 +57,7 @@ public class GUIKeyService implements KeyService {
             
         	int numFails = al.getLatestNumFailedLogins();
         	long diff;
-        	if (numFails > 4 && (diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
+        	if (numFails > 4 && (diff = (numFails - 4) * 30L - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
         		// disabled time is linear right now. may change to exponential
         		JOptionPane.showMessageDialog(
         				null,
@@ -176,7 +176,7 @@ public class GUIKeyService implements KeyService {
                 	
                 	int numFails = al.getLatestNumFailedLogins();
                 	long diff;
-                	if (numFails > 4 && (diff = (numFails - 4) * 30 - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
+                	if (numFails > 4 && (diff = (numFails - 4) * 30L - (System.currentTimeMillis() - al.getLastLoginTime()) / 1000) > 0){
                 		// disabled time is linear right now. may change to exponential
                 		JOptionPane.showMessageDialog(
                 				null,

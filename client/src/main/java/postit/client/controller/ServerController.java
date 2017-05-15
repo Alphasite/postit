@@ -594,7 +594,7 @@ public class ServerController {
             String jsonObject = response.get().getString(typeToString(KEYPAIR));
             try (JsonReader reader = Json.createReader(new StringReader(jsonObject))) {
                 return account.deserialiseKeypairs(keyService.getMasterKey(false), reader.readObject());
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 LOGGER.warning("Failed to parse keypair object...");
                 return false;
             }

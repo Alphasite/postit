@@ -27,11 +27,13 @@ public class GuiApp {
         serverController.setKeyService(keyService);
 
         if (!Crypto.init()) {
-            // TODO
+            System.out.println("Crypto could not be initialized. ABORTING");
+            System.exit(0);
         }
 
         if (!backingStore.init()) {
-            // TODO
+            System.out.println("backingStore could not be initialized. ABORTING");
+            System.exit(0);
         }
 
         invokeLater(() -> {

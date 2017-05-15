@@ -313,7 +313,7 @@ public class DatabaseController {
         } catch (SQLException e) {
             System.out.println("An error occurred in getDirectoryEntry");
             return null;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("An error occurred");
             return null;
         }
@@ -333,7 +333,7 @@ public class DatabaseController {
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getAllInstancesOfDirectoryEntry");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("An error occurred");
         }
 
@@ -354,7 +354,7 @@ public class DatabaseController {
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getDirectoryEntry");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("An error occurred");
         }
 

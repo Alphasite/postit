@@ -121,7 +121,7 @@ public class Account {
             } else {
                 return false;
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return false;
         }
     }
