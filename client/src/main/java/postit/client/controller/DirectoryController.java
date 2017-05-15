@@ -160,7 +160,9 @@ public class DirectoryController {
                                 .findAny();
 
                         localShare.ifPresent(share1 -> entry.shares.remove(share1));
-                        entry.shares.add(share);
+                        if (!entry.deletedShares.contains(share.serverid)) {
+                            entry.shares.add(share);
+                        }
                     }
                 }
             }
@@ -276,6 +278,11 @@ public class DirectoryController {
             return false;
         } else {
             entry.shares.remove(share);
+
+            if (share.serverid != -1) {
+                entry.deletedShares.add("" + share.serverid);
+            }
+
             entry.markUpdated();
             return store.save();
         }

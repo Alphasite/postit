@@ -15,7 +15,7 @@ public class Keychain {
     public static final String DELETED_PASSWORDS = "deleted-passwords";
     public List<Password> passwords;
     public Set<String> deletedPasswords;
-    private DirectoryEntry directoryEntry;
+    public DirectoryEntry directoryEntry;
 
     public Keychain(DirectoryEntry directoryEntry) {
         this.directoryEntry = directoryEntry;
