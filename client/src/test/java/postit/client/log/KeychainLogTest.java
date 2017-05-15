@@ -90,6 +90,15 @@ public class KeychainLogTest {
 
         kl.dumpLogs(controller);
         assertThat(Files.exists(Paths.get(KeychainLog.KEYCHAIN_LOG)), is(true));
+
+        kl.addCreateKeychainLogEntry(entry, "ning", true, 4, "added keychain keychain1");
+        kl.addCreateShareLogEntry(entry, "ning", true, 1, "added keychain keychain1");
+        kl.addRemoveKeychainLogEntry(entry, "ning", true, 1, "added keychain keychain1");
+        kl.addRemoveShareLogEntry(entry, "ning", true, 1, "added keychain keychain1");
+        kl.addUpdateKeychainLogEntry(entry, "ning", true, 1, "added keychain keychain1");
+        kl.addUpdateShareLogEntry(entry, "ning", true, 1, "added keychain keychain1");
+
+        assertThat(kl.getKeychainLogEntries(entry).size(), is(9));
     }
 
 }
