@@ -83,9 +83,7 @@ public class ServerAccount {
     	return salt;
     }
     
-    public String getPhoneNumber(){
-    	return phoneNumber;
-    }
+    public String getPhoneNumber(){ return phoneNumber; }
 
     public String getKeypair() { return this.keypair; }
 

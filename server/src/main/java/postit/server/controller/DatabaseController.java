@@ -115,6 +115,26 @@ public class DatabaseController {
         return null;
     }
 
+    String getPublickey(String username) {
+        ResultSet resultSet;
+
+        try (Connection connection = database.connect();
+                PreparedStatement statement = connection.prepareStatement(getAccountSQL)){
+            statement.setString(1, username);
+            resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getString("public_key");
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred in getPublickey");
+        } catch (Exception e) {
+            System.out.println("An error occurred");
+        }
+
+        return null;
+    }
+
     String getSalt(String username){
         ResultSet resultSet;
 
