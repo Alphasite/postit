@@ -602,10 +602,10 @@ public class KeychainViewer {
 
             JTextField username = new JTextField(directoryController.getAccount().get().getUsername());
             username.setEnabled(false);
-            JTextField firstName = new JTextField();
-            JTextField lastName = new JTextField();
-            JTextField email = new JTextField();
-            JTextField phoneNumber = new JTextField();
+            JTextField firstName = new JTextField(serverController.getFirstname(directoryController.getAccount().get()));
+            JTextField lastName = new JTextField(serverController.getLastname(directoryController.getAccount().get()));
+            JTextField email = new JTextField(serverController.getEmail(directoryController.getAccount().get()));
+            JTextField phoneNumber = new JTextField(serverController.getPhoneNumber(directoryController.getAccount().get()));
 
             Object[] message = {
                     "Username:", username,
