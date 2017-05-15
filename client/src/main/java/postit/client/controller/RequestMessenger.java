@@ -56,7 +56,6 @@ public class RequestMessenger {
 	public static String createUpdateAccountMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber){
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		account.setEmail(email);
 		account.setFirstname(firstname);
 		account.setLastname(lastname);
