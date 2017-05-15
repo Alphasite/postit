@@ -160,7 +160,9 @@ public class DirectoryController {
                                 .findAny();
 
                         localShare.ifPresent(share1 -> entry.shares.remove(share1));
-                        entry.shares.add(share);
+                        if (!entry.deletedShares.contains(share.serverid)) {
+                            entry.shares.add(share);
+                        }
                     }
                 }
             }
@@ -209,6 +211,10 @@ public class DirectoryController {
             }
 
             keychain.get().initFrom(passwords);
+
+            // Sync log entries
+            entry.getLog().addAll(newEntry.getLog());
+
         } else {
             LOGGER.warning("Failed to update entry " + entry.name + "from object (couldn't load keychain).");
             return false;
@@ -272,6 +278,11 @@ public class DirectoryController {
             return false;
         } else {
             entry.shares.remove(share);
+
+            if (share.serverid != -1) {
+                entry.deletedShares.add("" + share.serverid);
+            }
+
             entry.markUpdated();
             return store.save();
         }
@@ -298,6 +309,32 @@ public class DirectoryController {
         return keychain.passwords.stream()
                 .filter(password -> password.lastModified.isBefore(expireyDate))
                 .collect(Collectors.toList());
+    }
+
+    public boolean selfIsOwner(DirectoryEntry entry) {
+        Optional<Account> account = this.getAccount();
+
+        if (account.isPresent()) {
+            return entry.shares.stream()
+                    .filter(share -> share.isOwner)
+                    .anyMatch(share -> share.username.equals(account.get().getUsername()));
+        } else {
+            LOGGER.warning("SelfISOwner: System has no account?? Assuming offline.");
+            return true;
+        }
+    }
+
+    public boolean selfCanEdit(DirectoryEntry entry) {
+        Optional<Account> account = this.getAccount();
+
+        if (account.isPresent()) {
+            return entry.shares.stream()
+                    .filter(share -> share.username.equals(account.get().getUsername()))
+                    .anyMatch(share -> share.canWrite);
+        } else {
+            LOGGER.warning("SelfISOwner: System has no account?? Assuming offline.");
+            return true;
+        }
     }
 
     public boolean save() {

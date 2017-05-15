@@ -16,7 +16,14 @@ import static javax.swing.SwingUtilities.invokeLater;
  */
 public class GuiApp {
     public static void main(String[] args) {
-        Client client = new Client(2048, "localhost");
+        String url;
+        if (args.length > 0) {
+            url = args[0];
+        } else {
+            url = "localhost";
+        }
+
+        Client client = new Client(2048, url);
         ServerController serverController = new ServerController(client);
         AuthenticationLog authLog = new AuthenticationLog();
 
