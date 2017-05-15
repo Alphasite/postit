@@ -6,14 +6,12 @@ import postit.client.backend.MockBackingStore;
 import postit.client.backend.MockKeyService;
 import postit.client.controller.DirectoryController;
 import postit.client.controller.DirectoryControllerTest;
-import postit.client.keychain.Account;
-import postit.client.keychain.Directory;
-import postit.client.keychain.DirectoryEntry;
-import postit.client.keychain.Share;
+import postit.client.keychain.*;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.interfaces.RSAPublicKey;
 import java.util.logging.Logger;
 
@@ -41,6 +39,8 @@ public class KeychainLogTest {
     RSAPublicKey encryptionKey;
     RSAPublicKey signgingKey;
 
+    KeychainLog kl;
+
     @Before
     public void setUp() throws Exception {
         LOGGER.info("----Setup");
@@ -61,6 +61,12 @@ public class KeychainLogTest {
             encryptionKey = (RSAPublicKey) account.getEncryptionKeypair().getPublic();
             signgingKey = (RSAPublicKey) account.getSigningKeypair().getPublic();
             ownerShare = new Share(-1L, account.getUsername(), true, encryptionKey, signgingKey, true);
+
+            kl = new KeychainLog();
+
+            KeychainLog.KEYCHAIN_LOG = backingStore.getVolume() + "/log";
+            System.out.println("Log dir:" + kl.KEYCHAIN_LOG);
+
         } catch (Exception e) {
             Files.deleteIfExists(backingStore.getContainer());
             throw e;
@@ -74,7 +80,6 @@ public class KeychainLogTest {
         controller.createKeychain("test");
         DirectoryEntry entry = controller.getKeychains().get(0);
 
-        KeychainLog kl = new KeychainLog();
         kl.addCreateKeychainLogEntry(entry, "ning", true, 1, "added keychain keychain1");
         kl.addCreateKeychainLogEntry(entry, "ning", false, 2, "added keychain2");
         kl.addCreateKeychainLogEntry(entry, "ning", true, 3, "added keychain3");
@@ -82,6 +87,9 @@ public class KeychainLogTest {
         kl.printLog(kl.getKeychainLogEntries(entry));
 
         assertThat(kl.getKeychainLogEntries(entry).size(), is(3));
+
+        kl.dumpLogs(controller);
+        assertThat(Files.exists(Paths.get(KeychainLog.KEYCHAIN_LOG)), is(true));
     }
 
 }

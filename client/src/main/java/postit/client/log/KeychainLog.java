@@ -14,7 +14,7 @@ import java.util.List;
 
 public class KeychainLog {
 
-	public static final String KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
+	public static String KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
 	
 	private boolean initialized = true;
 	
