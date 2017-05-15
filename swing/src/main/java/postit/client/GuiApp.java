@@ -26,6 +26,10 @@ public class GuiApp {
         keyService.setBackingStore(backingStore);
         serverController.setKeyService(keyService);
 
+        if (! authLog.isInitialized()){
+            System.exit(0);
+        }
+        
         if (!Crypto.init()) {
             System.out.println("Crypto could not be initialized. ABORTING");
             System.exit(0);
@@ -39,6 +43,9 @@ public class GuiApp {
         invokeLater(() -> {
         	KeychainLog keyLog = new KeychainLog();
             KeychainViewer kv = new KeychainViewer(serverController, backingStore, keyService, keyLog, authLog);
+            if (! keyLog.isInitialized()){
+                System.exit(0);
+            }
         });
     }
 }

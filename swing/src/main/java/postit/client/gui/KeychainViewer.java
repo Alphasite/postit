@@ -79,7 +79,11 @@ public class KeychainViewer {
         Optional<Directory> directory = backingStore.readDirectory();
 
 
-        if (!directory.isPresent()) {
+        if (! keyLog.isInitialized()){
+        	JOptionPane.showMessageDialog(null, "Log file cannot be created. ABORTING");
+        	return;
+        }
+        else if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
             
