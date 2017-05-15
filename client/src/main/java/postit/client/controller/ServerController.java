@@ -329,11 +329,36 @@ public class ServerController {
     	return sendAndCheckIfSuccess(req);
     }
     
-    public boolean authenticate(Account account) {
-        String req = RequestMessenger.createAuthenticateMessage(account);
-        return sendAndCheckIfSuccess(req);
+    
+    public String getEmail(Account account){
+    	String req = RequestMessenger.createGetUserMessage(account);
+    	Optional<JsonObject> response = clientToServer.send(req);
+    	if (response.isPresent()) {
+    		return response.get().getJsonObject("account").getString("email");
+    	}
+    	return null;
     }
-
+    
+    public String getFirstname(Account account){
+    	String req = RequestMessenger.createGetUserMessage(account);
+    	Optional<JsonObject> response = clientToServer.send(req);
+    	if (response.isPresent()) {
+    		return response.get().getJsonObject("account").getString("firstname");
+    	}
+    	
+    	return null;
+    }
+    
+    public String getLastname(Account account){
+    	String req = RequestMessenger.createGetUserMessage(account);
+    	Optional<JsonObject> response = clientToServer.send(req);
+    	if (response.isPresent()) {
+    		return response.get().getJsonObject("account").getString("lastname");
+    	}
+    	
+    	return null;
+    }
+    
     public String getPhoneNumber(Account account){
     	String req = RequestMessenger.createGetUserMessage(account);
     	Optional<JsonObject> response = clientToServer.send(req);
@@ -342,6 +367,11 @@ public class ServerController {
     	}
     	
     	return null;
+    }
+    
+    public boolean authenticate(Account account) {
+        String req = RequestMessenger.createAuthenticateMessage(account);
+        return sendAndCheckIfSuccess(req);
     }
     
     public List<Long> getKeychains(Account account) {
