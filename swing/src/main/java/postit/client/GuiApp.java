@@ -7,6 +7,7 @@ import postit.client.gui.GUIKeyService;
 import postit.client.gui.KeychainViewer;
 import postit.client.log.AuthenticationLog;
 import postit.client.log.KeychainLog;
+import postit.shared.Crypto;
 
 import static javax.swing.SwingUtilities.invokeLater;
 
@@ -25,13 +26,13 @@ public class GuiApp {
         keyService.setBackingStore(backingStore);
         serverController.setKeyService(keyService);
 
-//        if (!Crypto.init()) {
-//            // TODO
-//        }
-//
-//        if (!backingStore.init()) {
-//            // TODO
-//        }
+        if (!Crypto.init()) {
+            // TODO
+        }
+
+        if (!backingStore.init()) {
+            // TODO
+        }
 
         invokeLater(() -> {
         	KeychainLog keyLog = new KeychainLog();
