@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /**
  * Created by Zhan on 3/23/2017.
@@ -71,7 +72,7 @@ public class Classify {
         try {
             String str;
             while ((str = in.readLine()) != null) {
-                if (str.indexOf(target.toLowerCase()) != -1) {
+                if (str.indexOf(target.toLowerCase(Locale.getDefault())) != -1) {
                     return true;
                 }
             }
