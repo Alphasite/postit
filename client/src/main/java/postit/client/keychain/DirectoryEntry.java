@@ -18,6 +18,7 @@ public class DirectoryEntry {
     private final static Logger LOGGER = Logger.getLogger(DirectoryEntry.class.getName());
 
     public static final String SHARES = "shares";
+    public static final String LOG = "log";
     public static final String ENCRYPTION_KEY = "encryption-key";
     public static final String NONCE = "nonce";
     public static final String LAST_MODIFIED = "lastModified";
@@ -38,6 +39,8 @@ public class DirectoryEntry {
 
     public List<Share> shares;
 
+    public Set<String> log;
+
     BackingStore backingStore;
 
     public LocalDateTime lastModified;
@@ -50,6 +53,7 @@ public class DirectoryEntry {
         this.backingStore = backingStore;
         this.lastModified = LocalDateTime.now();
         this.uuid = java.util.UUID.randomUUID().toString();
+        this.log = new HashSet<>();
         this.share = new Share(-1, null, true, publicKey, signingKey, true);
         this.shares = new ArrayList<>();
         this.shares.add(this.share);
@@ -60,6 +64,7 @@ public class DirectoryEntry {
         this.keychain = null;
         this.backingStore = backingStore;
         this.shares = new ArrayList<>();
+        this.log = new HashSet<>();
         this.updateFrom(object);
 
         JsonArray shareArray = object.getJsonArray(SHARES);
@@ -74,6 +79,11 @@ public class DirectoryEntry {
             } catch (InvalidKeyException e) {
                 LOGGER.warning("Failed to parse RSA key: " + e.getMessage() + " ignoring.");
             }
+        }
+
+        JsonArray logArray = object.getJsonArray(LOG);
+        for (int i = 0; i < logArray.size(); i++) {
+            this.log.add(logArray.getString(i));
         }
     }
 
@@ -102,7 +112,13 @@ public class DirectoryEntry {
             shareArray.add(share.dump());
         }
 
+        JsonArrayBuilder logArray = Json.createArrayBuilder();
+        for (String entry : log) {
+            logArray.add(entry);
+        }
+
         builder.add(SHARES, shareArray);
+        builder.add(LOG, logArray);
 
         return builder;
     }
@@ -166,5 +182,13 @@ public class DirectoryEntry {
 
     public void setOwner(String owner) {
         this.share.username = owner;
+    }
+
+    public void addLogEntry(String entry) {
+        this.log.add(entry);
+    }
+
+    public Set<String> getLog() {
+        return log;
     }
 }

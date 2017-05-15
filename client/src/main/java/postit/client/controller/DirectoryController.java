@@ -209,6 +209,10 @@ public class DirectoryController {
             }
 
             keychain.get().initFrom(passwords);
+
+            // Sync log entries
+            entry.getLog().addAll(newEntry.getLog());
+
         } else {
             LOGGER.warning("Failed to update entry " + entry.name + "from object (couldn't load keychain).");
             return false;
