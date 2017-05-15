@@ -295,7 +295,6 @@ public class ServerController {
     }
 
     public boolean addUser(Account account, String email, String firstname, String lastname, String phoneNumber, String keypair, String publicKey) {
-        Base64.Encoder encoder = Base64.getEncoder();
         String req = RequestMessenger.createAddUserMessage(account, email, firstname, lastname, phoneNumber, keypair, publicKey);
         return sendAndCheckIfSuccess(req);
     }
