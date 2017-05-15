@@ -6,6 +6,7 @@ import javax.crypto.SecretKey;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class Password {
         this.keychain = keychain;
 
         this.uuid = object.getString(UUID);
-        this.password = Crypto.secretKeyFromBytes(object.getString(PASSWORD).getBytes());
+        this.password = Crypto.secretKeyFromBytes(object.getString(PASSWORD).getBytes(StandardCharsets.UTF_8));
         this.lastModified = LocalDateTime.parse(object.getString(LAST_MODIFIED));
         this.metadata = new HashMap<>();
 
@@ -63,17 +64,17 @@ public class Password {
 
         return Json.createObjectBuilder()
                 .add(UUID, uuid)
-                .add(PASSWORD, new String(Crypto.secretKeyToBytes(password)))
+                .add(PASSWORD, new String(Crypto.secretKeyToBytes(password),StandardCharsets.UTF_8))
                 .add(LAST_MODIFIED, lastModified.toString())
                 .add(METADATA, metadataObject);
     }
 
     public String getPasswordAsString() {
-        return new String(Crypto.secretKeyToBytes(password));
+        return new String(Crypto.secretKeyToBytes(password),StandardCharsets.UTF_8);
     }
 
     public void setStringAsPassword(String password) {
-        this.password = Crypto.secretKeyFromBytes(password.getBytes());
+        this.password = Crypto.secretKeyFromBytes(password.getBytes(StandardCharsets.UTF_8));
     }
 
     public String getTitle() {

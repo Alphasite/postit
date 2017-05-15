@@ -93,7 +93,7 @@ public class DirectoryEntry {
         builder.add(NAME, name);
         builder.add(ENCRYPTION_KEY, encoder.encodeToString(Crypto.secretKeyToBytes(getEncryptionKey())));
         builder.add(NONCE, encoder.encodeToString(getNonce()));
-        builder.add(SERVERID, getServerid());
+        builder.add(SERVERID, getServerId());
         builder.add(LAST_MODIFIED, lastModified.toString()); // TODO check this handles timezones correctly
         builder.add(UUID, uuid);
 
@@ -152,7 +152,7 @@ public class DirectoryEntry {
 
     public void setName(String name){ this.name = name;}
 
-    public long getServerid() {
+    public long getServerId() {
         return this.share.serverid;
     }
 

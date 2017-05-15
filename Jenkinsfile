@@ -28,12 +28,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                parallel(
-                    shared: { sh "./gradlew :shared:test jacocoTestReport" },
-                    client: { sh "./gradlew :client:test jacocoTestReport" },
-                    server: { sh "./gradlew :server:test jacocoTestReport" },
-                    swing:  { sh "./gradlew :swing:test  jacocoTestReport" },
-                )
+                sh "./gradlew test jacocoTestReport"
             }
         }
 
@@ -64,9 +59,9 @@ pipeline {
 /*
         stage('Docker') {
             steps {
-                sh "docker build --tag=postit-server docker/Dockerfile.server ."
-                sh "docker tag postit-server nishadmathur.com/postit-server"
-                sh "docker image push nishadmathur.com/postit-server"
+                sh "docker build --tag=postit-server --file docker/Dockerfile.server ."
+                sh "docker tag postit-server alphasite/postit-server"
+                sh "docker image push alphasite/postit-server"
             }
         }
 */

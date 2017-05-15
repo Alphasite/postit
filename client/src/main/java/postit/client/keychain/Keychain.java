@@ -84,7 +84,7 @@ public class Keychain {
     }
 
     public long getServerId(){
-    	System.out.println("keyid " + directoryEntry.getServerid());
-    	return directoryEntry.getServerid();
+    	System.out.println("keyid " + directoryEntry.getServerId());
+    	return directoryEntry.getServerId();
     }
 }

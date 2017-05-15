@@ -1,12 +1,10 @@
 package postit.client.log;
 
-import java.awt.event.*;
-import java.io.*;
-
-import javax.swing.*;
-
 import postit.shared.AuditLog;
-import postit.shared.AuditLog.*;
+import postit.shared.AuditLog.EventType;
+import postit.shared.AuditLog.LogEntry;
+
+import java.io.*;
 
 public class AuthenticationLog {
 	public static final String AUTH_LOG = AuditLog.LOG_DIR + "/auth_log";
@@ -15,14 +13,23 @@ public class AuthenticationLog {
 		// Creates log file if not existing
 		// Reads in log file for past failed attempts
 		File logDir = new File(AuditLog.LOG_DIR);
-		if (! logDir.exists())
-			logDir.mkdirs();
+		if (! logDir.exists()){
+			Boolean success = logDir.mkdirs();
+			if(!success){
+				//TODO Ning: handle if mkdir was unsuccessful
+			}
+		}
+
+
 		
 		//File authLog = new File(AUTH_LOG);
 		File log = new File(AUTH_LOG);
 		if (! log.exists())
 			try {
-				log.createNewFile();
+				Boolean success = log.createNewFile();
+				if(!success){
+					//TODO Ning: handle if createNewFile is unsuccessful
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -49,8 +56,9 @@ public class AuthenticationLog {
 		// Returns the number of consecutive failed log-ins
 		// GUI should lock up accordingly
 		int numFailed = 0;
+		BufferedReader reader =null;
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
+			reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);
@@ -62,12 +70,18 @@ public class AuthenticationLog {
 				}
 				line = reader.readLine();
 			}
-			
-			reader.close();
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (reader != null) reader.close();;
+			} catch (IOException io) {
+				//log exception here
+			}
 		}
 		return numFailed;
 	}
@@ -81,8 +95,9 @@ public class AuthenticationLog {
 		// Returns the number of consecutive failed log-ins
 		// GUI should lock up accordingly
 		long time = -1; // -1 if never logged in before
+		BufferedReader reader = null;
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
+			 reader = new BufferedReader(new FileReader(new File(AUTH_LOG)));
 			String line = reader.readLine();
 			while (line != null){
 				LogEntry entry = AuditLog.parseLogEntry(line);
@@ -97,6 +112,13 @@ public class AuthenticationLog {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (reader != null) reader.close();;
+			} catch (IOException io) {
+				//log exception here
+			}
 		}
 		return time;
 	}

@@ -24,18 +24,14 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.sql.Timestamp;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static javax.swing.SwingUtilities.invokeLater;
 
@@ -46,6 +42,8 @@ public class KeychainViewer {
     KeychainViewer kv = this;
     DirectoryController directoryController;
     ServerController serverController;
+    BackingStore backingStore;
+
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -70,11 +68,11 @@ public class KeychainViewer {
     private KeyService keyService;
 
     private KeychainLog keyLog;
-    private AuthenticationLog authLog;
 
     public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService, KeychainLog keyLog, AuthenticationLog authLog) {
 
         this.serverController = serverController;
+        this.backingStore = backingStore;
 
         Optional<Directory> directory = backingStore.readDirectory();
 
@@ -95,15 +93,17 @@ public class KeychainViewer {
             if (act.isPresent()){
             	authLog.addAuthenticationLogEntry(act.get().getUsername(), true, "Login successful");
             }
-            String overduePasswords = "";
+            StringBuffer overduePasswords = new StringBuffer("");
             for(DirectoryEntry directoryEntry:directoryController.getKeychains()) {
                 List<Password>expiredPasswords = directoryController.getExpired(directoryEntry.readKeychain().get(), Duration.ofDays(365));
                 for (Password p:expiredPasswords){
-                    overduePasswords+=p.getTitle()+"\n";
+                    overduePasswords.append(p.getTitle());
+                    overduePasswords.append("\n");
                 }
             }
-            if(!overduePasswords.equals("")){
-                JOptionPane.showMessageDialog(null,"Passwords that have not updated for a year: \n"+overduePasswords,
+            if(overduePasswords.length()!=0){
+                JOptionPane.showMessageDialog(null,
+                        "Passwords that have not updated for a year: \n"+overduePasswords.toString()+"To stop update messages, re-save your passwords",
                         "Overdue passwords",JOptionPane.PLAIN_MESSAGE);
             }
         }
@@ -113,7 +113,6 @@ public class KeychainViewer {
         this.keyService = keyService;
         
         this.keyLog = keyLog;
-        this.authLog = authLog;
 
         backingStore.save();
     }
@@ -156,7 +155,13 @@ public class KeychainViewer {
                     passwordStrength.setText("Password Strength: "+strength);
                 }
             });
-            generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
+            generatePass.addActionListener(ee->{
+                newpassword.setText(passwordGenerator.generatePassword());
+                JSONObject result = classify.strengthCheck(newpassword.getText());
+                String strength = (String) result.get("strength");
+
+                passwordStrength.setText("Password Strength: "+strength);
+            });
 
             Object[] message = {
                     "Title:", newtitle,
@@ -172,7 +177,7 @@ public class KeychainViewer {
                         && newusername.getText().length() > 0) {
                     boolean success = directoryController.createPassword(getActiveKeychain(),
                             newtitle.getText(), newusername.getText(),
-                            Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
+                            Crypto.secretKeyFromBytes(newpassword.getText().getBytes(StandardCharsets.UTF_8)));
                     if (success){
                     	Keychain key = getActiveKeychain();
                     	Optional<Account> act = directoryController.getAccount();
@@ -279,29 +284,9 @@ public class KeychainViewer {
 
         menuItem = new JMenuItem("Create Public Keyfile");
         menuItem.addActionListener((ActionEvent e) ->{
-            String username = directoryController.getAccount().get().getUsername();
-            JFileChooser fc = new JFileChooser();
-            JFileChooser fileChooser = new JFileChooser();
-            if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                // save to file
-                String path = file.getPath();
-
-                RSAPublicKey encryptionKey = (RSAPublicKey) directoryController.getAccount().get().getEncryptionKeypair().getPublic();
-                RSAPublicKey signingKey = (RSAPublicKey) directoryController.getAccount().get().getSigningKeypair().getPublic();
-
-                X509EncodedKeySpec x509EncodedEncryptionKeySpec = new X509EncodedKeySpec(encryptionKey.getEncoded());
-                X509EncodedKeySpec x509EncodedSingingKeySpec = new X509EncodedKeySpec(signingKey.getEncoded());
-
-                try (PrintWriter writer = new PrintWriter(file)) {
-                    Base64.Encoder encoder = Base64.getEncoder();
-                    writer.println(encoder.encodeToString(x509EncodedEncryptionKeySpec.getEncoded()));
-                    writer.println(encoder.encodeToString(x509EncodedSingingKeySpec.getEncoded()));
-                } catch (IOException e1) {
-                    JOptionPane.showConfirmDialog(frame, "Unable to write to location: "+path);
-                }
+            if (!backingStore.writeKeypair(directoryController.getAccount().get())) {
+                JOptionPane.showConfirmDialog(frame, "Unable to write public keyfile.");
             }
-
         });
 
 
@@ -426,41 +411,34 @@ public class KeychainViewer {
                     Boolean readWrite = writepriv.isSelected();
 //                    String readWrite = (String)priv.getSelectedItem();
                     //Try to read public key
-                    try {
-                        Base64.Decoder decoder = Base64.getDecoder();
-                        List<String> keyLines = Files.readAllLines(file[0].toPath());
+                    Optional<List<RSAPublicKey>> keys = backingStore.readPublicKey(file[0].toPath());
 
-                        X509EncodedKeySpec spec;
-                        KeyFactory kf = KeyFactory.getInstance("RSA");
-
-                        spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(0)));
-                        RSAPublicKey encryptionKey = (RSAPublicKey) kf.generatePublic(spec);
-
-                        spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(1)));
-                        RSAPublicKey signingKey = (RSAPublicKey) kf.generatePublic(spec);
-
-                        Share newshare = new Share(-1L, username, readWrite, encryptionKey, signingKey, false);
-
-                        boolean success = directoryController.shareKeychain(activeDE,newshare);
-                        if(success){
-                            JOptionPane.showMessageDialog(frame,
-                                    "Successfully shared " + activeDE.name+ " with "+ username);
-                            
-                            Optional<Account> act = directoryController.getAccount();
-                            String user = null;
-                            if (act.isPresent())
-                            	user = act.get().getUsername();
-                            keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getServerId(), 
-                            		String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username));
-                        }
-                        else{
-                            JOptionPane.showMessageDialog(frame,
-                                    "Unable to share " + activeDE.name+ " with "+ username);
-                        }
-                    }catch (IOException | ClassCastException|
-                            InvalidKeySpecException |NoSuchAlgorithmException e1){
-
+                    if (!keys.isPresent()) {
+                        // TODO
                         JOptionPane.showMessageDialog(frame,"Unable to read public key file");
+                        System.err.println("Error loading public key");
+                        return;
+                    }
+
+                    RSAPublicKey encryptionKey = keys.get().get(0);
+                    RSAPublicKey signingKey = keys.get().get(1);
+
+                    Share newshare = new Share(-1L, username, readWrite, encryptionKey, signingKey, false);
+
+                    boolean success = directoryController.shareKeychain(activeDE,newshare);
+                    if (success) {
+                        JOptionPane.showMessageDialog(frame,
+                                "Successfully shared " + activeDE.name+ " with "+ username);
+
+                        Optional<Account> act = directoryController.getAccount();
+                        String user = null;
+                        if (act.isPresent())
+                            user = act.get().getUsername();
+                        keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getServerId(),
+                                String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username));
+                    } else {
+                        JOptionPane.showMessageDialog(frame,
+                                "Unable to share " + activeDE.name+ " with "+ username);
                     }
                 }
             }
@@ -663,9 +641,10 @@ public class KeychainViewer {
 
         menuItem = new JMenuItem("Pwd Gen Settings");
         menuItem.addActionListener( e -> {
-            passwordGenerator.editSettings(frame);
+            this.editSettings(passwordGenerator, frame);
             directoryController.setPasswordGenerator(passwordGenerator);
         });
+
         settingsMenu.add(menuItem);
 
         tabbedPane.addChangeListener(new ChangeListener() {
@@ -805,5 +784,76 @@ public class KeychainViewer {
         } catch (IndexOutOfBoundsException ex) {
             return null;
         }
+    }
+
+    public void editSettings(PasswordGenerator generator, JFrame frame){
+        SpinnerNumberModel model = new SpinnerNumberModel();
+        model.setMaximum(256);
+        model.setMinimum(8);
+
+        JSpinner newLength = new JSpinner(model);
+        newLength.setValue(generator.activeConfiguration.passwordlength);
+
+        JCheckBox upper = new JCheckBox();
+        upper.setText("Upper case (A-Z)?");
+        upper.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useUpper)
+            upper.setSelected(true);
+
+        JCheckBox lower = new JCheckBox();
+        lower.setText("Lower case (a-z)?");
+        lower.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useLower)
+            lower.setSelected(true);
+
+        JCheckBox numbers = new JCheckBox();
+        numbers.setText("Number (0-9)?");
+        numbers.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useNumbers)
+            numbers.setSelected(true);
+
+        JCheckBox symbols = new JCheckBox();
+        symbols.setText("Symbols?");
+        symbols.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useSymbols)
+            symbols.setSelected(true);
+        JTextField permittedSymbols = new JTextField(generator.activeConfiguration.SYMBOLS);
+        symbols.addActionListener(e->{
+            if (symbols.isSelected())
+                permittedSymbols.setEnabled(true);
+            else
+                permittedSymbols.setEnabled(false);
+        });
+        permittedSymbols.addActionListener(e->{
+            permittedSymbols.setText(generator.removeDuplicates(permittedSymbols.getText()));
+        });
+
+        ArrayList<Object>  message = new ArrayList<Object>();
+        message.add("Length");
+        message.add(newLength);
+        message.add(upper);
+        message.add(lower);
+        message.add(numbers);
+        message.add(symbols);
+        message.add(permittedSymbols);
+        do{
+            int option = JOptionPane.showConfirmDialog(frame, message.toArray(), "Password Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (option == JOptionPane.OK_OPTION) {
+                passwordGenerator.activeConfiguration.passwordlength = (int) newLength.getValue();
+                passwordGenerator.activeConfiguration.useUpper = upper.isSelected();
+                passwordGenerator.activeConfiguration.useLower = lower.isSelected();
+                passwordGenerator.activeConfiguration.useNumbers = numbers.isSelected();
+                passwordGenerator.activeConfiguration.useSymbols = symbols.isSelected();
+                permittedSymbols.setText(passwordGenerator.removeDuplicates(permittedSymbols.getText()));
+                passwordGenerator.activeConfiguration.SYMBOLS=permittedSymbols.getText();
+            }
+            message.add("Some chars must be selected");
+
+        } while (!(passwordGenerator.activeConfiguration.useUpper
+                || passwordGenerator.activeConfiguration.useLower
+                || passwordGenerator.activeConfiguration.useNumbers
+                || passwordGenerator.activeConfiguration.useSymbols)
+        );
     }
 }

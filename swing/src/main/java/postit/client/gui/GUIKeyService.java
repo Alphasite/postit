@@ -8,12 +8,12 @@ import postit.client.keychain.Account;
 import postit.client.log.AuthenticationLog;
 import postit.client.passwordtools.Classify;
 import postit.shared.Crypto;
-import postit.shared.EFactorAuth;
 
 import javax.crypto.SecretKey;
 import javax.json.JsonObjectBuilder;
 import javax.security.auth.DestroyFailedException;
 import javax.swing.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -67,7 +67,7 @@ public class GUIKeyService implements KeyService {
         	}
             
         }while (key == null);
-        return key.getBytes();
+        return key.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -75,15 +75,15 @@ public class GUIKeyService implements KeyService {
         String password;
 
         while (true) {
-            String password1 = new String(getKey("Please enter NEW master password: "));
-            String password2 = new String(getKey("Please re-enter NEW master password: "));
+            String password1 = new String(getKey("Please enter NEW master password: "),StandardCharsets.UTF_8);
+            String password2 = new String(getKey("Please re-enter NEW master password: "),StandardCharsets.UTF_8);
             if (password1.equals(password2)) {
                 password = password1;
                 break;
             }
         }
 
-        key = Crypto.secretKeyFromBytes(password.getBytes());
+        key = Crypto.secretKeyFromBytes(password.getBytes(StandardCharsets.UTF_8));
         retrieved = Instant.now();
 
         return key;
@@ -94,14 +94,14 @@ public class GUIKeyService implements KeyService {
         String password;
 
         while (true) {
-        	String passwordOld1 = new String(getMasterKey().getEncoded());
-        	String passwordOld2 = new String(getKey("Current master password"));
+        	String passwordOld1 = new String(getMasterKey().getEncoded(),StandardCharsets.UTF_8);
+        	String passwordOld2 = new String(getKey("Current master password"),StandardCharsets.UTF_8);
         	if (! passwordOld1.equals(passwordOld2)){
         		JOptionPane.showMessageDialog(null, "The CURRENT master password is incorrect.");
         		return null;
         	}
-            String password1 = new String(getKey("New master password"));
-            String password2 = new String(getKey("Re-enter new master password"));
+            String password1 = new String(getKey("New master password"),StandardCharsets.UTF_8);
+            String password2 = new String(getKey("Re-enter new master password"),StandardCharsets.UTF_8);
             if (password1.equals(password2)) {
                 password = password1;
                 break;
@@ -126,16 +126,7 @@ public class GUIKeyService implements KeyService {
     public SecretKey getMasterKey() {
         if (key == null || retrieved == null || Instant.now().isAfter(retrieved.plus(GUIKeyService.timeout))) {
 
-            try {
-                if (key != null) {
-                    // Try destroy, but its not significant if it fails.
-                    key.destroy();
-                }
-            } catch (DestroyFailedException ignored) {
-
-            } finally {
-                key = null;
-            }
+            destroyKey();
 
             key = null;
 
@@ -147,6 +138,20 @@ public class GUIKeyService implements KeyService {
 
         retrieved = Instant.now();
         return key;
+    }
+
+    @Override
+    public void destroyKey() {
+        try {
+            if (key != null) {
+                // Try destroy, but its not significant if it fails.
+                key.destroy();
+            }
+        } catch (DestroyFailedException ignored) {
+
+        } finally {
+            key = null;
+        }
     }
 
     @Override
@@ -188,31 +193,20 @@ public class GUIKeyService implements KeyService {
                 		if (sc.authenticate(newAccount)) {
                 			//authenticate via text
                 			//TODO send text
-                			String phoneNumber=sc.getPhoneNumber(newAccount);
-                			new EFactorAuth().sendMsg(phoneNumber);
                             String pin = null;
                 			if (sc.sendGetKeypairRequest(newAccount)) {
                                 while (pin == null){
                                     pin = JOptionPane.showInputDialog("Enter PIN sent to your phone: ");
                                 }
+
+                                if (sc.sendKeypairOtpResponse(newAccount, pin)) {
+                                    al.addAuthenticationLogEntry(username, true, "Login successful");
+                                    return newAccount;
+                                } else {
+                                    this.destroyKey();
+                                    JOptionPane.showMessageDialog(null, "Incorrect PIN");
+                                }
                             }
-
-                			if (new EFactorAuth().verifyMsg(phoneNumber, pin)) {
-                				JOptionPane.showConfirmDialog(
-                						null,
-                						"Please ensure your keypair is in the data directory. Select any option to proceed"
-                                );
-                				
-                				al.addAuthenticationLogEntry(username, true, "Login successful");
-
-                				if (backingStore.readKeypair(newAccount)) {
-                					return newAccount;
-                				} else {
-                					JOptionPane.showMessageDialog(null, "Failed to load keypair.");
-                				}
-                			} else {
-                				JOptionPane.showMessageDialog(null, "Incorrect PIN");
-                			}
 
                 		} else {
                 			al.addAuthenticationLogEntry(username, false, "Login credentials are invalid");
@@ -239,7 +233,7 @@ public class GUIKeyService implements KeyService {
                             && LoginPanel.isValidEmailAddress(email)
                             && LoginPanel.isValidPhoneNumber(phone)) {
                         Account newAccount = new Account(username, pass1);
-                        Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs();
+                        Optional<JsonObjectBuilder> keypair = newAccount.dumpKeypairs(getMasterKey());
 
                         if (sc.addUser(
                             newAccount,
@@ -250,19 +244,12 @@ public class GUIKeyService implements KeyService {
                             keypair.get().build().toString(),
                             Crypto.serialiseObject(newAccount.getSigningKeypair().getPublic()))
                         ) {
-
-                            if (backingStore.writeKeypair(newAccount)) {
-                                JOptionPane.showMessageDialog(
-                                    null,
-                                    "Generated a new keypair and saved it to the disk. Please transfer this " +
-                                            "to a memory stick and store it in a safe, or other secure location as you " +
-                                            "will need it to login at new locations."
-                                );
-
-                                return newAccount;
-                            } else {
-                                JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
-                            }
+                            return newAccount;
+//                            if (backingStore.writeKeypair(newAccount)) {
+//                                return newAccount;
+//                            } else {
+//                                JOptionPane.showMessageDialog(null, "Failed to save generated key pair.");
+//                            }
                         }
 
                     } else if (!pass1.equals(pass2)) {
