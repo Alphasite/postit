@@ -132,3 +132,5 @@ local.properties
 */build/
 
 logs/auth_log
+
+container.json
