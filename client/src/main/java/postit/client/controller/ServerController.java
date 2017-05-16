@@ -275,9 +275,20 @@ public class ServerController {
                         }
                     }
 
-                    if (!setKeychain(account.get(), entry)) {
-                        LOGGER.warning("Failed to update keychain (" + entry.name + ")  on server...");
+                    Optional<Share> selfShare = entry.shares.stream()
+                            .filter(share -> share.username.equals(account.get().getUsername()))
+                            .findAny();
+
+                    if (!selfShare.isPresent()) {
+                        LOGGER.warning("Keychain is missing own share (" + entry.name + ")...");
                         return;
+                    }
+
+                    if (selfShare.get().canWrite) {
+                        if (!setKeychain(account.get(), entry)) {
+                            LOGGER.warning("Failed to update keychain (" + entry.name + ")  on server...");
+                            return;
+                        }
                     }
                 }
             }
@@ -576,7 +587,7 @@ public class ServerController {
 
                     if (!directoryKeychain.isPresent()) {
                         LOGGER.warning("Failed to parse json object");
-                        return Optional.empty();
+                        continue;
                     }
 
                     directoryKeychains.add(directoryKeychain.get());

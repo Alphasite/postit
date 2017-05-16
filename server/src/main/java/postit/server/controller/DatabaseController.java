@@ -340,6 +340,13 @@ public class DatabaseController {
     }
 
     List<ServerKeychain> getSharedInstancesOfDirectoryEntry(String ownerUsername, Long id) {
+        ServerKeychain entry = getDirectoryEntry(id);
+
+        if (entry.getOwnerDirectoryEntryId() != -1) {
+            ownerUsername = entry.getOwnerUsername();
+            id = entry.getOwnerDirectoryEntryId();
+        }
+
         ResultSet resultSet;
         ArrayList<ServerKeychain> list = new ArrayList<>();
 
