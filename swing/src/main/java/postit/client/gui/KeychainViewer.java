@@ -749,17 +749,27 @@ public class KeychainViewer {
             public void stateChanged(ChangeEvent e) {
                 delPass.setEnabled(false);
                 movePass.setEnabled(false);
-//                DirectoryEntry activeDE = getActiveKeychain().directoryEntry;
-//
-//                if(!directoryController.selfIsOwner(activeDE)){
-//                    addKeyPerm.setEnabled(false);
-//                    rmKeyPerm.setEnabled(false);
-//                    if(!directoryController.selfCanEdit(activeDE)){
-//                        addPass.setEnabled(false);
-//                        delPass.setEnabled(false);
-//                        movePass.setEnabled(false);
-//                    }
-//                }
+                int idx = tabbedPane.getSelectedIndex();
+                System.out.println(idx);
+                DirectoryEntry activeDE=null;
+                if(idx>=0) {
+                     activeDE = directoryController.getKeychains().get(idx);
+                }
+                else{
+                    activeDE = directoryController.getKeychains().get(0);
+                }
+
+                if(!directoryController.selfIsOwner(activeDE)){
+                    addKeyPerm.setEnabled(false);
+                    rmKeyPerm.setEnabled(false);
+                    if(!directoryController.selfCanEdit(activeDE)){
+                        rnKey.setEnabled(false);
+                        addPass.setEnabled(false);
+                        delPass.setEnabled(false);
+                        movePass.setEnabled(false);
+                    }
+                }
+
                 for (JTable t:tables){
                     t.clearSelection();
                 }
