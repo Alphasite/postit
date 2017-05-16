@@ -23,6 +23,8 @@ public class DirectoryKeychain {
     public static final String DATA = "data";
     public static final String KEYCHAIN = "keychain";
     public static final String DIRECTORY = "directory";
+    public static final String ENCRYPTING_USER = "encrypting-user";
+
 
     public final JsonObject keychain;
     public final JsonObject entry;
@@ -63,11 +65,11 @@ public class DirectoryKeychain {
                             decoder.decode(signatureEncryptionKey),
                             signatureKey.get()
                     )) {
-                        LOGGER.severe("FAILED TO DECRYPT KEY, TAMPERING OR CORRUPTION DETECTED.");
+                        LOGGER.severe("FAILED TO VERIFY KEY, TAMPERING OR CORRUPTION DETECTED.");
                         return Optional.empty();
                     }
                 } catch (Exception e) {
-                    LOGGER.severe("FAILED TO DECRYPT KEY, TAMPERING OR CORRUPTION DETECTED: " + e.getLocalizedMessage());
+                    LOGGER.severe("FAILED TO VERIFY KEY, TAMPERING OR CORRUPTION DETECTED: " + e.getLocalizedMessage());
                     return Optional.empty();
                 }
             }
@@ -106,7 +108,8 @@ public class DirectoryKeychain {
         Base64.Encoder encoder = Base64.getEncoder();
 
         JsonObjectBuilder encryptedParameters = Json.createObjectBuilder()
-                .add(NONCE, encoder.encodeToString(nonce));
+                .add(NONCE, encoder.encodeToString(nonce))
+                .add(ENCRYPTING_USER, account.getUsername());
 
         try {
             for (Share share : entryObject.shares) {
@@ -120,7 +123,7 @@ public class DirectoryKeychain {
                 encryptedParameters
                         .add(share.username + "-key", encoder.encodeToString(encryptedKey.get()));
                 encryptedParameters
-                        .add(share.username + "-signature", encoder.encodeToString(Crypto.signer(encryptedKey.get(), account.signingKeypair.getPrivate())));
+                        .add(share.username + "-signature", encoder.encodeToString(Crypto.sign(encryptedKey.get(), account.signingKeypair.getPrivate())));
             }
         } catch (Exception e) {
             LOGGER.warning("Failed to sign entry: " + e.getMessage());
@@ -133,7 +136,6 @@ public class DirectoryKeychain {
             LOGGER.warning("Failed to encrypt dk due to failure to encrypt data");
             return Optional.empty();
         }
-
 
         return Optional.of(
                 Json.createObjectBuilder()

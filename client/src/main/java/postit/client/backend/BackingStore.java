@@ -167,7 +167,7 @@ public class BackingStore {
             spec = new X509EncodedKeySpec(decoder.decode(keyLines.get(1)));
             RSAPublicKey signingKey = (RSAPublicKey) kf.generatePublic(spec);
 
-            ArrayList<RSAPublicKey> keys = new ArrayList<>();
+            List<RSAPublicKey> keys = new ArrayList<>();
             keys.add(encryptionKey);
             keys.add(signingKey);
 
