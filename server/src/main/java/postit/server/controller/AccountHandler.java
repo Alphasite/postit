@@ -99,7 +99,7 @@ public class AccountHandler {
 		ServerAccount account = new ServerAccount();
 		ServerAccount server = getAccount(serverAccount.getUsername());
 		account.setUsername(serverAccount.getUsername());
-		account.setPassword(serverAccount.getPassword() == null ? server.getUsername() : serverAccount.getPassword());
+		account.setPassword(serverAccount.getPassword() == null ? server.getPassword() : serverAccount.getPassword());
 		account.setEmail(serverAccount.getEmail() == null ? server.getEmail() : serverAccount.getEmail());
 		account.setFirstname(serverAccount.getFirstname() == null ? server.getFirstname() : serverAccount.getFirstname());
 		account.setLastname(serverAccount.getLastname() == null ? server.getLastname() : serverAccount.getLastname());
