@@ -282,17 +282,22 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		case UPDATE:
 			switch(asset){
 			case ACCOUNT:
-				ServerAccount serverAccount = new ServerAccount();
-				serverAccount.setUsername(username);
-				if (obj.has("password")) serverAccount.setPassword(obj.getString("password"));
-				if (obj.has("email")) serverAccount.setEmail(obj.getString("email"));
-				if (obj.has("firstname")) serverAccount.setFirstname(obj.getString("firstname"));
-				if (obj.has("lastname")) serverAccount.setLastname(obj.getString("lastname"));
-				if (obj.has("phoneNumber")) serverAccount.setPhoneNumber(obj.getString("phoneNumber"));
-				if (ah.updateAccount(serverAccount))
+				String pwd = null;
+				String email = null;
+				String first = null;
+				String last = null;
+				String phone = null;
+				if (obj.has("password")) pwd = obj.getString("password");
+				if (obj.has("email")) email = obj.getString("email");
+				if (obj.has("firstname")) first = obj.getString("firstname");
+				if (obj.has("lastname")) last = obj.getString("lastname");
+				if (obj.has("phoneNumber")) phone = obj.getString("phoneNumber");
+				if (ah.updateAccount(username, pwd, email, first, last, phone)){
+					ServerAccount serverAccount = new ServerAccount(username, null, email, first, last, phone);
 					return createResponse(true, username, "", asset, serverAccount);
+				}
 				else
-					return createResponse(false, username, "Unable to update serverAccount information of " + serverAccount.getUsername(),
+					return createResponse(false, username, "Unable to update serverAccount information of " + username,
 							asset, null);
 			case KEYCHAIN:
 				ServerKeychain keychain = new ServerKeychain();

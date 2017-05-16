@@ -53,9 +53,10 @@ public class RequestMessenger {
 		return createRequest(Action.GET, clientAccount, Asset.ACCOUNT, account);
 	}
 	
-	public static String createUpdateAccountMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber){
+	public static String createUpdateAccountMessage(Account clientAccount, String pwd, String email, String firstname, String lastname, String phoneNumber){
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
+		account.setPassword(pwd);
 		account.setEmail(email);
 		account.setFirstname(firstname);
 		account.setLastname(lastname);

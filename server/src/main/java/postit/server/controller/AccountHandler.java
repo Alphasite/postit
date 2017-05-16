@@ -62,7 +62,8 @@ public class AccountHandler {
 		return false;
 	}
 	
-	public boolean updateAccount(String username, String pwd, String email, String firstname, String lastname, String phoneNumber){
+	public boolean updateAccount(String username, String pwd, String email, String firstname, String lastname, 
+			String phoneNumber){
 		ServerAccount serverAccount = new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber);
 		if (pwd != null){
 			ServerAccount a = db.getAccount(username);

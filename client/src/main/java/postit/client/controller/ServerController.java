@@ -9,6 +9,7 @@ import postit.client.keychain.Share;
 import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager;
 
+import javax.crypto.SecretKey;
 import javax.json.*;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -306,31 +307,41 @@ public class ServerController {
     	return sendAndCheckIfSuccess(req);
     }
     
-    public boolean updateAccount(Account account, String email, String firstname, String lastname, String phoneNumber){
-    	String req = RequestMessenger.createUpdateAccountMessage(account, email, firstname, lastname, phoneNumber);
+    public boolean updateAccount(Account account, String pwd, String email, String firstname, String lastname, String phoneNumber){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, pwd, email, firstname, lastname, phoneNumber);
     	return sendAndCheckIfSuccess(req);
     }
     
     public boolean updateEmail(Account account, String email){
-    	String req = RequestMessenger.createUpdateAccountMessage(account, email, null, null, null);
+    	String req = RequestMessenger.createUpdateAccountMessage(account, null, email, null, null, null);
     	return sendAndCheckIfSuccess(req);
     }
     
     public boolean updateFirstname(Account account, String firstname){
-    	String req = RequestMessenger.createUpdateAccountMessage(account, null, firstname, null, null);
+    	String req = RequestMessenger.createUpdateAccountMessage(account, null, null, firstname, null, null);
     	return sendAndCheckIfSuccess(req);
     }
     
     public boolean updateLastname(Account account, String lastname){
-    	String req = RequestMessenger.createUpdateAccountMessage(account, null, null, lastname, null);
+    	String req = RequestMessenger.createUpdateAccountMessage(account, null, null, null, lastname, null);
     	return sendAndCheckIfSuccess(req);
     }
     
     public boolean updatePhonenumber(Account account, String phoneNumber){
-    	String req = RequestMessenger.createUpdateAccountMessage(account, null, null, null, phoneNumber);
+    	String req = RequestMessenger.createUpdateAccountMessage(account, null, null, null, null, phoneNumber);
     	return sendAndCheckIfSuccess(req);
     }
     
+    public boolean updateServerPassword(Account account, SecretKey pwd){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, 
+    			new String(pwd.getEncoded(),StandardCharsets.UTF_8), null, null, null, null);
+    	return sendAndCheckIfSuccess(req);
+    }
+    
+    public boolean updateServerPassword(Account account, String pwd){
+    	String req = RequestMessenger.createUpdateAccountMessage(account, pwd, null, null, null, null);
+    	return sendAndCheckIfSuccess(req);
+    }
     
     public String getEmail(Account account){
     	String req = RequestMessenger.createGetUserMessage(account);
