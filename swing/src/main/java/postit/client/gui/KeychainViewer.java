@@ -822,16 +822,7 @@ public class KeychainViewer {
             rmKeyPerm.setEnabled(true);
             showKeyPerm.setEnabled(true);
             showKeyLogs.setEnabled(true);
-            int idx = tabbedPane.getSelectedIndex();
-            System.out.println(idx);
-            DirectoryEntry activeDE=null;
-            if(idx>=0) {
-                activeDE = directoryController.getKeychains().get(idx);
-            }
-            else{
-                activeDE = directoryController.getKeychains().get(0);
-            }
-
+            DirectoryEntry activeDE= getActiveKeychain().directoryEntry;
             if(!directoryController.selfIsOwner(activeDE)){
 
                 addKeyPerm.setEnabled(false);
