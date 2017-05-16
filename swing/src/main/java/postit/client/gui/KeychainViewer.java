@@ -822,18 +822,6 @@ public class KeychainViewer {
             rmKeyPerm.setEnabled(true);
             showKeyPerm.setEnabled(true);
             showKeyLogs.setEnabled(true);
-            DirectoryEntry activeDE= getActiveKeychain().directoryEntry;
-            if(!directoryController.selfIsOwner(activeDE)){
-
-                addKeyPerm.setEnabled(false);
-                rmKeyPerm.setEnabled(false);
-                if(!directoryController.selfCanEdit(activeDE)){
-                    rnKey.setEnabled(false);
-                    addPass.setEnabled(false);
-                    delPass.setEnabled(false);
-                    movePass.setEnabled(false);
-                }
-            }
         }
         if(activeKeychainidx>-1 && activeKeychainidx<tabbedPane.getTabCount()){
             tabbedPane.setSelectedIndex(activeKeychainidx);
