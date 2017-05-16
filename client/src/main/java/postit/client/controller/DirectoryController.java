@@ -160,7 +160,7 @@ public class DirectoryController {
                                 .findAny();
 
                         localShare.ifPresent(share1 -> entry.shares.remove(share1));
-                        if (!entry.deletedShares.contains(share.serverid)) {
+                        if (!entry.deletedShares.contains("" + share.serverid)) {
                             entry.shares.add(share);
                         }
                     }

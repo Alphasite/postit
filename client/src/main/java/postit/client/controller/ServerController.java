@@ -196,8 +196,10 @@ public class ServerController {
 
                     boolean isOwnerOfEntry = ownerShare.serverid == entry.getServerId();
 
+                    List<Long> locallyDeletedSharesToDeleteRemotely = new ArrayList<>();
+
                     // Get all non-owner instances of this keychain.
-                    Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry);
+                    Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry, locallyDeletedSharesToDeleteRemotely);
 
                     if (!allInstancesOfKeychain.isPresent()) {
                         LOGGER.warning("Failed to fetch keychains for update (" + entry.name + ").");
@@ -267,7 +269,7 @@ public class ServerController {
                         sharedKeychainsOnServer.removeAll(sharedKeychainsTheClientKnowsOf);
 
                         // Remove keychains which have been unshared.
-                        for (Long serverid : sharedKeychainsOnServer) {
+                        for (Long serverid : locallyDeletedSharesToDeleteRemotely) {
                             deleteKeychain(account.get(), serverid);
                         }
                     }
@@ -517,7 +519,7 @@ public class ServerController {
         }
     }
 
-    public Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry) {
+    public Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry, List<Long> deletedInstances) {
         String req = RequestMessenger.createGetKeychainInstancesMessage(account, entry.getServerId());
         Optional<JsonObject> response = clientToServer.send(req);
 
@@ -542,6 +544,7 @@ public class ServerController {
 
                     if (!currentShareOfEntry.isPresent()) {
                         LOGGER.warning("Directory entry " + entry.name + " with server id: " + directoryEntryId + " has no local share. skipping.");
+                        deletedInstances.add(directoryEntryId);
                         continue;
                     }
 

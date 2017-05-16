@@ -99,6 +99,9 @@ public class KeychainLogTest {
         kl.addUpdateShareLogEntry(entry, "ning", true, 1, "added keychain keychain1");
 
         assertThat(kl.getKeychainLogEntries(entry).size(), is(9));
+
+        kl.dumpLogs(controller);
+        assertThat(Files.exists(Paths.get(KeychainLog.KEYCHAIN_LOG)), is(true));
     }
 
 }
