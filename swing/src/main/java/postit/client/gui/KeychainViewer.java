@@ -757,33 +757,34 @@ public class KeychainViewer {
                      activeDE = directoryController.getKeychains().get(idx);
                 }
                 else{
-                    activeDE = directoryController.getKeychains().get(0);
+                    if (directoryController.getKeychains().size()>0) {
+                        activeDE = directoryController.getKeychains().get(0);
+                    }
                 }
-
-                if(!directoryController.selfIsOwner(activeDE)){
-                    addKeyPerm.setEnabled(false);
-                    rmKeyPerm.setEnabled(false);
-                    if(!directoryController.selfCanEdit(activeDE)){
-                        rnKey.setEnabled(false);
-                        addPass.setEnabled(false);
-                        delPass.setEnabled(false);
-                        movePass.setEnabled(false);
-                    }else{
+                if (activeDE!=null) {
+                    if (!directoryController.selfIsOwner(activeDE)) {
+                        addKeyPerm.setEnabled(false);
+                        rmKeyPerm.setEnabled(false);
+                        if (!directoryController.selfCanEdit(activeDE)) {
+                            rnKey.setEnabled(false);
+                            addPass.setEnabled(false);
+                            delPass.setEnabled(false);
+                            movePass.setEnabled(false);
+                        } else {
+                            rnKey.setEnabled(true);
+                            addPass.setEnabled(true);
+                            delPass.setEnabled(true);
+                            movePass.setEnabled(true);
+                        }
+                    } else {
+                        addKeyPerm.setEnabled(true);
+                        rmKeyPerm.setEnabled(true);
                         rnKey.setEnabled(true);
                         addPass.setEnabled(true);
                         delPass.setEnabled(true);
                         movePass.setEnabled(true);
                     }
                 }
-                else {
-                    addKeyPerm.setEnabled(true);
-                    rmKeyPerm.setEnabled(true);
-                    rnKey.setEnabled(true);
-                    addPass.setEnabled(true);
-                    delPass.setEnabled(true);
-                    movePass.setEnabled(true);
-                }
-
                 for (JTable t:tables){
                     t.clearSelection();
                 }
