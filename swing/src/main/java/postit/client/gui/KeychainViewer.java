@@ -763,11 +763,13 @@ public class KeychainViewer {
                     addKeyPerm.setEnabled(false);
                     rmKeyPerm.setEnabled(false);
                     if(!directoryController.selfCanEdit(activeDE)){
+                        rnKey.setEnabled(false);
                         addPass.setEnabled(false);
                         delPass.setEnabled(false);
                         movePass.setEnabled(false);
                     }
                 }
+
                 for (JTable t:tables){
                     t.clearSelection();
                 }
@@ -820,6 +822,27 @@ public class KeychainViewer {
             rmKeyPerm.setEnabled(true);
             showKeyPerm.setEnabled(true);
             showKeyLogs.setEnabled(true);
+            int idx = tabbedPane.getSelectedIndex();
+            System.out.println(idx);
+            DirectoryEntry activeDE=null;
+            if(idx>=0) {
+                activeDE = directoryController.getKeychains().get(idx);
+            }
+            else{
+                activeDE = directoryController.getKeychains().get(0);
+            }
+
+            if(!directoryController.selfIsOwner(activeDE)){
+
+                addKeyPerm.setEnabled(false);
+                rmKeyPerm.setEnabled(false);
+                if(!directoryController.selfCanEdit(activeDE)){
+                    rnKey.setEnabled(false);
+                    addPass.setEnabled(false);
+                    delPass.setEnabled(false);
+                    movePass.setEnabled(false);
+                }
+            }
         }
         if(activeKeychainidx>-1 && activeKeychainidx<tabbedPane.getTabCount()){
             tabbedPane.setSelectedIndex(activeKeychainidx);
