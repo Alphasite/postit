@@ -86,7 +86,7 @@ public class KeychainViewer {
         else if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
-            
+
             authLog.addAuthenticationLogEntry("N/A", false, "Login credentials are invalid");
         } else {
             directoryController = new DirectoryController(directory.get(), backingStore, keyService);
@@ -94,7 +94,7 @@ public class KeychainViewer {
 
             serverController.setDirectoryController(directoryController);
             createUIComponents();
-            
+
             Optional<Account> act = directoryController.getAccount();
             if (act.isPresent()){
             	authLog.addAuthenticationLogEntry(act.get().getUsername(), true, "Login successful");
@@ -117,7 +117,7 @@ public class KeychainViewer {
         passwordGenerator = directoryController.getPasswordGenerator();
         classify = new Classify();
         this.keyService = keyService;
-        
+
         this.keyLog = keyLog;
 
         backingStore.save();
@@ -244,7 +244,7 @@ public class KeychainViewer {
                 SecretKey password =  selectedPassword.password;
                 boolean success = directoryController.deletePassword(selectedPassword);
                 Optional<String> comments = Optional.ofNullable((selectedPassword.metadata.get("comments")));
-                
+
                 if (success){
                 	Keychain key = selectedPassword.keychain;
                 	Optional<Account> act = directoryController.getAccount();
@@ -258,7 +258,7 @@ public class KeychainViewer {
                         );
                 	}
                 }
-                
+
                 Keychain newDestination = this.keychains.get(choicesList.indexOf(input)).readKeychain().get();
 
                 directoryController.createPassword(newDestination,
@@ -268,7 +268,7 @@ public class KeychainViewer {
                 Password addedPassword = newDestination.passwords.get(newDestination.passwords.size()-1);
                 if(comments.isPresent())
                     directoryController.updateMetadataEntry(addedPassword,"comments",comments.get());
-                
+
                 if (success){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
@@ -390,7 +390,7 @@ public class KeychainViewer {
             String newName = JOptionPane.showInputDialog(frame,"New keychain name:","Update name",JOptionPane.PLAIN_MESSAGE);
             if (newName!=null){
             	String oldName = getActiveKeychain().getName();
-            	
+
                 if (directoryController.renameKeychain(getActiveKeychain(),newName)){
                 	Optional<Account> act = directoryController.getAccount();
 
@@ -542,7 +542,7 @@ public class KeychainViewer {
                 		String user = null;
                 		if (act.isPresent())
                 			user = act.get().getUsername();
-                		
+
                 		keyLog.addRemoveShareLogEntry(
                 		        getActiveKeychain().directoryEntry,
                 		        user,
@@ -587,7 +587,7 @@ public class KeychainViewer {
 
         });
         keychainMenu.add(showKeyPerm);
-        
+
 
         showKeyLogs = new JMenuItem("Keychain logs");
         showKeyLogs.addActionListener(e->{
@@ -653,6 +653,37 @@ public class KeychainViewer {
         JMenu settingsMenu = new JMenu("Settings");
         menuBar.add(settingsMenu);
 
+        menuItem = new JMenuItem("Change server password");
+        menuItem.addActionListener(e->{
+            JPasswordField pass1 = new JPasswordField();
+            JPasswordField pass2 = new JPasswordField();
+
+            Object[] message = {
+                    "New Password:", pass1,
+                    "Re-type:", pass2
+            };
+            int option = JOptionPane.showConfirmDialog(frame, message, "Edit Account Settings",
+                    JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
+            if (option == JOptionPane.OK_OPTION) {
+                if (pass1.getPassword().equals(pass2.getPassword())){
+                    JOptionPane.showMessageDialog(null, "Passwords do not match. No updates were made");
+                }
+                else if (classify.isWeak(String.valueOf(pass1.getPassword()))){
+                    JOptionPane.showMessageDialog(null, "Passwords are too weak. No updates were made");
+                }
+                else{
+                    String key = JOptionPane.showInputDialog(null, "Enter account password (NOT master password)", "", JOptionPane.PLAIN_MESSAGE);
+                    if (key!=null && serverController.authenticate(new Account(directoryController.getAccount().get().getUsername(),key))){
+                        serverController.updateServerPassword(directoryController.getAccount().get(),String.valueOf(pass1.getPassword()));
+                    }
+                    else{ //wrong password
+                        JOptionPane.showMessageDialog(null, "Password is invalid. No updates were made");
+                    }
+                }
+            }
+        });
+
+        settingsMenu.add(menuItem);
 
         menuItem = new JMenuItem("Account Settings");
         menuItem.addActionListener(e -> {
@@ -718,6 +749,7 @@ public class KeychainViewer {
             public void stateChanged(ChangeEvent e) {
                 delPass.setEnabled(false);
                 movePass.setEnabled(false);
+
                 for (JTable t:tables){
                     t.clearSelection();
                 }
