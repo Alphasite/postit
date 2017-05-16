@@ -294,8 +294,6 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				if (obj.has("phoneNumber")) phone = obj.getString("phoneNumber");
 				if (ah.updateAccount(username, pwd, email, first, last, phone)){
 					ServerAccount serverAccount = new ServerAccount(username, null, email, first, last, phone);
-					System.out.println("Request: "+request);
-					System.out.println("Password: "+pwd);
 					return createResponse(true, username, "", asset, serverAccount);
 				}
 				else

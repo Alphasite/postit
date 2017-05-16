@@ -121,6 +121,7 @@ public class KeychainViewer {
         this.keyLog = keyLog;
 
         backingStore.save();
+        refreshTabbedPanes();
     }
 
     /**
@@ -224,7 +225,8 @@ public class KeychainViewer {
         movePass.addActionListener(e -> {
             ArrayList<String> choicesList = new ArrayList<String>();
             for(DirectoryEntry de : keychains){
-                choicesList.add(de.name);
+                if(directoryController.selfCanEdit(de) || directoryController.selfIsOwner(de))
+                    choicesList.add(de.name);
             }
             String[] choices = choicesList.toArray(new String[choicesList.size()]);
             String passwordTitle = selectedPassword.metadata.get("title");
@@ -750,7 +752,6 @@ public class KeychainViewer {
                 delPass.setEnabled(false);
                 movePass.setEnabled(false);
                 int idx = tabbedPane.getSelectedIndex();
-                System.out.println(idx);
                 DirectoryEntry activeDE=null;
                 if(idx>=0) {
                      activeDE = directoryController.getKeychains().get(idx);
@@ -767,7 +768,20 @@ public class KeychainViewer {
                         addPass.setEnabled(false);
                         delPass.setEnabled(false);
                         movePass.setEnabled(false);
+                    }else{
+                        rnKey.setEnabled(true);
+                        addPass.setEnabled(true);
+                        delPass.setEnabled(true);
+                        movePass.setEnabled(true);
                     }
+                }
+                else {
+                    addKeyPerm.setEnabled(true);
+                    rmKeyPerm.setEnabled(true);
+                    rnKey.setEnabled(true);
+                    addPass.setEnabled(true);
+                    delPass.setEnabled(true);
+                    movePass.setEnabled(true);
                 }
 
                 for (JTable t:tables){
@@ -825,6 +839,19 @@ public class KeychainViewer {
         }
         if(activeKeychainidx>-1 && activeKeychainidx<tabbedPane.getTabCount()){
             tabbedPane.setSelectedIndex(activeKeychainidx);
+
+            DirectoryEntry activeDE= getActiveKeychain().directoryEntry;
+            if(!directoryController.selfIsOwner(activeDE)){
+                addKeyPerm.setEnabled(false);
+                rmKeyPerm.setEnabled(false);
+                if(!directoryController.selfCanEdit(activeDE)){
+                    rnKey.setEnabled(false);
+                    addPass.setEnabled(false);
+                    delPass.setEnabled(false);
+                    movePass.setEnabled(false);
+                }
+            }
+
         }
     }
 
