@@ -197,20 +197,17 @@ public class ServerController {
 
                     boolean isOwnerOfEntry = ownerShare.serverid == entry.getServerId();
 
-                    List<Long> locallyDeletedSharesToDeleteRemotely = new ArrayList<>();
-
                     // Get all non-owner instances of this keychain.
-                    Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry, locallyDeletedSharesToDeleteRemotely);
+                    Optional<List<DirectoryKeychain>> allInstancesOfKeychain = getAllAccessibleInstances(account.get(), entry);
+                    Optional<Set<Long>> allAccessibleInstanceIds = getAllAccessibleInstanceIds(account.get(), entry);
 
-                    if (!allInstancesOfKeychain.isPresent()) {
+                    if (!allInstancesOfKeychain.isPresent() || !allAccessibleInstanceIds.isPresent()) {
                         LOGGER.warning("Failed to fetch keychains for update (" + entry.name + ").");
                         return;
                     }
 
                     // Get the ids of all the shared copies of the keychain
-                    Set<Long> sharedKeychainsOnServer = allInstancesOfKeychain.get().stream()
-                            .map(DirectoryKeychain::getServerId)
-                            .collect(Collectors.toSet());
+                    Set<Long> sharedKeychainsOnServer = allAccessibleInstanceIds.get();
 
                     // Iterate through each of them
                     for (DirectoryKeychain directoryKeychain : allInstancesOfKeychain.get()) {
@@ -270,8 +267,11 @@ public class ServerController {
                         sharedKeychainsOnServer.removeAll(sharedKeychainsTheClientKnowsOf);
 
                         // Remove keychains which have been unshared.
-                        for (Long serverid : locallyDeletedSharesToDeleteRemotely) {
-                            deleteKeychain(account.get(), serverid);
+                        for (String serverid : entry.deletedShares) {
+                            long id = Long.parseLong(serverid);
+                            if (allAccessibleInstanceIds.get().contains(id)) {
+                                deleteKeychain(account.get(), id);
+                            }
                         }
                     }
 
@@ -530,7 +530,7 @@ public class ServerController {
         }
     }
 
-    public Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry, List<Long> deletedInstances) {
+    public Optional<List<DirectoryKeychain>> getAllAccessibleInstances(Account account, DirectoryEntry entry) {
         String req = RequestMessenger.createGetKeychainInstancesMessage(account, entry.getServerId());
         Optional<JsonObject> response = clientToServer.send(req);
 
@@ -555,12 +555,18 @@ public class ServerController {
 
                     if (!currentShareOfEntry.isPresent()) {
                         LOGGER.warning("Directory entry " + entry.name + " with server id: " + directoryEntryId + " has no local share. skipping.");
-                        deletedInstances.add(directoryEntryId);
                         continue;
                     }
 
                     String decodedDirectoryKeychain = new String(Base64.getDecoder().decode(keychain.getString("data")),StandardCharsets.UTF_8);
                     JsonObject object = Json.createReader(new StringReader(decodedDirectoryKeychain)).readObject();
+
+                    String encryptingUser = object.getJsonObject(DirectoryKeychain.PARAMETERS).getString(DirectoryKeychain.ENCRYPTING_USER);
+
+                    if (encryptingUser.equals(account.getUsername())) {
+                        continue;
+                    }
+
                     Optional<DirectoryKeychain> directoryKeychain = DirectoryKeychain.init(
                             directoryEntryId,
                             object,
@@ -582,6 +588,39 @@ public class ServerController {
             }
 
             return Optional.of(directoryKeychains);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Set<Long>> getAllAccessibleInstanceIds(Account account, DirectoryEntry entry) {
+        String req = RequestMessenger.createGetKeychainInstancesMessage(account, entry.getServerId());
+        Optional<JsonObject> response = clientToServer.send(req);
+
+        Set<Long> directoryKeychainIds = new HashSet<>();
+
+        if (response.isPresent()) {
+            JsonArray list = response.get().getJsonArray(typeToString(SHARED_KEYCHAINS));
+
+            if (list == null) {
+                LOGGER.warning("Failed to fetch keychains: " + response.get().getString("message"));
+                return Optional.empty();
+            }
+
+            for (int i = 0; i < list.size(); i++) {
+                JsonObject keychain = list.getJsonObject(i);
+
+                try {
+                    long directoryEntryId = keychain.getJsonNumber("directoryEntryId").longValue();
+                    directoryKeychainIds.add(directoryEntryId);
+
+                } catch (JsonException | IllegalStateException e) {
+                    LOGGER.warning("Failed to parse server keychain response: " + e.getMessage());
+                    return Optional.empty();
+                }
+            }
+
+            return Optional.of(directoryKeychainIds);
         } else {
             return Optional.empty();
         }
