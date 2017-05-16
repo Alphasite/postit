@@ -603,7 +603,7 @@ public class KeychainViewer {
                 data[i][0] = String.valueOf(new Timestamp(logEntries.get(i).time));
                 data[i][1] = String.valueOf(logEntries.get(i).event);
                 data[i][2] = String.valueOf(logEntries.get(i).username);
-                data[i][3] = String.valueOf(logEntries.get(i).keychainId);
+                data[i][3] = String.valueOf(getActiveKeychain().getName());
                 data[i][4] = String.valueOf(logEntries.get(i).status);
                 data[i][5] = String.valueOf(logEntries.get(i).message);
             }
