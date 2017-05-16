@@ -667,7 +667,7 @@ public class KeychainViewer {
             int option = JOptionPane.showConfirmDialog(frame, message, "Edit Account Settings",
                     JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (option == JOptionPane.OK_OPTION) {
-                if (!pass1.getPassword().equals(pass2.getPassword())){
+                if (!String.valueOf(pass1.getPassword()).equals(String.valueOf(pass2.getPassword()))){
                     JOptionPane.showMessageDialog(null, "Passwords do not match. No updates were made");
                 }
                 else if (classify.isWeak(String.valueOf(pass1.getPassword()))){
