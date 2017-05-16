@@ -1,13 +1,13 @@
 package postit.client;
 
 import postit.client.backend.BackingStore;
+import postit.client.communication.Client;
 import postit.client.controller.ServerController;
 import postit.client.gui.GUIKeyService;
 import postit.client.gui.KeychainViewer;
 import postit.client.log.AuthenticationLog;
 import postit.client.log.KeychainLog;
 import postit.shared.Crypto;
-import postit.client.communication.Client;
 
 import static javax.swing.SwingUtilities.invokeLater;
 
@@ -16,7 +16,14 @@ import static javax.swing.SwingUtilities.invokeLater;
  */
 public class GuiApp {
     public static void main(String[] args) {
-        Client client = new Client(2048, "localhost");
+        String url;
+        if (args.length > 0) {
+            url = args[0];
+        } else {
+            url = "localhost";
+        }
+
+        Client client = new Client(2048, url);
         ServerController serverController = new ServerController(client);
         AuthenticationLog authLog = new AuthenticationLog();
 
@@ -24,18 +31,28 @@ public class GuiApp {
         BackingStore backingStore = new BackingStore(keyService);
 
         keyService.setBackingStore(backingStore);
+        serverController.setKeyService(keyService);
 
+        if (! authLog.isInitialized()){
+            System.exit(0);
+        }
+        
         if (!Crypto.init()) {
-            // TODO
+            System.out.println("Crypto could not be initialized. ABORTING");
+            System.exit(0);
         }
 
         if (!backingStore.init()) {
-            // TODO
+            System.out.println("backingStore could not be initialized. ABORTING");
+            System.exit(0);
         }
 
         invokeLater(() -> {
         	KeychainLog keyLog = new KeychainLog();
             KeychainViewer kv = new KeychainViewer(serverController, backingStore, keyService, keyLog, authLog);
+            if (! keyLog.isInitialized()){
+                System.exit(0);
+            }
         });
     }
 }

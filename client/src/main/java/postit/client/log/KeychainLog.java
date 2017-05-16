@@ -1,162 +1,77 @@
 package postit.client.log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-
+import postit.client.controller.DirectoryController;
+import postit.client.keychain.DirectoryEntry;
 import postit.shared.AuditLog;
 import postit.shared.AuditLog.EventType;
 import postit.shared.AuditLog.LogEntry;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 public class KeychainLog {
 
-	public static final String KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
+	public static String KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
 	
-	public KeychainLog(){
-		// Creates log file if not existing
-		File logDir = new File(AuditLog.LOG_DIR);
-		if (! logDir.exists())
-			logDir.mkdirs();
-		
-		File log = new File(KEYCHAIN_LOG);
-		if (! log.exists())
-			try {
-				log.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		
-		System.out.println(log.getAbsolutePath());
+	private boolean initialized = true;
+	
+	public KeychainLog() {
+
+	}
+
+	public boolean isInitialized(){
+		return initialized;
 	}
 	
-	public void addCreateKeychainLogEntry(String username, boolean status, long keychainId, String message){
+	public void addCreateKeychainLogEntry(DirectoryEntry directoryEntry, String username, boolean status, long keychainId, String message){
 		if (! status) return; // do not care about failed creations
-		
-		// Appends new log to file
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_CREATE, username, keychainId, status, message);
-			writer.println(entry.toString());
-			writer.close();
-		}
+		LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_CREATE, username, keychainId, status, message);
+		directoryEntry.log.add(entry.toString());
 	}
 	
-	public void addUpdateKeychainLogEntry(String username, boolean status, long keychainId, String message){
+	public void addUpdateKeychainLogEntry(DirectoryEntry directoryEntry, String username, boolean status, long keychainId, String message){
 		if (! status) return;
-		
-		// Appends new log to file
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_UPDATE, username, keychainId, status, message);
-			writer.println(entry.toString());
-			writer.close();
-		}
+		LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_UPDATE, username, keychainId, status, message);
+		directoryEntry.log.add(entry.toString());
 	}
 	
-	public void addRemoveKeychainLogEntry(String username, boolean status, long keychainId, String message){
+	public void addRemoveKeychainLogEntry(DirectoryEntry directoryEntry, String username, boolean status, long keychainId, String message){
 		if (! status) return;
-		
-		// Appends new log to file
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_REMOVE, username, keychainId, status, message);
-			writer.println(entry.toString());
-			writer.close();
-		}
+		LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.KEYCHAIN_REMOVE, username, keychainId, status, message);
+		directoryEntry.log.add(entry.toString());
 	}
 	
-	public void addCreateShareLogEntry(String username, boolean status, long keychainId, String message){
+	public void addCreateShareLogEntry(DirectoryEntry directoryEntry, String username, boolean status, long keychainId, String message){
 		if (! status) return;
-		
-		// Appends new log to file
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_ADD, username, keychainId, status, message);
-			writer.println(entry.toString());
-			writer.close();
-		}
+		LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_ADD, username, keychainId, status, message);
+		directoryEntry.log.add(entry.toString());
 	}
 	
-	public void addRemoveShareLogEntry(String username, boolean status, long keychainId, String message){
+	public void addRemoveShareLogEntry(DirectoryEntry directoryEntry, String username, boolean status, long keychainId, String message){
 		if (! status) return;
-		
-		// Appends new log to file
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_REMOVE, username, keychainId, status, message);
-			writer.println(entry.toString());
-			writer.close();
-		}
+		LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_REMOVE, username, keychainId, status, message);
+		directoryEntry.log.add(entry.toString());
 	}
 	
-	public void addUpdateShareLogEntry(String username, boolean status, long keychainId, String message){
+	public void addUpdateShareLogEntry(DirectoryEntry directoryEntry, String username, boolean status, long keychainId, String message){
 		if (! status) return;
-		
-		// Appends new log to file
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter(new FileWriter(new File(KEYCHAIN_LOG), true));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (writer != null){
-			LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_UPDATE, username, keychainId, status, message);
-			writer.println(entry.toString());
-			writer.close();
-		}
+		LogEntry entry = new LogEntry(System.currentTimeMillis(), EventType.SHARE_UPDATE, username, keychainId, status, message);
+		directoryEntry.log.add(entry.toString());
 	}
 	
-	public List<LogEntry> getKeychainLogEntries(long keychainId){
+	public List<LogEntry> getKeychainLogEntries(DirectoryEntry directoryEntry){
 		List<LogEntry> entries = new ArrayList<LogEntry>();
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader(new File(KEYCHAIN_LOG)));
-			String line = reader.readLine();
-			while (line != null){
-				LogEntry entry = AuditLog.parseLogEntry(line);
-				if (keychainId == -1 || entry.keychainId == keychainId){
-					entries.add(entry);
-				}
-				line = reader.readLine();
-			}
-			
-			reader.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+
+		for (String line : directoryEntry.getLog()) {
+			LogEntry entry = AuditLog.parseLogEntry(line);
+			entries.add(entry);
 		}
-		
+
+		entries.sort(Comparator.comparingLong(entry -> entry.time));
+
 		return entries;
 	}
 	
@@ -164,14 +79,46 @@ public class KeychainLog {
 		for (LogEntry le: entries)
 			System.out.println(le);
 	}
-	
-	public static void main(String[] args){
-		KeychainLog kl = new KeychainLog();
-		kl.addCreateKeychainLogEntry("ning", true, 1, "added keychain keychain1");
-		kl.addCreateKeychainLogEntry("ning", false, 2, "added keychain2");
-		kl.addCreateKeychainLogEntry("ning", true, 3, "added keychain3");
-		kl.addUpdateKeychainLogEntry("ning", true, 1, "updated keychain1");
-		kl.printLog(kl.getKeychainLogEntries(1));
+
+	public void dumpLogs(DirectoryController controller) {
+		// Creates log file if not existing
+		File logDir = new File(AuditLog.LOG_DIR);
+		if (!logDir.exists()) {
+			boolean success = logDir.mkdirs();
+			if (!success) {
+				initialized = false;
+				return;
+			}
+		}
+
+
+		File log = new File(KEYCHAIN_LOG);
+		if (!log.exists()) {
+			try {
+				if (!log.createNewFile()) {
+					return;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				return;
+			}
+		}
+
+		List<LogEntry> allLogEntries = new ArrayList<>();
+		List<DirectoryEntry> entries = controller.getKeychains();
+		for (DirectoryEntry entry : entries) {
+			List<LogEntry> keychainLogEntries = this.getKeychainLogEntries(entry);
+			allLogEntries.addAll(keychainLogEntries);
+		}
+
+		allLogEntries.sort(Comparator.comparingLong(entry -> entry.time));
+
+		try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(KEYCHAIN_LOG), StandardCharsets.UTF_8), true)){
+			for (LogEntry logEntry : allLogEntries) {
+				writer.println(logEntry.toString());
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-	
 }

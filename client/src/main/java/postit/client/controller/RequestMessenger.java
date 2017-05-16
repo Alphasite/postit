@@ -6,6 +6,8 @@ import postit.server.model.ServerKeychain;
 import postit.shared.MessagePackager.Action;
 import postit.shared.MessagePackager.Asset;
 
+import java.nio.charset.StandardCharsets;
+
 import static postit.client.ClientMessagePackager.createRequest;
 
 public class RequestMessenger {
@@ -13,40 +15,35 @@ public class RequestMessenger {
 	public static String createAuthenticateMessage(Account clientAccount){
 		ServerAccount serverAccount = new ServerAccount();
 		serverAccount.setUsername(clientAccount.getUsername());
-		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.ACCOUNT, serverAccount);
 	}
 	
-	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber, String keypair){
+	public static String createAddUserMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber, String keypair, String publickey){
 		ServerAccount serverAccount = new ServerAccount();
 		serverAccount.setUsername(clientAccount.getUsername());
-		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		serverAccount.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		serverAccount.setEmail(email);
 		serverAccount.setFirstname(firstname);
 		serverAccount.setLastname(lastname);
 		serverAccount.setPhoneNumber(phoneNumber);
 		serverAccount.setKeypair(keypair);
+		serverAccount.setPublickey(publickey);
 		return createRequest(Action.ADD, null, Asset.ACCOUNT, serverAccount);
 	}
 	
 	public static String createRemoveUserMessage(Account clientAccount){
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
+		account.setPassword(new String(clientAccount.getSecretKey().getEncoded(),StandardCharsets.UTF_8));
 		return createRequest(Action.REMOVE, clientAccount, Asset.ACCOUNT, account);
 	}
 
 	public static String createGetKeypairMessage(Account clientAccount) {
-		ServerAccount account = new ServerAccount();
-		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
 		return createRequest(Action.GET, clientAccount, Asset.KEYPAIR, null);
 	}
 
 	public static String sendOtpMessage(Account clientAccount, String otp) {
-		ServerAccount account = new ServerAccount();
-		account.setUsername(clientAccount.getUsername());
-		account.setPassword(new String(clientAccount.getSecretKey().getEncoded()));
 		return createRequest(Action.AUTHENTICATE, clientAccount, Asset.KEYPAIR, otp);
 	}
 
@@ -54,6 +51,16 @@ public class RequestMessenger {
 		ServerAccount account = new ServerAccount();
 		account.setUsername(clientAccount.getUsername()); 
 		return createRequest(Action.GET, clientAccount, Asset.ACCOUNT, account);
+	}
+	
+	public static String createUpdateAccountMessage(Account clientAccount, String email, String firstname, String lastname, String phoneNumber){
+		ServerAccount account = new ServerAccount();
+		account.setUsername(clientAccount.getUsername());
+		account.setEmail(email);
+		account.setFirstname(firstname);
+		account.setLastname(lastname);
+		account.setPhoneNumber(phoneNumber);
+		return createRequest(Action.UPDATE, clientAccount, Asset.ACCOUNT, account);
 	}
 	
 	public static String createAddKeychainsMessage(Account account, String name, String data){

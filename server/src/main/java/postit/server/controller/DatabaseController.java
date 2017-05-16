@@ -17,6 +17,12 @@ public class DatabaseController {
     private static final String ACCOUNT = "account";
     private static final String DIRECTORY_ENTRY = "directory_entry";
     private static final String LOGIN = "login";
+    public static final String EMAIL = "email";
+    public static final String FIRST_NAME = "first_name";
+    public static final String LAST_NAME = "last_name";
+    public static final String PHONE_NUMBER = "phone_number";
+    public static final String KEY_PAIR = "key_pair";
+    public static final String PUBLIC_KEY = "public_key";
 
     private Database database;
 
@@ -25,7 +31,7 @@ public class DatabaseController {
             + "WHERE `user_name`=?;";
 
     private static final String addAccountSQL
-            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `phone_number`, `salt`, `keypair`) VALUES (?,?,?,?,?,?,?,?);";
+            = "INSERT INTO " + ACCOUNT + " (`user_name`, `pwd_key`, `email`, `first_name`, `last_name`, `phone_number`, `salt`, `key_pair`, `public_key`) VALUES (?,?,?,?,?,?,?,?,?);";
 
     private static final String updateAccountSQL
             = "UPDATE "+ACCOUNT + " SET `user_name`=?, `pwd_key`=?, `email`=?, `first_name`=?, `last_name`=?, `phone_number`=? "
@@ -76,16 +82,25 @@ public class DatabaseController {
     }
 
     ServerAccount getAccount(String username) {
-        ResultSet resultSet;
         ServerAccount serverAccount = null;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
             statement.setString(1, username);
-            resultSet = statement.executeQuery();
 
-            if (resultSet.next()) {
-                serverAccount = new ServerAccount(username, null, resultSet.getString("email"),
-                        resultSet.getString("first_name"), resultSet.getString("last_name"), resultSet.getString("phone_number"));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    serverAccount = new ServerAccount(
+                            username,
+                            null,
+                            resultSet.getString(EMAIL),
+                            resultSet.getString(FIRST_NAME),
+                            resultSet.getString(LAST_NAME),
+                            resultSet.getString(PHONE_NUMBER),
+                            resultSet.getString(KEY_PAIR),
+                            resultSet.getString(PUBLIC_KEY)
+
+                    );
+                }
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getAccount " + e.getMessage()); // should be contained in JSONObject returned to view
@@ -97,14 +112,12 @@ public class DatabaseController {
     }
 
     String getKeyPair(String username) {
-        ResultSet resultSet;
-
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
             statement.setString(1, username);
-            resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                return resultSet.getString("key_pair");
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString(KEY_PAIR);
+                }
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getKeyPair"); // should be contained in JSONObject returned to view
@@ -115,15 +128,33 @@ public class DatabaseController {
         return null;
     }
 
-    String getSalt(String username){
+    String getPublickey(String username) {
         ResultSet resultSet;
 
-        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
+        try (Connection connection = database.connect();
+                PreparedStatement statement = connection.prepareStatement(getAccountSQL)){
             statement.setString(1, username);
             resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
-            	return resultSet.getString("salt");
+                return resultSet.getString("public_key");
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred in getPublickey");
+        } catch (Exception e) {
+            System.out.println("An error occurred");
+        }
+
+        return null;
+    }
+
+    String getSalt(String username){
+        try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
+            statement.setString(1, username);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString("salt");
+                }
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getSalt"); // should be contained in JSONObject returned to view
@@ -135,14 +166,12 @@ public class DatabaseController {
     }
     
     String getPassword(String username){
-        ResultSet resultSet;
-
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getAccountSQL)) {
             statement.setString(1, username);
-            resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-            	return resultSet.getString("pwd_key");
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString("pwd_key");
+                }
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getPassword"); // should be contained in JSONObject returned to view
@@ -165,6 +194,7 @@ public class DatabaseController {
             statement.setString(6, serverAccount.getPhoneNumber());
             statement.setString(7, serverAccount.getSalt());
             statement.setString(8, serverAccount.getKeypair());
+            statement.setString(9, serverAccount.getPublickey());
             add = statement.executeUpdate();
         } catch (SQLException e) {
         	e.printStackTrace();
@@ -286,16 +316,16 @@ public class DatabaseController {
     }
 
     ServerKeychain getDirectoryEntry(long directoryEntryId) {
-        ResultSet resultSet;
         ServerKeychain de = null;
 
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getDirectoryEntrySQL)) {
 
             statement.setLong(1, directoryEntryId);
-            resultSet = statement.executeQuery();
 
-            if (resultSet.next()) {
-                de = resultSetToServerKeychain(resultSet);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    de = resultSetToServerKeychain(resultSet);
+                }
             }
 
             return de;
@@ -303,7 +333,7 @@ public class DatabaseController {
         } catch (SQLException e) {
             System.out.println("An error occurred in getDirectoryEntry");
             return null;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("An error occurred");
             return null;
         }
@@ -323,7 +353,7 @@ public class DatabaseController {
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getAllInstancesOfDirectoryEntry");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("An error occurred");
         }
 
@@ -344,7 +374,7 @@ public class DatabaseController {
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getDirectoryEntry");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("An error occurred");
         }
 
@@ -393,18 +423,18 @@ public class DatabaseController {
     }
     
     public List<LogEntry> getLogins(String username) {
-        ResultSet resultSet;
-        LogEntry log = null;
+        LogEntry log;
 
-        List<LogEntry> list = new ArrayList<LogEntry>();
+        List<LogEntry> list = new ArrayList<>();
         try (Connection connection = database.connect(); PreparedStatement statement = connection.prepareStatement(getLoginsSQL)) {
             statement.setString(1, username);
-            resultSet = statement.executeQuery();
 
-            if (resultSet.next()) {
-            	log = new LogEntry(resultSet.getTimestamp("time").getTime(), AuditLog.EventType.AUTHENTICATE, resultSet.getString("username"), 
-            			-1, resultSet.getBoolean("status"), resultSet.getString("message"));
-            	list.add(log);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    log = new LogEntry(resultSet.getTimestamp("time").getTime(), AuditLog.EventType.AUTHENTICATE, resultSet.getString("username"),
+                            -1, resultSet.getBoolean("status"), resultSet.getString("message"));
+                    list.add(log);
+                }
             }
         } catch (SQLException e) {
             System.out.println("An error occurred in getLogins " + e.getMessage()); // should be contained in JSONObject returned to view

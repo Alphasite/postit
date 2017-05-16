@@ -76,7 +76,7 @@ public class RequestHandlerTest {
 	}
 
 	public static void testCreateAccount(RequestHandler rh, Account account, String email) {
-		String req = RequestMessenger.createAddUserMessage(account, email, "", "", "", "");
+		String req = RequestMessenger.createAddUserMessage(account, email, "", "", "", "", "");
 		String res = rh.handleRequest(req);
 		System.out.println(res);
 		JSONObject js = new JSONObject(res);
@@ -194,7 +194,7 @@ public class RequestHandlerTest {
 
 		assertThat(js3.getString("status").equals("success"), is(true));
 		assertThat(js3.getJsonObject(typeToString(OWNER_KEYCHAIN)), notNullValue());
-		ServerKeychain ownerView = new ServerKeychain(js2.getJsonObject(typeToString(OWNER_KEYCHAIN)));
+		//ServerKeychain ownerView = new ServerKeychain(js2.getJsonObject(typeToString(OWNER_KEYCHAIN)));
 		assertThat(sharedView.getOwnerUsername(), is(owner.getUsername()));
 		assertThat(sharedView.getDirectoryEntryId(), is(id));
 		System.out.println("Test getting owner keychain as shared was successful");

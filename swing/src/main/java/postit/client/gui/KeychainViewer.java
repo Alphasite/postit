@@ -8,8 +8,8 @@ import postit.client.backend.KeyService;
 import postit.client.controller.DirectoryController;
 import postit.client.controller.ServerController;
 import postit.client.keychain.*;
-import postit.client.log.KeychainLog;
 import postit.client.log.AuthenticationLog;
+import postit.client.log.KeychainLog;
 import postit.client.passwordtools.Classify;
 import postit.client.passwordtools.PasswordGenerator;
 import postit.shared.AuditLog;
@@ -19,20 +19,17 @@ import javax.crypto.SecretKey;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +44,8 @@ public class KeychainViewer {
     KeychainViewer kv = this;
     DirectoryController directoryController;
     ServerController serverController;
+    BackingStore backingStore;
+
     private JMenuBar menuBar;
     private JMenuItem menuItem;
 
@@ -71,16 +70,20 @@ public class KeychainViewer {
     private KeyService keyService;
 
     private KeychainLog keyLog;
-    private AuthenticationLog authLog;
 
     public KeychainViewer(ServerController serverController, BackingStore backingStore, KeyService keyService, KeychainLog keyLog, AuthenticationLog authLog) {
 
         this.serverController = serverController;
+        this.backingStore = backingStore;
 
         Optional<Directory> directory = backingStore.readDirectory();
 
 
-        if (!directory.isPresent()) {
+        if (! keyLog.isInitialized()){
+        	JOptionPane.showMessageDialog(null, "Log file cannot be created. ABORTING");
+        	return;
+        }
+        else if (!directory.isPresent()) {
             JOptionPane.showMessageDialog(null,
                     "Could not load directory. Master password may be wrong or data has been compromised");
             
@@ -96,14 +99,28 @@ public class KeychainViewer {
             if (act.isPresent()){
             	authLog.addAuthenticationLogEntry(act.get().getUsername(), true, "Login successful");
             }
+            StringBuffer overduePasswords = new StringBuffer("");
+            for(DirectoryEntry directoryEntry:directoryController.getKeychains()) {
+                List<Password>expiredPasswords = directoryController.getExpired(directoryEntry.readKeychain().get(), Duration.ofDays(365));
+                for (Password p:expiredPasswords){
+                    overduePasswords.append(p.getTitle());
+                    overduePasswords.append("\n");
+                }
+            }
+            if(overduePasswords.length()!=0){
+                JOptionPane.showMessageDialog(null,
+                        "Passwords that have not updated for a year: \n"+overduePasswords.toString()+"To stop update messages, re-save your passwords",
+                        "Overdue passwords",JOptionPane.PLAIN_MESSAGE);
+            }
         }
 
-        passwordGenerator = new PasswordGenerator();
+        passwordGenerator = directoryController.getPasswordGenerator();
         classify = new Classify();
         this.keyService = keyService;
         
         this.keyLog = keyLog;
-        this.authLog = authLog;
+
+        backingStore.save();
     }
 
     /**
@@ -114,7 +131,7 @@ public class KeychainViewer {
      * for that keychain
      */
     private void createUIComponents() {
-        JFrame frame = new JFrame("Keychain");
+        JFrame frame = new JFrame(directoryController.getAccount().get().getUsername());
         frame.setLayout(new GridLayout());
         frame.setMinimumSize(new Dimension(520, 485));
         menuBar = new JMenuBar();
@@ -131,20 +148,38 @@ public class KeychainViewer {
 
             JButton generatePass = new JButton("Generate Password");
             JLabel passwordStrength = new JLabel("\n");
-            newpassword.addFocusListener(new FocusListener() {
+            newpassword.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
-                public void focusGained(FocusEvent e) {
-                    passwordStrength.setText("\n");
+                public void insertUpdate(DocumentEvent e) {
+                    JSONObject result = classify.strengthCheck(newpassword.getText());
+                    String strength = (String) result.get("strength");
+
+                    passwordStrength.setText("Password Strength: "+strength);
                 }
+
                 @Override
-                public void focusLost(FocusEvent e) {
+                public void removeUpdate(DocumentEvent e) {
+                    JSONObject result = classify.strengthCheck(newpassword.getText());
+                    String strength = (String) result.get("strength");
+
+                    passwordStrength.setText("Password Strength: "+strength);
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
                     JSONObject result = classify.strengthCheck(newpassword.getText());
                     String strength = (String) result.get("strength");
 
                     passwordStrength.setText("Password Strength: "+strength);
                 }
             });
-            generatePass.addActionListener(ee->{newpassword.setText(passwordGenerator.generatePassword());});
+            generatePass.addActionListener(ee->{
+                newpassword.setText(passwordGenerator.generatePassword());
+                JSONObject result = classify.strengthCheck(newpassword.getText());
+                String strength = (String) result.get("strength");
+
+                passwordStrength.setText("Password Strength: "+strength);
+            });
 
             Object[] message = {
                     "Title:", newtitle,
@@ -160,13 +195,18 @@ public class KeychainViewer {
                         && newusername.getText().length() > 0) {
                     boolean success = directoryController.createPassword(getActiveKeychain(),
                             newtitle.getText(), newusername.getText(),
-                            Crypto.secretKeyFromBytes(newpassword.getText().getBytes()));
+                            Crypto.secretKeyFromBytes(newpassword.getText().getBytes(StandardCharsets.UTF_8)));
                     if (success){
                     	Keychain key = getActiveKeychain();
                     	Optional<Account> act = directoryController.getAccount();
                     	if (act.isPresent()){
-                    		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
-                    				String.format("Password %s added to keychain <%s>", newtitle.getText(), key.getName()));
+                    		keyLog.addUpdateKeychainLogEntry(
+                    		        key.directoryEntry,
+                    		        act.get().getUsername(),
+                                    true,
+                                    key.getServerId(),
+                    				String.format("Password %s added to keychain <%s>", newtitle.getText(), key.getName())
+                            );
                     	}
                     }
                     else{
@@ -209,8 +249,13 @@ public class KeychainViewer {
                 	Keychain key = selectedPassword.keychain;
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
-                				String.format("Password %s removed from keychain <%s>", selectedPassword.getTitle(), key.getName()));
+                		keyLog.addUpdateKeychainLogEntry(
+                		        key.directoryEntry,
+                		        act.get().getUsername(),
+                                true,
+                                key.getServerId(),
+                				String.format("Password %s removed from keychain <%s>", selectedPassword.getTitle(), key.getName())
+                        );
                 	}
                 }
                 
@@ -227,8 +272,13 @@ public class KeychainViewer {
                 if (success){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, newDestination.getServerId(), 
-                				String.format("Password %s added to keychain <%s>", selectedPassword.getTitle(), newDestination.getName()));
+                		keyLog.addUpdateKeychainLogEntry(
+                		        newDestination.directoryEntry,
+                		        act.get().getUsername(),
+                                true,
+                                newDestination.getServerId(),
+                				String.format("Password %s added to keychain <%s>", selectedPassword.getTitle(), newDestination.getName())
+                        );
                 	}
                 }
 
@@ -248,8 +298,13 @@ public class KeychainViewer {
             		Keychain key = selectedPassword.keychain;
             		Optional<Account> act = directoryController.getAccount();
             		if (act.isPresent()){
-            			keyLog.addUpdateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
-            					String.format("Password %s removed from keychain <%s>", selectedPassword.identifier, key.getName()));
+            			keyLog.addUpdateKeychainLogEntry(
+            			        key.directoryEntry,
+            			        act.get().getUsername(),
+                                true,
+                                key.getServerId(),
+            					String.format("Password %s removed from keychain <%s>", selectedPassword.getTitle(), key.getName())
+                        );
             		}
             	}
                 refreshTabbedPanes();
@@ -267,26 +322,17 @@ public class KeychainViewer {
 
         menuItem = new JMenuItem("Create Public Keyfile");
         menuItem.addActionListener((ActionEvent e) ->{
-            String username = directoryController.getAccount().get().getUsername();
-            JFileChooser fc = new JFileChooser();
-            JFileChooser fileChooser = new JFileChooser();
-            if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                // save to file
-                String path = file.getPath();
-
-                RSAPublicKey publicKey = (RSAPublicKey) directoryController.getAccount().get().getEncryptionKeypair().getPublic();
-                X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
-
-                try {
-                    Files.write(Paths.get(path), x509EncodedKeySpec.getEncoded());
-                } catch (IOException e1) {
-                    JOptionPane.showConfirmDialog(frame, "Unable to write to location: "+path);
-                }
+            if (!backingStore.writeKeypair(directoryController.getAccount().get())) {
+                JOptionPane.showConfirmDialog(frame, "Unable to write public keyfile.");
             }
-
         });
 
+        fileMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Export Log File");
+        menuItem.addActionListener((ActionEvent e) ->{
+            keyLog.dumpLogs(directoryController);
+        });
 
         fileMenu.add(menuItem);
 
@@ -321,9 +367,15 @@ public class KeychainViewer {
             if ((k != null) && (k.length() > 0)) {
                 if (directoryController.createKeychain(k)){
                 	Optional<Account> act = directoryController.getAccount();
-                	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, getActiveKeychain().getServerId(), 
-                				String.format("Keychain <%s> created.", k));
+                    Optional<Keychain> keychain = directoryController.getKeychain(k);
+                    if (act.isPresent() && keychain.isPresent()){
+                		keyLog.addCreateKeychainLogEntry(
+                		        keychain.get().directoryEntry,
+                                act.get().getUsername(),
+                                true,
+                                keychain.get().getServerId(),
+                				String.format("Keychain <%s> created.", k)
+                        );
                 	}
                 }
             }
@@ -341,9 +393,15 @@ public class KeychainViewer {
             	
                 if (directoryController.renameKeychain(getActiveKeychain(),newName)){
                 	Optional<Account> act = directoryController.getAccount();
+
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, getActiveKeychain().getServerId(), 
-                				String.format("Keychain <%s> changed name to <%s>.", oldName, newName));
+                		keyLog.addCreateKeychainLogEntry(
+                		        getActiveKeychain().directoryEntry,
+                		        act.get().getUsername(),
+                                true,
+                                getActiveKeychain().getServerId(),
+                				String.format("Keychain <%s> changed name to <%s>.", oldName, newName)
+                        );
                 	}
                 }
                 refreshTabbedPanes();
@@ -360,8 +418,13 @@ public class KeychainViewer {
                 if (directoryController.deleteKeychain(key)){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(act.get().getUsername(), true, key.getServerId(), 
-                				String.format("Keychain <%s> deleted.", key.getName()));
+                		keyLog.addCreateKeychainLogEntry(
+                		        key.directoryEntry,
+                		        act.get().getUsername(),
+                                true,
+                                key.getServerId(),
+                				String.format("Keychain <%s> deleted.", key.getName())
+                        );
                 	}
                 }
                 refreshTabbedPanes();
@@ -409,34 +472,39 @@ public class KeychainViewer {
                     Boolean readWrite = writepriv.isSelected();
 //                    String readWrite = (String)priv.getSelectedItem();
                     //Try to read public key
-                    try {
-                        byte[] keyBytes = Files.readAllBytes(file[0].toPath());
-                        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-                        KeyFactory kf = KeyFactory.getInstance("RSA");
-                        RSAPublicKey publicKey = (RSAPublicKey) kf.generatePublic(spec);
+                    Optional<List<RSAPublicKey>> keys = backingStore.readPublicKey(file[0].toPath());
 
-                        Share newshare = new Share(-1L,username,readWrite, publicKey, false);
-
-                        boolean success = directoryController.shareKeychain(activeDE,newshare);
-                        if(success){
-                            JOptionPane.showMessageDialog(frame,
-                                    "Successfully shared " + activeDE.name+ " with "+ username);
-                            
-                            Optional<Account> act = directoryController.getAccount();
-                            String user = null;
-                            if (act.isPresent())
-                            	user = act.get().getUsername();
-                            keyLog.addCreateShareLogEntry(user, true, getActiveKeychain().getServerId(), 
-                            		String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username));
-                        }
-                        else{
-                            JOptionPane.showMessageDialog(frame,
-                                    "Unable to share " + activeDE.name+ " with "+ username);
-                        }
-                    }catch (IOException | ClassCastException|
-                            InvalidKeySpecException |NoSuchAlgorithmException e1){
-
+                    if (!keys.isPresent()) {
+                        // TODO
                         JOptionPane.showMessageDialog(frame,"Unable to read public key file");
+                        System.err.println("Error loading public key");
+                        return;
+                    }
+
+                    RSAPublicKey encryptionKey = keys.get().get(0);
+                    RSAPublicKey signingKey = keys.get().get(1);
+
+                    Share newshare = new Share(-1L, username, readWrite, encryptionKey, signingKey, false);
+
+                    boolean success = directoryController.shareKeychain(activeDE,newshare);
+                    if (success) {
+                        JOptionPane.showMessageDialog(frame,
+                                "Successfully shared " + activeDE.name+ " with "+ username);
+
+                        Optional<Account> act = directoryController.getAccount();
+                        String user = null;
+                        if (act.isPresent())
+                            user = act.get().getUsername();
+                        keyLog.addCreateShareLogEntry(
+                                getActiveKeychain().directoryEntry,
+                                user,
+                                true,
+                                getActiveKeychain().getServerId(),
+                                String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), username)
+                        );
+                    } else {
+                        JOptionPane.showMessageDialog(frame,
+                                "Unable to share " + activeDE.name+ " with "+ username);
                     }
                 }
             }
@@ -475,8 +543,13 @@ public class KeychainViewer {
                 		if (act.isPresent())
                 			user = act.get().getUsername();
                 		
-                		keyLog.addRemoveShareLogEntry(user, true, getActiveKeychain().getServerId(), 
-                				String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), unshareUser));
+                		keyLog.addRemoveShareLogEntry(
+                		        getActiveKeychain().directoryEntry,
+                		        user,
+                                true,
+                                getActiveKeychain().getServerId(),
+                				String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), unshareUser)
+                        );
                 	}
                 }
             }
@@ -521,7 +594,7 @@ public class KeychainViewer {
             long keyId = getActiveKeychain().getServerId();
 
             String[] columnNames = {"Time","Event","Username","Keychain Name","Status","Message"};
-            List<AuditLog.LogEntry> logEntries = keyLog.getKeychainLogEntries(keyId);
+            List<AuditLog.LogEntry> logEntries = keyLog.getKeychainLogEntries(getActiveKeychain().directoryEntry);
             String[][] data = new String[logEntries.size()][6];
 
             for (int i = 0; i < logEntries.size(); i++) {
@@ -586,11 +659,10 @@ public class KeychainViewer {
 
             JTextField username = new JTextField(directoryController.getAccount().get().getUsername());
             username.setEnabled(false);
-            JTextField firstName = new JTextField();
-            JTextField lastName = new JTextField();
-            JTextField email = new JTextField();
-            JTextField phoneNumber = new JTextField();
-            JPasswordField password = new JPasswordField();
+            JTextField firstName = new JTextField(serverController.getFirstname(directoryController.getAccount().get()));
+            JTextField lastName = new JTextField(serverController.getLastname(directoryController.getAccount().get()));
+            JTextField email = new JTextField(serverController.getEmail(directoryController.getAccount().get()));
+            JTextField phoneNumber = new JTextField(serverController.getPhoneNumber(directoryController.getAccount().get()));
 
             Object[] message = {
                     "Username:", username,
@@ -598,7 +670,6 @@ public class KeychainViewer {
                     "Last name:", lastName,
                     "Email:", email,
                     "Phone number:", phoneNumber,
-                    "Password:", password
             };
 
             int option = JOptionPane.showConfirmDialog(frame, message, "Edit Account Settings",
@@ -606,27 +677,24 @@ public class KeychainViewer {
             if (option == JOptionPane.OK_OPTION) {
                 if(firstName.getText().length()>0||
                         lastName.getText().length()>0 || email.getText().length()>0 ||
-                        phoneNumber.getText().length()>0 || password.getPassword().length>0){
-                    String key = null;
-                    key = JOptionPane.showInputDialog(null, "Enter password", "", JOptionPane.PLAIN_MESSAGE);
+                        phoneNumber.getText().length()>0 ){
+                    String key = JOptionPane.showInputDialog(null, "Enter account password (NOT master password)", "", JOptionPane.PLAIN_MESSAGE);
                     if (key!=null && serverController.authenticate(new Account(username.getText(),key))){
-                        if(username.getText().length()>0){
-                            //update username
-                        }
                         if (firstName.getText().length()>0){
                             //update first name
+                            serverController.updateFirstname(directoryController.getAccount().get(),firstName.getText());
                         }
                         if (lastName.getText().length()>0){
                             //update last name
+                            serverController.updateLastname(directoryController.getAccount().get(),lastName.getText());
                         }
                         if(email.getText().length()>0){
                             //update email
+                            serverController.updateEmail(directoryController.getAccount().get(),email.getText());
                         }
                         if(phoneNumber.getText().length()>0){
                             //update phone number
-                        }
-                        if(password.getPassword().length>0){
-                            //update password
+                            serverController.updatePhonenumber(directoryController.getAccount().get(),phoneNumber.getText());
                         }
                     }
                     else{ //wrong password
@@ -638,7 +706,11 @@ public class KeychainViewer {
         settingsMenu.add(menuItem);
 
         menuItem = new JMenuItem("Pwd Gen Settings");
-        menuItem.addActionListener( e -> {passwordGenerator.editSettings(frame);});
+        menuItem.addActionListener( e -> {
+            this.editSettings(passwordGenerator, frame);
+            directoryController.setPasswordGenerator(passwordGenerator);
+        });
+
         settingsMenu.add(menuItem);
 
         tabbedPane.addChangeListener(new ChangeListener() {
@@ -673,9 +745,9 @@ public class KeychainViewer {
         for (DirectoryEntry entry : this.keychains) {
             Optional<Keychain> keychain = entry.readKeychain();
 
-            if (!keychain.isPresent()) {
-                // TODO
-            }
+//            if (!keychain.isPresent()) {
+//                // TODO
+//            }
 
             addPanes(keychain.get());
         }
@@ -762,9 +834,9 @@ public class KeychainViewer {
 
         Optional<Keychain> keychain = this.keychains.get(activeKeychainidx).readKeychain();
 
-        if (!keychain.isPresent()) {
-            // TODO
-        }
+//        if (!keychain.isPresent()) {
+//            // TODO
+//        }
 
         return keychain.get();
     }
@@ -778,5 +850,76 @@ public class KeychainViewer {
         } catch (IndexOutOfBoundsException ex) {
             return null;
         }
+    }
+
+    public void editSettings(PasswordGenerator generator, JFrame frame){
+        SpinnerNumberModel model = new SpinnerNumberModel();
+        model.setMaximum(256);
+        model.setMinimum(8);
+
+        JSpinner newLength = new JSpinner(model);
+        newLength.setValue(generator.activeConfiguration.passwordlength);
+
+        JCheckBox upper = new JCheckBox();
+        upper.setText("Upper case (A-Z)?");
+        upper.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useUpper)
+            upper.setSelected(true);
+
+        JCheckBox lower = new JCheckBox();
+        lower.setText("Lower case (a-z)?");
+        lower.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useLower)
+            lower.setSelected(true);
+
+        JCheckBox numbers = new JCheckBox();
+        numbers.setText("Number (0-9)?");
+        numbers.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useNumbers)
+            numbers.setSelected(true);
+
+        JCheckBox symbols = new JCheckBox();
+        symbols.setText("Symbols?");
+        symbols.setHorizontalTextPosition(SwingConstants.LEFT);
+        if(generator.activeConfiguration.useSymbols)
+            symbols.setSelected(true);
+        JTextField permittedSymbols = new JTextField(generator.activeConfiguration.SYMBOLS);
+        symbols.addActionListener(e->{
+            if (symbols.isSelected())
+                permittedSymbols.setEnabled(true);
+            else
+                permittedSymbols.setEnabled(false);
+        });
+        permittedSymbols.addActionListener(e->{
+            permittedSymbols.setText(generator.removeDuplicates(permittedSymbols.getText()));
+        });
+
+        ArrayList<Object>  message = new ArrayList<Object>();
+        message.add("Length");
+        message.add(newLength);
+        message.add(upper);
+        message.add(lower);
+        message.add(numbers);
+        message.add(symbols);
+        message.add(permittedSymbols);
+        do{
+            int option = JOptionPane.showConfirmDialog(frame, message.toArray(), "Password Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (option == JOptionPane.OK_OPTION) {
+                passwordGenerator.activeConfiguration.passwordlength = (int) newLength.getValue();
+                passwordGenerator.activeConfiguration.useUpper = upper.isSelected();
+                passwordGenerator.activeConfiguration.useLower = lower.isSelected();
+                passwordGenerator.activeConfiguration.useNumbers = numbers.isSelected();
+                passwordGenerator.activeConfiguration.useSymbols = symbols.isSelected();
+                permittedSymbols.setText(passwordGenerator.removeDuplicates(permittedSymbols.getText()));
+                passwordGenerator.activeConfiguration.SYMBOLS=permittedSymbols.getText();
+            }
+            message.add("Some chars must be selected");
+
+        } while (!(passwordGenerator.activeConfiguration.useUpper
+                || passwordGenerator.activeConfiguration.useLower
+                || passwordGenerator.activeConfiguration.useNumbers
+                || passwordGenerator.activeConfiguration.useSymbols)
+        );
     }
 }

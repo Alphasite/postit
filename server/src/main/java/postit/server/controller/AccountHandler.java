@@ -1,10 +1,9 @@
 package postit.server.controller;
 
-import java.security.SecureRandom;
+import postit.server.model.ServerAccount;
 
 import javax.json.JsonObject;
-
-import postit.server.model.ServerAccount;
+import java.security.SecureRandom;
 
 /**
  * Class handling requests from frontend and directs to the proper backend controller.
@@ -49,8 +48,8 @@ public class AccountHandler {
 	 * @param lastname
 	 * @return
 	 */
-	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname, String keypair, String phoneNumber) {
-		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber, keypair));
+	public boolean addAccount(String username, String pwd, String email, String firstname, String lastname, String keypair, String publickey, String phoneNumber) {
+		return addAccount(new ServerAccount(username, pwd, email, firstname, lastname, phoneNumber, keypair, publickey));
 	}
 
 	public boolean addAccount(ServerAccount serverAccount){
@@ -74,9 +73,37 @@ public class AccountHandler {
 		}
 		return updateAccount(serverAccount);
 	}
+
+	public boolean updateAccountEmail(String username, String newEmail) {
+		ServerAccount oldAccount = db.getAccount(username);
+		if (oldAccount != null) {
+			oldAccount.setEmail(newEmail);
+		} else {
+			return false;
+		}
+		return updateAccount(oldAccount);
+	}
+
+	public boolean updateAccountPassword(String username, String newpwd) {
+		ServerAccount oldAccount = db.getAccount(username);
+		if (oldAccount != null) {
+			oldAccount.setPassword(Util.hashPassword(newpwd, db.getSalt(username)));
+		} else {
+			return false;
+		}
+		return updateAccount(oldAccount);
+	}
 	
 	public boolean updateAccount(ServerAccount serverAccount){
-		return db.updateAccount(serverAccount);
+		ServerAccount account = new ServerAccount();
+		ServerAccount server = getAccount(serverAccount.getUsername());
+		account.setUsername(serverAccount.getUsername());
+		account.setPassword(serverAccount.getPassword() == null ? server.getUsername() : serverAccount.getPassword());
+		account.setEmail(serverAccount.getEmail() == null ? server.getEmail() : serverAccount.getEmail());
+		account.setFirstname(serverAccount.getFirstname() == null ? server.getFirstname() : serverAccount.getFirstname());
+		account.setLastname(serverAccount.getLastname() == null ? server.getLastname() : serverAccount.getLastname());
+		account.setPhoneNumber(serverAccount.getPhoneNumber() == null ? server.getPhoneNumber() : serverAccount.getPhoneNumber());
+		return db.updateAccount(account);
 	}
 	
 	public boolean removeAccount(String username, String pwd){

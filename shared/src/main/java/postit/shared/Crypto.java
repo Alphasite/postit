@@ -74,7 +74,7 @@ public class Crypto {
                 CPU_SCALING_FACTOR = (int) Math.pow(2, 14);
                 MEMORY_SCALING_FACTOR = 8;
                 PARALLELISM_SCALING_FACTOR = 1;
-                RSA_KEY_LENGTH = 4096;
+                RSA_KEY_LENGTH = 2048;
             } else {
                 random = new SecureRandom();
                 CPU_SCALING_FACTOR = 5;
@@ -153,6 +153,7 @@ public class Crypto {
     }
 
     public static Optional<byte[]> encryptJsonObject(Key key, byte[] nonce, JsonObject object) {
+
         AEADBlockCipher cipher = new GCMBlockCipher(new AESEngine());
         KeyParameter keyParameter = new KeyParameter(key.getEncoded());
         AEADParameters parameters = new AEADParameters(keyParameter, 128, nonce);
@@ -256,7 +257,7 @@ public class Crypto {
             cipher.init(Cipher.UNWRAP_MODE, privateKey);
             return Optional.of(cipher.unwrap(key, "AES", Cipher.SECRET_KEY));
         } catch (Exception e) {
-            LOGGER.severe("Failed to encrypt data using public key: " + e.getMessage());
+            LOGGER.severe("Failed to decrypt data using public key: " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -289,6 +290,20 @@ public class Crypto {
             LOGGER.severe("HIT ERROR STATE FAILED TO DESERIALIZE key pair: " + e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    public static byte[] signer(byte[] data, PrivateKey key) throws Exception {
+        Signature signer = Signature.getInstance("SHA512withRSA/ISO9796-2", "BC");
+        signer.initSign(key);
+        signer.update(data);
+        return signer.sign();
+    }
+
+    public static boolean verify(byte[] data, byte[] signature, PublicKey key) throws Exception {
+        Signature signer = Signature.getInstance("SHA512withRSA/ISO9796-2", "BC");
+        signer.initVerify(key);
+        signer.update(data);
+        return signer.verify(signature);
     }
 
     public static SSLContext getSSLContext() {

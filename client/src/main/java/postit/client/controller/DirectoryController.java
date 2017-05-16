@@ -3,12 +3,15 @@ package postit.client.controller;
 import postit.client.backend.BackingStore;
 import postit.client.backend.KeyService;
 import postit.client.keychain.*;
+import postit.client.passwordtools.PasswordGenerator;
 import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAmount;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -52,7 +55,7 @@ public class DirectoryController {
     }
 
     public boolean createKeychain(String keychainName) {
-        return directory.createKeychain(keyService.getMasterKey(), keychainName) && store.save();
+        return directory.createKeychain(keyService.getMasterKey(true), keychainName) && store.save();
     }
 
     public boolean createPassword(Keychain keychain, String title, String username, SecretKey key) {
@@ -111,12 +114,12 @@ public class DirectoryController {
     }
 
     public boolean deletePassword(Password p) {
-        p.markUpdated();
-        return p.delete() && store.save();
+        p.delete();
+        return store.save();
     }
 
     public String getPassword(Password p) {
-        return new String(Crypto.secretKeyToBytes(p.password));
+        return new String(Crypto.secretKeyToBytes(p.password), StandardCharsets.UTF_8);
     }
 
     public List<Long> getDeletedKeychains() {
@@ -157,13 +160,20 @@ public class DirectoryController {
                                 .findAny();
 
                         localShare.ifPresent(share1 -> entry.shares.remove(share1));
-                        entry.shares.add(share);
+                        if (!entry.deletedShares.contains("" + share.serverid)) {
+                            entry.shares.add(share);
+                        }
                     }
                 }
             }
 
             // TODO replace this later
             JsonArray passwordArray = keychainObject.getJsonArray("passwords");
+            JsonArray deletedPasswordArray = keychainObject.getJsonArray("deleted-passwords");
+
+            for (int i = 0; i < deletedPasswordArray.size(); i++) {
+                keychain.get().deletedPasswords.add(deletedPasswordArray.getString(i));
+            }
 
             HashMap<String, List<Password>> allPasswords = new HashMap<>();
 
@@ -178,8 +188,10 @@ public class DirectoryController {
             for (int i = 0; i < passwordArray.size(); i++) {
                 JsonObject jsonPassword = passwordArray.getJsonObject(i);
                 Password password = new Password(jsonPassword, keychain.get());
+
                 List<Password> passwordList = allPasswords.getOrDefault(password.uuid, new ArrayList<>());
                 passwordList.add(password);
+                allPasswords.put(password.uuid, passwordList);
             }
 
             // Select the newest version and use that.
@@ -199,6 +211,10 @@ public class DirectoryController {
             }
 
             keychain.get().initFrom(passwords);
+
+            // Sync log entries
+            entry.getLog().addAll(newEntry.getLog());
+
         } else {
             LOGGER.warning("Failed to update entry " + entry.name + "from object (couldn't load keychain).");
             return false;
@@ -225,8 +241,14 @@ public class DirectoryController {
             return Optional.empty();
         }
 
-        return new DirectoryKeychain(entry.getServerid(), keychain.get().dump().build(), entry.dump().build())
-                .dump(entry);
+        Optional<Account> account = getAccount();
+        if (!account.isPresent()) {
+            LOGGER.warning("No account availible; cant build KDO");
+            return Optional.empty();
+        }
+
+        return new DirectoryKeychain(entry.getServerId(), keychain.get().dump().build(), entry.dump().build())
+                .dump(entry, account.get());
     }
 
     public boolean setKeychainOnlineId(DirectoryEntry entry, long id) {
@@ -256,6 +278,11 @@ public class DirectoryController {
             return false;
         } else {
             entry.shares.remove(share);
+
+            if (share.serverid != -1) {
+                entry.deletedShares.add("" + share.serverid);
+            }
+
             entry.markUpdated();
             return store.save();
         }
@@ -266,6 +293,48 @@ public class DirectoryController {
         entry.setOwner(username);
         entry.markUpdated();
         return store.save();
+    }
+
+    public PasswordGenerator getPasswordGenerator() {
+        return directory.passwordGenerator;
+    }
+
+    public boolean setPasswordGenerator(PasswordGenerator pg) {
+        directory.savePasswordGenerator(pg);
+        return store.save();
+    }
+
+    public List<Password> getExpired(Keychain keychain, TemporalAmount validityPeriod) {
+        LocalDateTime expireyDate = LocalDateTime.now().minus(validityPeriod);
+        return keychain.passwords.stream()
+                .filter(password -> password.lastModified.isBefore(expireyDate))
+                .collect(Collectors.toList());
+    }
+
+    public boolean selfIsOwner(DirectoryEntry entry) {
+        Optional<Account> account = this.getAccount();
+
+        if (account.isPresent()) {
+            return entry.shares.stream()
+                    .filter(share -> share.isOwner)
+                    .anyMatch(share -> share.username.equals(account.get().getUsername()));
+        } else {
+            LOGGER.warning("SelfISOwner: System has no account?? Assuming offline.");
+            return true;
+        }
+    }
+
+    public boolean selfCanEdit(DirectoryEntry entry) {
+        Optional<Account> account = this.getAccount();
+
+        if (account.isPresent()) {
+            return entry.shares.stream()
+                    .filter(share -> share.username.equals(account.get().getUsername()))
+                    .anyMatch(share -> share.canWrite);
+        } else {
+            LOGGER.warning("SelfISOwner: System has no account?? Assuming offline.");
+            return true;
+        }
     }
 
     public boolean save() {

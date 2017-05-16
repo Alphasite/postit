@@ -8,6 +8,7 @@ import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.security.Key;
+import java.security.PublicKey;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -17,6 +18,11 @@ import java.util.logging.Logger;
  */
 public class DirectoryKeychain {
     private final static Logger LOGGER = Logger.getLogger(DirectoryKeychain.class.getName());
+    public static final String PARAMETERS = "parameters";
+    public static final String NONCE = "nonce";
+    public static final String DATA = "data";
+    public static final String KEYCHAIN = "keychain";
+    public static final String DIRECTORY = "directory";
 
     public final JsonObject keychain;
     public final JsonObject entry;
@@ -29,18 +35,19 @@ public class DirectoryKeychain {
         this.serverid = serverid;
     }
 
-    public static Optional<DirectoryKeychain> init(long serverid, JsonObject object, Account account) {
+    public static Optional<DirectoryKeychain> init(long serverid, JsonObject object, Account account, Optional<PublicKey> signatureKey) {
         Base64.Decoder decoder = Base64.getDecoder();
 
         try {
-            JsonObject parameters = object.getJsonObject("parameters");
-            byte[] nonce = decoder.decode(parameters.getString("nonce"));
-            byte[] data = decoder.decode(object.getString("data"));
+            JsonObject parameters = object.getJsonObject(PARAMETERS);
+            byte[] nonce = decoder.decode(parameters.getString(NONCE));
+            byte[] data = decoder.decode(object.getString(DATA));
 
             String encryptedEncryptionKey = parameters.getString(account.getUsername() + "-key", null);
+            String signatureEncryptionKey = parameters.getString(account.getUsername() + "-signature", null);
 
-            if (encryptedEncryptionKey == null) {
-                LOGGER.info("Keychain doesnt have a decryption key for me; Skipping. Perhaps it is too new?");
+            if (encryptedEncryptionKey == null || signatureEncryptionKey == null) {
+                LOGGER.info("Keychain doesnt have a decryption key/signature for me; Skipping. Perhaps it is too new?");
                 return Optional.empty();
             }
 
@@ -48,6 +55,22 @@ public class DirectoryKeychain {
                     decoder.decode(encryptedEncryptionKey),
                     account.getEncryptionKeypair().getPrivate()
             );
+
+            if (signatureKey.isPresent()) {
+                try {
+                    if (!Crypto.verify(
+                            decoder.decode(encryptedEncryptionKey),
+                            decoder.decode(signatureEncryptionKey),
+                            signatureKey.get()
+                    )) {
+                        LOGGER.severe("FAILED TO DECRYPT KEY, TAMPERING OR CORRUPTION DETECTED.");
+                        return Optional.empty();
+                    }
+                } catch (Exception e) {
+                    LOGGER.severe("FAILED TO DECRYPT KEY, TAMPERING OR CORRUPTION DETECTED: " + e.getLocalizedMessage());
+                    return Optional.empty();
+                }
+            }
 
             if (!key.isPresent()) {
                 LOGGER.severe("Could not decrypt parameters due to error unwrapping key.");
@@ -63,8 +86,8 @@ public class DirectoryKeychain {
 
             return Optional.of(new DirectoryKeychain(
                     serverid,
-                    directorKeychainObject.get().getJsonObject("keychain"),
-                    directorKeychainObject.get().getJsonObject("directory")
+                    directorKeychainObject.get().getJsonObject(KEYCHAIN),
+                    directorKeychainObject.get().getJsonObject(DIRECTORY)
             ));
         } catch (JsonException | IllegalStateException e) {
             LOGGER.warning("Failed to parse json object: " + e.getMessage());
@@ -72,29 +95,36 @@ public class DirectoryKeychain {
         }
     }
 
-    public Optional<JsonObject> dump(DirectoryEntry entryObject) {
+    public Optional<JsonObject> dump(DirectoryEntry entryObject, Account account) {
         SecretKey key = Crypto.generateKey();
         byte[] nonce = Crypto.getNonce();
 
         JsonObjectBuilder directoryKeychain = Json.createObjectBuilder()
-                .add("directory", entry)
-                .add("keychain", keychain);
+                .add(DIRECTORY, entry)
+                .add(KEYCHAIN, keychain);
 
         Base64.Encoder encoder = Base64.getEncoder();
 
         JsonObjectBuilder encryptedParameters = Json.createObjectBuilder()
-                .add("nonce", encoder.encodeToString(nonce));
+                .add(NONCE, encoder.encodeToString(nonce));
 
-        for (Share share : entryObject.shares) {
-            Optional<byte[]> encryptedKey = Crypto.wrapKey(key, share.publicKey);
+        try {
+            for (Share share : entryObject.shares) {
+                Optional<byte[]> encryptedKey = Crypto.wrapKey(key, share.encryptionKey);
 
-            if (!encryptedKey.isPresent()) {
-                LOGGER.warning("Failed to encrypt dk due to failure to wrap key");
-                return Optional.empty();
+                if (!encryptedKey.isPresent()) {
+                    LOGGER.warning("Failed to encrypt dk due to failure to wrap key");
+                    return Optional.empty();
+                }
+
+                encryptedParameters
+                        .add(share.username + "-key", encoder.encodeToString(encryptedKey.get()));
+                encryptedParameters
+                        .add(share.username + "-signature", encoder.encodeToString(Crypto.signer(encryptedKey.get(), account.signingKeypair.getPrivate())));
             }
-
-            encryptedParameters
-                    .add(share.username + "-key", encoder.encodeToString(encryptedKey.get()));
+        } catch (Exception e) {
+            LOGGER.warning("Failed to sign entry: " + e.getMessage());
+            return Optional.empty();
         }
 
         Optional<byte[]> directoryKeychainData = Crypto.encryptJsonObject(key, nonce, directoryKeychain.build());
@@ -107,13 +137,13 @@ public class DirectoryKeychain {
 
         return Optional.of(
                 Json.createObjectBuilder()
-                        .add("data", encoder.encodeToString(directoryKeychainData.get()))
-                        .add("parameters", encryptedParameters)
+                        .add(DATA, encoder.encodeToString(directoryKeychainData.get()))
+                        .add(PARAMETERS, encryptedParameters)
                         .build()
         );
     }
 
-    public long getServerid() {
+    public long getServerId() {
         return serverid;
     }
 }

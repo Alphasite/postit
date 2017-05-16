@@ -1,0 +1,7 @@
+May 14 2017 19:24:11 KEYCHAIN_CREATE jlaw95 -1 success: Keychain <key1> created.
+May 14 2017 19:24:26 KEYCHAIN_UPDATE jlaw95 -1 success: Password title9 added to keychain <key1>
+May 14 2017 22:03:46 KEYCHAIN_CREATE jlaw95 -1 success: Keychain <keych> created.
+May 14 2017 22:16:23 KEYCHAIN_CREATE jlaw95 -1 success: Keychain <key> created.
+May 14 2017 22:16:34 KEYCHAIN_UPDATE jlaw95 -1 success: Password fjdksl;a added to keychain <key>
+May 14 2017 22:20:30 KEYCHAIN_UPDATE jlaw95 -1 success: Password s fsa added to keychain <key>
+May 14 2017 22:51:53 KEYCHAIN_CREATE jlaw95 -1 success: Keychain <f> created.

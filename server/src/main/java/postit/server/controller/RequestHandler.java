@@ -6,12 +6,15 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.json.JSONObject;
 import postit.server.model.ServerAccount;
 import postit.server.model.ServerKeychain;
+import postit.shared.EFactorAuth;
 import postit.shared.MessagePackager;
 import postit.shared.MessagePackager.Action;
 import postit.shared.MessagePackager.Asset;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Logger;
 
 import static postit.server.ServerMessagePackager.createResponse;
@@ -41,8 +44,8 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
 		System.out.println("Starting request handle...");
-		msg = new String(Base64.getDecoder().decode(msg));
-		String response = Base64.getEncoder().encodeToString(handleRequest(msg).getBytes());
+		msg = new String(Base64.getDecoder().decode(msg), StandardCharsets.UTF_8);
+		String response = Base64.getEncoder().encodeToString(handleRequest(msg).getBytes(StandardCharsets.UTF_8));
 		ChannelFuture send = ctx.writeAndFlush(response + "\r\n");
 		send.sync();
 		ctx.close();
@@ -82,12 +85,12 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 			username = json.getString("username");
 			password = json.getString("password");
-			password = new String(Base64.getDecoder().decode(password));
+			password = new String(Base64.getDecoder().decode(password),StandardCharsets.UTF_8);
 			
 			int numFails = lc.getLatestNumFailedLogins(username);
 			if (numFails > 4){
 				// disabled time is linear right now. may change to exponential
-				long diff = (numFails - 4) * 30 - (System.currentTimeMillis() - lc.getLastLoginTime(username)) / 1000;
+				long diff = (numFails - 4) * 30L - (System.currentTimeMillis() - lc.getLastLoginTime(username)) / 1000;
 				if (diff > 0){
 					LOGGER.info("Sign in disabled");
 					return createResponse(false, username, String.format("Login is temporarily disabled. Try again in %d seconds.", diff), 
@@ -104,12 +107,14 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 			}
 		}
 
-		String assetName = MessagePackager.typeToString(asset).toLowerCase();
+		String assetName = MessagePackager.typeToString(asset).toLowerCase(Locale.getDefault());
 		LOGGER.info("Handling request of type: " + act.toString() + " " + assetName);
 		JSONObject obj = null;
+		String str = null;
 
 		if (json.has(assetName)) {
-			obj = json.getJSONObject(assetName);
+			str = json.optString(assetName);
+			obj = json.optJSONObject(assetName);
 		}
 
 		JSONObject js;
@@ -125,7 +130,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 						obj.getString("email"),
 						obj.getString("firstname"),
 						obj.getString("lastname"),
-						obj.getString("phoneNumber")
+						obj.getString("phoneNumber"),
+						obj.getString("keypair"),
+						obj.getString("publickey")
 				);
 
 				if (ah.addAccount(serverAccount)) {
@@ -189,8 +196,11 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 				return createResponse(true, username, "", asset, null);
 			case KEYPAIR:
 				// TODO fill this in Zhan.
+				ServerAccount serverAccount = ah.getAccount(username);
+				String otp = str;
+				String phoneNumber = serverAccount.getPhoneNumber();
 				// check otp.
-				boolean otpSuccessfullyAuthenticated = true;
+				boolean otpSuccessfullyAuthenticated = new EFactorAuth().verifyMsg(phoneNumber, otp);
 				if (otpSuccessfullyAuthenticated) {
 					String keypair = ah.getAccount(username).getKeypair();
 					return createResponse(true, username, "", asset, keypair);
@@ -232,6 +242,9 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 
 			case KEYPAIR:
 				// TODO fill this in Zhan.
+				ServerAccount serverAccount1 = ah.getAccount(username);
+				String phoneNumber = serverAccount1.getPhoneNumber();
+				new EFactorAuth().sendMsg(phoneNumber);
 				// send otp.
 				return createResponse(true, username, "Please send otp.", asset, null);
 
@@ -269,8 +282,13 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 		case UPDATE:
 			switch(asset){
 			case ACCOUNT:
-				ServerAccount serverAccount = new ServerAccount(obj.getString("username"), obj.getString("password"), obj.getString("email"),
-						obj.getString("firstname"), obj.getString("lastname"), obj.getString("phoneNumber"));
+				ServerAccount serverAccount = new ServerAccount();
+				serverAccount.setUsername(username);
+				if (obj.has("password")) serverAccount.setPassword(obj.getString("password"));
+				if (obj.has("email")) serverAccount.setEmail(obj.getString("email"));
+				if (obj.has("firstname")) serverAccount.setFirstname(obj.getString("firstname"));
+				if (obj.has("lastname")) serverAccount.setLastname(obj.getString("lastname"));
+				if (obj.has("phoneNumber")) serverAccount.setPhoneNumber(obj.getString("phoneNumber"));
 				if (ah.updateAccount(serverAccount))
 					return createResponse(true, username, "", asset, serverAccount);
 				else

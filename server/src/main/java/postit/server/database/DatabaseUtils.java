@@ -3,6 +3,7 @@ package postit.server.database;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -14,6 +15,6 @@ public class DatabaseUtils {
         URL resource = ClassLoader.getSystemClassLoader().getResource("./database/init_schema.sql");
         byte[] bytes = Files.readAllBytes(Paths.get(resource.toURI()));
 
-        return new String(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 }

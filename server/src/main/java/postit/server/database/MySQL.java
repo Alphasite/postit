@@ -1,6 +1,7 @@
 package postit.server.database;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -21,7 +22,7 @@ public class MySQL implements Database {
 	String password;
 	//String url;
 
-	ComboPooledDataSource cpds;
+	HikariDataSource hds;
 
 	public MySQL(String url, String database, String user, String pwd) throws SQLException {
 		this.password = pwd;
@@ -30,11 +31,12 @@ public class MySQL implements Database {
 		//this.url = url;
 
 		try {
-			this.cpds = new ComboPooledDataSource();
-			this.cpds.setDriverClass("com.mysql.cj.jdbc.Driver");
-			this.cpds.setJdbcUrl("jdbc:mysql://" + url + "/" + databaseName + "?useSSL=false");
-			this.cpds.setUser(user);
-			this.cpds.setPassword(password);
+			HikariConfig jdbcConfig;
+			jdbcConfig = new HikariConfig();
+			jdbcConfig.setJdbcUrl("jdbc:mysql://" + url + "/" + databaseName + "?useSSL=false");
+			jdbcConfig.setUsername(user);
+			jdbcConfig.setPassword(password);
+			hds = new HikariDataSource(jdbcConfig);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -44,29 +46,29 @@ public class MySQL implements Database {
 		return new MySQL("localhost:3306", database, user, pwd);
 	}
 
-	public static MySQL remoteDatabase(String database, String user, String pwd) throws SQLException {
-		return new MySQL("nishadmathur.com:3306", database, user, pwd);
+	public static MySQL remoteDatabase(String address, String database, String user, String pwd) throws SQLException {
+		return new MySQL(address, database, user, pwd);
 	}
 
 	public static MySQL defaultDatabase() throws SQLException {
-		return MySQL.remoteDatabase("postit", "postit", "xDljSX8Ojk");
+		return new MySQL("nishadmathur.com:3306","postit", "postit", "xDljSX8Ojk");
 	}
 
 	@Override
 	public Connection connect() throws SQLException {
-		return this.cpds.getConnection();
+		return this.hds.getConnection();
 	}
 
 	@Override
 	public boolean initDatabase() {
-		try (Connection connection = connect(); Statement statement = connection.createStatement()){
+		try (Connection connection = connect();
+		Statement statement = connection.createStatement();
+        PreparedStatement ps = connection.prepareStatement("?")){
 			final String sql = DatabaseUtils.getSetupSQL();
-            PreparedStatement ps = connection.prepareStatement("?");
-            ps.setString(1,sql);
-			Boolean res = ps.execute();
-            ps.close();
-            return res;
 
+            ps.setString(1, sql);
+			Boolean res = ps.execute();
+            return res;
 		} catch (SQLException | IOException | URISyntaxException e) {
 			e.printStackTrace();
 			return false;

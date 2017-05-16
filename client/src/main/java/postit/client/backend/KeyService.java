@@ -9,15 +9,17 @@ import javax.crypto.SecretKey;
  */
 public interface KeyService {
 
-    byte[] getKey(String keyName);
+    byte[] getKey(String keyName, Boolean isBeingCreated);
 
     SecretKey createMasterKey();
 
-    SecretKey getMasterKey();
+    SecretKey getMasterKey(Boolean isBeingCreated);
     
     SecretKey updateMasterKey();
 
     SecretKey getClientKey();
 
     Account getAccount();
+
+    void destroyKey();
 }

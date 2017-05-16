@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /**
  * Created by Zhan on 3/23/2017.
@@ -50,8 +52,8 @@ public class Classify {
         ERROR
     }
 
-    URL wordlist = Classify.class.getClassLoader().getResource("./passwordStrength/password-2011.lst");
-    URL wordlist2 = Classify.class.getClassLoader().getResource("./passwordStrength/words.txt");
+    public static final URL wordlist = Classify.class.getClassLoader().getResource("./passwordStrength/password-2011.lst");
+    public static final URL wordlist2 = Classify.class.getClassLoader().getResource("./passwordStrength/words.txt");
 
     /**“Password must have at
      least 8 characters,
@@ -66,11 +68,11 @@ public class Classify {
      a dictionary, ignoring case.**/
 
     public static boolean checkDicWords (String target, URL file) throws Exception{
-        BufferedReader in = new BufferedReader(new InputStreamReader(file.openStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(file.openStream(), StandardCharsets.UTF_8));
         try {
             String str;
             while ((str = in.readLine()) != null) {
-                if (str.indexOf(target.toLowerCase()) != -1) {
+                if (str.indexOf(target.toLowerCase(Locale.getDefault())) != -1) {
                     return true;
                 }
             }
@@ -91,7 +93,7 @@ public class Classify {
     }
 
     public static boolean comprehensive8 (String password, URL wordlist) throws Exception{
-        String regex = "^(?=.*[A-Z])(?=.*[-!@#$&*])(?=.*[0-9])(?=.*[a-z]).{8,}$";
+        String regex = "^(?=.*[A-Z])(?=.*[!@#$%^&*_=+-/.?<>)])(?=.*[0-9])(?=.*[a-z]).{8,}$";
         boolean flag = password.matches(regex);
         if (flag) { // check if dictionary 8, i.e. contains a dictionary word
             String word = password.replaceAll("[^a-zA-Z]", "");
@@ -140,9 +142,9 @@ public class Classify {
         return result.get("strength").equals(Level.LOW.name());
     }
 
-    public static void main (String[] args) {
-        Classify classify = new Classify();
-        String pwd = "Bjxdf-92";
-        System.out.println(classify.strengthCheck(pwd).get("strength"));
-    }
+//    public static void main (String[] args) {
+//        Classify classify = new Classify();
+//        String pwd = "Bjxdf-92";
+//        System.out.println(classify.strengthCheck(pwd).get("strength"));
+//    }
 }

@@ -26,7 +26,8 @@ public class MockKeyService implements KeyService {
     }
 
     @Override
-    public byte[] getKey(String keyName) {
+
+    public byte[] getKey(String keyName, Boolean isBeingCreated) {
         return getKeys.remove(0);
     }
 
@@ -36,7 +37,7 @@ public class MockKeyService implements KeyService {
     }
 
     @Override
-    public SecretKey getMasterKey() {
+    public SecretKey getMasterKey(Boolean isBeingCreated) {
         return masterKey;
     }
 
@@ -54,5 +55,10 @@ public class MockKeyService implements KeyService {
     @Override
     public Account getAccount() {
         return account;
+    }
+
+    @Override
+    public void destroyKey() {
+        // TODO?
     }
 }
