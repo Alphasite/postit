@@ -66,8 +66,12 @@ public class KeychainLog {
 		List<LogEntry> entries = new ArrayList<LogEntry>();
 
 		for (String line : directoryEntry.getLog()) {
-			LogEntry entry = AuditLog.parseLogEntry(line);
-			entries.add(entry);
+			try {
+				LogEntry entry = AuditLog.parseLogEntry(line);
+				entries.add(entry);
+			} catch (Exception ignored) {
+				// Dont care. ignore.
+			}
 		}
 
 		entries.sort(Comparator.comparingLong(entry -> entry.time));

@@ -86,9 +86,11 @@ public class DirectoryEntry {
             }
         }
 
+        Base64.Decoder decoder = Base64.getDecoder();
+
         JsonArray logArray = object.getJsonArray(LOG);
         for (int i = 0; i < logArray.size(); i++) {
-            this.log.add(logArray.getString(i));
+            this.log.add(new String(decoder.decode(logArray.getString(i).getBytes())));
         }
 
         JsonArray deletedSharesArray = object.getJsonArray(DELETED_SHARES);
@@ -128,7 +130,7 @@ public class DirectoryEntry {
 
         JsonArrayBuilder logArray = Json.createArrayBuilder();
         for (String entry : log) {
-            logArray.add(entry);
+            logArray.add(encoder.encodeToString(entry.getBytes()));
         }
 
         JsonArrayBuilder deletedSharesArray = Json.createArrayBuilder();
