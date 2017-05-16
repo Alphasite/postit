@@ -131,7 +131,7 @@ public class KeychainViewer {
      * for that keychain
      */
     private void createUIComponents() {
-        JFrame frame = new JFrame("Keychain");
+        JFrame frame = new JFrame(directoryController.getAccount().get().getUsername());
         frame.setLayout(new GridLayout());
         frame.setMinimumSize(new Dimension(520, 485));
         menuBar = new JMenuBar();
