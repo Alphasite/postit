@@ -665,7 +665,7 @@ public class KeychainViewer {
             int option = JOptionPane.showConfirmDialog(frame, message, "Edit Account Settings",
                     JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE);
             if (option == JOptionPane.OK_OPTION) {
-                if (pass1.getPassword().equals(pass2.getPassword())){
+                if (!pass1.getPassword().equals(pass2.getPassword())){
                     JOptionPane.showMessageDialog(null, "Passwords do not match. No updates were made");
                 }
                 else if (classify.isWeak(String.valueOf(pass1.getPassword()))){
@@ -749,7 +749,17 @@ public class KeychainViewer {
             public void stateChanged(ChangeEvent e) {
                 delPass.setEnabled(false);
                 movePass.setEnabled(false);
-
+//                DirectoryEntry activeDE = getActiveKeychain().directoryEntry;
+//
+//                if(!directoryController.selfIsOwner(activeDE)){
+//                    addKeyPerm.setEnabled(false);
+//                    rmKeyPerm.setEnabled(false);
+//                    if(!directoryController.selfCanEdit(activeDE)){
+//                        addPass.setEnabled(false);
+//                        delPass.setEnabled(false);
+//                        movePass.setEnabled(false);
+//                    }
+//                }
                 for (JTable t:tables){
                     t.clearSelection();
                 }
