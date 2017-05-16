@@ -292,7 +292,7 @@ public class Crypto {
         }
     }
 
-    public static byte[] signer(byte[] data, PrivateKey key) throws Exception {
+    public static byte[] sign(byte[] data, PrivateKey key) throws Exception {
         Signature signer = Signature.getInstance("SHA512withRSA/ISO9796-2", "BC");
         signer.initSign(key);
         signer.update(data);
