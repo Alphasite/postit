@@ -128,8 +128,8 @@ public class DatabaseController {
         return null;
     }
 
-    String getPublickey(String username) {
-        ResultSet resultSet;
+    String getPublickey(String username) throws SQLException {
+        ResultSet resultSet=null;
 
         try (Connection connection = database.connect();
                 PreparedStatement statement = connection.prepareStatement(getAccountSQL)){
@@ -143,6 +143,10 @@ public class DatabaseController {
             System.out.println("An error occurred in getPublickey");
         } catch (Exception e) {
             System.out.println("An error occurred");
+        }finally {
+            if(resultSet!=null){
+                resultSet.close();
+            }
         }
 
         return null;
