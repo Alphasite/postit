@@ -5,6 +5,7 @@ import postit.shared.Crypto;
 
 import javax.crypto.SecretKey;
 import javax.json.*;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
@@ -90,7 +91,7 @@ public class DirectoryEntry {
 
         JsonArray logArray = object.getJsonArray(LOG);
         for (int i = 0; i < logArray.size(); i++) {
-            this.log.add(new String(decoder.decode(logArray.getString(i).getBytes())));
+            this.log.add(new String(decoder.decode(logArray.getString(i).getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8));
         }
 
         JsonArray deletedSharesArray = object.getJsonArray(DELETED_SHARES);
@@ -130,7 +131,7 @@ public class DirectoryEntry {
 
         JsonArrayBuilder logArray = Json.createArrayBuilder();
         for (String entry : log) {
-            logArray.add(encoder.encodeToString(entry.getBytes()));
+            logArray.add(encoder.encodeToString(entry.getBytes(StandardCharsets.UTF_8)));
         }
 
         JsonArrayBuilder deletedSharesArray = Json.createArrayBuilder();
