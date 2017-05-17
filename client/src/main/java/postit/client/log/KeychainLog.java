@@ -71,6 +71,7 @@ public class KeychainLog {
 				entries.add(entry);
 			} catch (Exception ignored) {
 				// Dont care. ignore.
+				System.out.println("Malformed log entry: " + line);
 			}
 		}
 
