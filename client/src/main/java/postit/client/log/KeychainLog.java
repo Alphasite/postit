@@ -14,13 +14,19 @@ import java.util.List;
 
 public class KeychainLog {
 
-	public String KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
-	
-	private boolean initialized = true;
-	
-	public KeychainLog() {
+	String KEYCHAIN_LOG;
 
+	public KeychainLog() {
+		KEYCHAIN_LOG = AuditLog.LOG_DIR + "/keychain_log";
 	}
+
+	public KeychainLog(String logPath) {
+		this.KEYCHAIN_LOG = logPath;
+	}
+
+
+
+	private boolean initialized = true;
 
 	public boolean isInitialized(){
 		return initialized;

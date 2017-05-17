@@ -62,9 +62,8 @@ public class KeychainLogTest {
             signgingKey = (RSAPublicKey) account.getSigningKeypair().getPublic();
             ownerShare = new Share(-1L, account.getUsername(), true, encryptionKey, signgingKey, true);
 
-            kl = new KeychainLog();
+            kl = new KeychainLog(backingStore.getVolume() + "/log");
 
-            KeychainLog.KEYCHAIN_LOG = backingStore.getVolume() + "/log";
             System.out.println("Log dir:" + kl.KEYCHAIN_LOG);
 
         } catch (Exception e) {
@@ -89,7 +88,7 @@ public class KeychainLogTest {
         assertThat(kl.getKeychainLogEntries(entry).size(), is(3));
 
         kl.dumpLogs(controller);
-        assertThat(Files.exists(Paths.get(KeychainLog.KEYCHAIN_LOG)), is(true));
+        assertThat(Files.exists(Paths.get(kl.KEYCHAIN_LOG)), is(true));
 
         kl.addCreateKeychainLogEntry(entry, "ning", true, 4, "added keychain keychain1");
         kl.addCreateShareLogEntry(entry, "ning", true, 1, "added keychain keychain1");
@@ -101,7 +100,7 @@ public class KeychainLogTest {
         assertThat(kl.getKeychainLogEntries(entry).size(), is(9));
 
         kl.dumpLogs(controller);
-        assertThat(Files.exists(Paths.get(KeychainLog.KEYCHAIN_LOG)), is(true));
+        assertThat(Files.exists(Paths.get(kl.KEYCHAIN_LOG)), is(true));
     }
 
 }
