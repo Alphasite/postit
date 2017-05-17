@@ -83,6 +83,8 @@ public class Account {
         Base64.Encoder encoder = Base64.getEncoder();
         byte[] nonce = Crypto.getNonce();
 
+        keychainEncryptionKey = Crypto.hashedSecretKeyFromBytes(keychainEncryptionKey.getEncoded(), "".getBytes());
+
         JsonObjectBuilder dataObject = Json.createObjectBuilder()
                 .add(ENCRYPTION_KEYPAIR, encoder.encodeToString(serialiseObject(encryptionKeypair).getBytes(StandardCharsets.UTF_8)))
                 .add(SIGNING_KEYPAIR, encoder.encodeToString(serialiseObject(signingKeypair).getBytes(StandardCharsets.UTF_8)));
@@ -100,6 +102,8 @@ public class Account {
 
     public boolean deserialiseKeypairs(SecretKey keychainEncryptionKey, JsonObject jsonObject) {
         Base64.Decoder decoder = Base64.getDecoder();
+
+        keychainEncryptionKey = Crypto.hashedSecretKeyFromBytes(keychainEncryptionKey.getEncoded(), "".getBytes());
 
         try {
             byte[] nonce = decoder.decode(jsonObject.getString(NONCE));
