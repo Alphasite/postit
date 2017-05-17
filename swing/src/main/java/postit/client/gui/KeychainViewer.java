@@ -397,7 +397,7 @@ public class KeychainViewer {
                 	Optional<Account> act = directoryController.getAccount();
 
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(
+                		keyLog.addUpdateKeychainLogEntry(
                 		        getActiveKeychain().directoryEntry,
                 		        act.get().getUsername(),
                                 true,
@@ -420,7 +420,7 @@ public class KeychainViewer {
                 if (directoryController.deleteKeychain(key)){
                 	Optional<Account> act = directoryController.getAccount();
                 	if (act.isPresent()){
-                		keyLog.addCreateKeychainLogEntry(
+                		keyLog.addRemoveKeychainLogEntry(
                 		        key.directoryEntry,
                 		        act.get().getUsername(),
                                 true,
@@ -550,7 +550,7 @@ public class KeychainViewer {
                 		        user,
                                 true,
                                 getActiveKeychain().getServerId(),
-                				String.format("Keychain <%s> shared with user %s", getActiveKeychain().getName(), unshareUser)
+                				String.format("Keychain <%s> unshared with user %s", getActiveKeychain().getName(), unshareUser)
                         );
                 	}
                 }
@@ -603,7 +603,7 @@ public class KeychainViewer {
                 data[i][0] = String.valueOf(new Timestamp(logEntries.get(i).time));
                 data[i][1] = String.valueOf(logEntries.get(i).event);
                 data[i][2] = String.valueOf(logEntries.get(i).username);
-                data[i][3] = String.valueOf(logEntries.get(i).keychainId);
+                data[i][3] = String.valueOf(getActiveKeychain().getName());
                 data[i][4] = String.valueOf(logEntries.get(i).status);
                 data[i][5] = String.valueOf(logEntries.get(i).message);
             }
